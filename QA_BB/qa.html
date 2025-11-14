@@ -148,14 +148,14 @@
             width: auto;
         }
         
-        .mobile-title {
-            font-size: 16px; /* Más angosto */
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 120px; /* Limitar el ancho */
-        }
+		.mobile-title {
+			font-size: 14px; /* Cambia de 16px a 14px o incluso 13px */
+			font-weight: bold;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			max-width: 80px; /* Cambia de 120px a 80px o menos */
+		}
         
         .mobile-toggle-btn {
             background: rgba(255, 255, 255, 0.2);
@@ -316,14 +316,16 @@
                 display: none !important;
             }
             
-            .mobile-title {
-                font-size: 15px;
-                max-width: 100px;
-            }
+			.mobile-title {
+				font-size: 13px; /* Puedes poner 12px si quieres aún más pequeño */
+				max-width: 70px; /* Reduce aún más el ancho */
+			}
             
-            .mobile-header-content {
-                gap: 10px;
-            }
+			.mobile-header-content {
+				display: flex;
+				align-items: center;
+				gap: 8px; /* Cambia de 15px a 8px o menos */
+			}
         }
         
         /* Ocultar welcome en móviles y mostrar dashboard móvil */
