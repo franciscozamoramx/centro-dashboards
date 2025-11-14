@@ -149,8 +149,12 @@
         }
         
         .mobile-title {
-            font-size: 18px;
+            font-size: 16px; /* Más angosto */
             font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px; /* Limitar el ancho */
         }
         
         .mobile-toggle-btn {
@@ -306,6 +310,20 @@
                 height: 24px;
                 font-size: 12px;
             }
+            
+            /* Ocultar botón salir en móviles */
+            .mobile-exit-btn {
+                display: none !important;
+            }
+            
+            .mobile-title {
+                font-size: 15px;
+                max-width: 100px;
+            }
+            
+            .mobile-header-content {
+                gap: 10px;
+            }
         }
         
         /* Ocultar welcome en móviles y mostrar dashboard móvil */
@@ -348,7 +366,8 @@
                 <img src="https://i.postimg.cc/9f1mQRcj/Sin-Fondo.png" alt="Big Bola Casinos" class="mobile-logo">
                 <div class="mobile-title">Centro de BI</div>
             </div>
-            <button class="mobile-exit-btn" id="mobileExitBtn">
+            <!-- Botón Salir oculto en móviles -->
+            <button class="mobile-exit-btn" id="mobileExitBtn" style="display: none;">
                 <i class="fas fa-times"></i> Salir
             </button>
         </div>
@@ -356,7 +375,7 @@
         <div class="mobile-sidebar-overlay" id="mobileOverlay"></div>
         
         <div class="mobile-sidebar" id="mobileSidebar">
-            <div class="mobile-menu-section">Dashboard Principal</div>
+            <!-- Eliminada la sección "Dashboard Principal" y solo queda el ítem con ícono de casa -->
             <button class="mobile-menu-item active" data-src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
                 <i class="fas fa-house"></i> Principal
             </button>
@@ -915,7 +934,6 @@
                 const mobileIframe = document.getElementById('mobileIframe');
                 const mobileMenuItems = document.querySelectorAll('.mobile-menu-item');
                 const mobileWhatsappBtn = document.getElementById('mobileWhatsappBtn');
-                const mobileExitBtn = document.getElementById('mobileExitBtn');
                 
                 let isSidebarOpen = false;
                 
@@ -969,13 +987,6 @@
                 // Evento para el botón de WhatsApp
                 mobileWhatsappBtn.addEventListener('click', function() {
                     openWhatsApp();
-                });
-                
-                // Evento para el botón de salir
-                mobileExitBtn.addEventListener('click', function() {
-                    if (confirm('¿Estás seguro de que quieres salir del Centro de BI?')) {
-                        window.close();
-                    }
                 });
             }
         });
