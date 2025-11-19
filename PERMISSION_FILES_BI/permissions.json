@@ -1,136 +1,24 @@
-<script>
-    // Configuración de todos los dashboards disponibles
-    const ALL_DASHBOARDS = {
-        'principal': {
-            id: '9bd044c3-981b-4a9a-914a-b7bf130dae59',
-            name: 'Principal',
-            icon: 'fas fa-house',
-            url: 'https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c',
-            category: 'principal'
-        },
-        'adt': {
-            id: '1149b379-aad5-4876-bfe6-c325dc89308f',
-            name: 'ADT',
-            icon: 'fas fa-chart-line',
-            url: 'https://app.powerbi.com/reportEmbed?reportId=1149b379-aad5-4876-bfe6-c325dc89308f&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c',
-            category: 'dashboards'
-        },
-        'auditoria': {
-            id: 'a78289b5-2543-4104-aff7-96e30ef79b58',
-            name: 'Auditoría de Salas',
-            icon: 'fas fa-search',
-            url: 'https://app.powerbi.com/reportEmbed?reportId=a78289b5-2543-4104-aff7-96e30ef79b58&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c',
-            category: 'dashboards'
-        }
-        // ... (mantén el resto de tus dashboards)
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM cargado - Iniciando aplicación...');
-        
-        // Detectar si es dispositivo móvil/tableta
-        function isMobileDevice() {
-            return (typeof window.orientation !== "undefined") || 
-                   (navigator.userAgent.indexOf('IEMobile') !== -1) ||
-                   (window.innerWidth <= 1024);
-        }
-        
-        // Verificar si ya hay un usuario logueado
-        const currentUser = getCurrentUser();
-        console.log('Usuario actual:', currentUser);
-        
-        // Configurar botón "Abrir Ahora" para escritorio
-        document.getElementById('openBtn').addEventListener('click', function() {
-            const testUser = 'francisco.zamora@bigbola.com';
-            setCurrentUser(testUser);
-            location.reload(); // Recargar para aplicar cambios
-        });
-        
-        // Inicializar según el dispositivo y estado de login
-        if (currentUser) {
-            // Usuario ya logueado
-            if (isMobileDevice()) {
-                console.log('Mostrando dashboard móvil para usuario logueado');
-                document.getElementById('welcomeContainer').style.display = 'none';
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('desktopContainer').style.display = 'none';
-                document.getElementById('mobileDashboardContainer').style.display = 'block';
-                initMobileDashboard();
-            } else {
-                console.log('Mostrando dashboard desktop para usuario logueado');
-                document.getElementById('welcomeContainer').style.display = 'none';
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('mobileDashboardContainer').style.display = 'none';
-                document.getElementById('desktopContainer').style.display = 'block';
-                initDesktopVersion();
-            }
-        } else {
-            // Usuario no logueado - mostrar versión apropiada
-            if (isMobileDevice()) {
-                console.log('Mostrando login móvil');
-                document.getElementById('welcomeContainer').style.display = 'none';
-                document.getElementById('desktopContainer').style.display = 'none';
-                document.getElementById('mobileDashboardContainer').style.display = 'none';
-                document.getElementById('loginContainer').style.display = 'block';
-            } else {
-                console.log('Mostrando welcome desktop');
-                document.getElementById('welcomeContainer').style.display = 'block';
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('mobileDashboardContainer').style.display = 'none';
-                document.getElementById('desktopContainer').style.display = 'none';
-            }
-            initLogin();
-        }
-
-        // Función para obtener el usuario actual
-        function getCurrentUser() {
-            return localStorage.getItem('bi_current_user');
-        }
-
-        // Función para guardar el usuario
-        function setCurrentUser(email) {
-            localStorage.setItem('bi_current_user', email.toLowerCase());
-        }
-
-        // Función para eliminar el usuario (logout)
-        function clearCurrentUser() {
-            localStorage.removeItem('bi_current_user');
-        }
-
-        // Función simplificada para permisos (acceso completo temporal)
-        async function getUserDashboardPermissions(userEmail) {
-            console.log('Concediendo acceso completo a:', userEmail);
-            return Object.keys(ALL_DASHBOARDS);
-        }
-
-        // ... (mantén el resto de tus funciones createDynamicMenu, initLogin, etc.)
-        
-        // Función para inicializar el login
-        function initLogin() {
-            const loginBtn = document.getElementById('loginBtn');
-            const userEmailInput = document.getElementById('userEmail');
-            
-            loginBtn.addEventListener('click', async function() {
-                const userEmail = userEmailInput.value.trim();
-                
-                if (!userEmail) {
-                    alert('Por favor ingresa tu correo electrónico');
-                    return;
-                }
-                
-                // Guardar usuario y recargar
-                setCurrentUser(userEmail);
-                location.reload();
-            });
-            
-            // Permitir login con Enter
-            userEmailInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    loginBtn.click();
-                }
-            });
-        }
-
-        // ... (mantén el resto de tus funciones de inicialización)
-    });
-</script>
+// Configuración de todos los dashboards disponibles
+const ALL_DASHBOARDS = {
+    principal: {
+        id: '9bdb44c3-98fb-4a9a-914a-b7bf1b0da659',
+        name: 'Principal',
+        icon: 'fas fa-house',
+        url: 'https://app.powerbi.com/reportEmbed?reportId=9bdb44c3-98fb-4a9a-914a-b7bf1b0da659&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c',
+        category: 'principal'
+    },
+    adt: {
+        id: '11496379-aad5-4876-bfed-c325dc893887',
+        name: 'ADT',
+        icon: 'fas fa-chart-line',
+        url: 'https://app.powerbi.com/reportEmbed?reportId=11496379-aad5-4876-bfed-c325dc893887&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c',
+        category: 'dashboards'
+    },
+    auditoria: {
+        id: 'a78289b5-2543-4104-aff7-96e30ef79588',
+        name: 'Auditoría de Salas',
+        icon: 'fas fa-search',
+        url: 'https://app.powerbi.com/reportEmbed?reportId=a78289b5-2543-4104-aff7-96e30ef79588&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c',
+        category: 'dashboards'
+    }
+};
