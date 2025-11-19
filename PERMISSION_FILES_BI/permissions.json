@@ -1,0 +1,56 @@
+{
+  "version": "1.0",
+  "last_updated": "2024-01-15",
+  "users": {
+    "francisco.zamora@bigbola.com": {
+      "name": "Administrador",
+      "role": "Administrador del Sistema",
+      "department": "TI",
+      "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "promociones", "proyectos", "rtp", "diccionario"],
+      "groups": ["admin"]
+    },
+    "gerente@bigbola.com": {
+      "name": "Gerente General",
+      "role": "Gerente",
+      "department": "Gerencia",
+      "dashboards": ["principal", "adt", "bigplayers", "desempeno", "promociones", "rtp"],
+      "groups": ["gerencia"]
+    },
+    "auditor@bigbola.com": {
+      "name": "Auditor Interno", 
+      "role": "Auditor",
+      "department": "Auditoría",
+      "dashboards": ["principal", "auditoria", "rtp"],
+      "groups": ["auditoria"]
+    },
+    "ti@bigbola.com": {
+      "name": "Personal de TI",
+      "role": "Soporte Técnico",
+      "department": "Tecnología",
+      "dashboards": ["principal", "inventario", "proyectos"],
+      "groups": ["tecnologia"]
+    }
+  },
+  "groups": {
+    "admin": {
+      "name": "Administradores",
+      "description": "Acceso completo a todos los dashboards",
+      "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "promociones", "proyectos", "rtp", "diccionario"]
+    },
+    "gerencia": {
+      "name": "Gerencia",
+      "description": "Dashboards estratégicos y de negocio",
+      "dashboards": ["principal", "adt", "bigplayers", "desempeno", "promociones", "rtp"]
+    },
+    "auditoria": {
+      "name": "Auditoría",
+      "description": "Dashboards de control y auditoría",
+      "dashboards": ["principal", "auditoria", "rtp"]
+    },
+    "tecnologia": {
+      "name": "Tecnología",
+      "description": "Dashboards técnicos y de inventario",
+      "dashboards": ["principal", "inventario", "proyectos", "diccionario"]
+    }
+  }
+}
