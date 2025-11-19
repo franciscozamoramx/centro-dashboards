@@ -1,6 +1,6 @@
 {
     "users": {
-        "francisco.zamora@bigbola.com": {
+        "admin@bigbola.com": {
             "dashboards": ["principal", "adt", "auditoria"],
             "groups": ["admin"]
         },
