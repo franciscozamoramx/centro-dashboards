@@ -1,23 +1,20 @@
 {
-    "principal": {
-        "id": "9dbb4dc3-38f0-4a9a-91da-b7bf1b8d6c39",
-        "name": "Principal",
-        "icon": "fas fa-house",
-        "url": "https://app.powerbi.com/reportEmbed?reportId=9dbb4dc3-38f0-4a9a-91da-b7bf1b8d6c39&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-        "category": "principal"
+    "users": {
+        "francisco.zamora@bigbola.com": {
+            "dashboards": ["principal", "adt", "auditoria"],
+            "groups": ["admin"]
+        },
+        "gerente@bigbola.com": {
+            "dashboards": ["principal", "adt"],
+            "groups": ["gerentes"]
+        }
     },
-    "adt": {
-        "id": "11096379-aad5-4876-bfed-c325dc893887",
-        "name": "ADT",
-        "icon": "fas fa-chart-line",
-        "url": "https://app.powerbi.com/reportEmbed?reportId=11096379-aad5-4876-bfed-c325dc893887&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-        "category": "dashboards"
-    },
-    "auditoria": {
-        "id": "8785805-2543-4104-aff7-96e36e779588",
-        "name": "Auditoría de Salas",
-        "icon": "fas fa-search",
-        "url": "https://app.powerbi.com/reportEmbed?reportId=8785805-2543-4104-aff7-96e36e779588&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-        "category": "dashboards"
+    "groups": {
+        "admin": {
+            "dashboards": ["principal", "adt", "auditoria", "inventario"]
+        },
+        "gerentes": {
+            "dashboards": ["principal", "adt"]
+        }
     }
 }
