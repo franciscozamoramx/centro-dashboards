@@ -206,7 +206,7 @@
             font-weight: bold;
             color: white;
             text-align: center;
-			line-height: 1.2;
+            line-height: 1.2;
         }
         
         .mobile-menu-section {
@@ -379,11 +379,11 @@
         
         <div class="mobile-sidebar" id="mobileSidebar">
             <div class="mobile-sidebar-header">
-                <img src="https://i.postimg.cc/9f1mQRcj/Sin-Fondo.png" alt="Big Bola Casinos" class="mobile-sidebar-logo">
+                <img src="https://i.postimg.cc/hGqNYsNp/Isotipo-Perfiles-Marmol01-Photoroom.png" alt="Big Bola Casinos" class="mobile-sidebar-logo">
                 <div class="mobile-sidebar-title">
-				<div>Centro de</div>
-				<div>Business Intelligence</div>
-				</div>
+                    <div>Centro de</div>
+                    <div>Business Intelligence</div>
+                </div>
             </div>
             
             <button class="mobile-menu-item active" data-src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
@@ -459,7 +459,6 @@
                 let countdownInterval;
                 let popupBlocked = false;
                 
-                // ... (todo el código original para PC aquí)
                 // Función para deshabilitar teclas de función
                 function disableFunctionKeys(e) {
                     // Detectar teclas F1-F12 por keyCode (para compatibilidad)
@@ -677,10 +676,11 @@
                                 }
                                 
                                 .sidebar-title {
-                                    font-size: 20px;
+                                    font-size: 18px;
                                     font-weight: bold;
                                     color: white;
                                     text-align: center;
+                                    line-height: 1.2;
                                 }
                                 
                                 .menu-section {
@@ -810,11 +810,11 @@
                                 
                                 <div class="sidebar" id="sidebar">
                                     <div class="sidebar-header">
-                                        <img src="https://i.postimg.cc/9f1mQRcj/Sin-Fondo.png" alt="Big Bola Casinos" class="sidebar-logo">
+                                        <img src="https://i.postimg.cc/hGqNYsNp/Isotipo-Perfiles-Marmol01-Photoroom.png" alt="Big Bola Casinos" class="sidebar-logo">
                                         <div class="sidebar-title">
-										<div>Centro de</div>
-										<div>Business Intelligence</div>
-										</div>
+                                            <div>Centro de</div>
+                                            <div>Business Intelligence</div>
+                                        </div>
                                     </div>
                                     
                                     <button class="menu-item active" data-src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
@@ -894,6 +894,13 @@
                                         sidebar.classList.toggle('active');
                                         overlay.classList.toggle('active');
                                         iframeContainer.classList.toggle('sidebar-open');
+                                        
+                                        // Cambiar el ícono según el estado
+                                        if (isSidebarOpen) {
+                                            toggleBtn.innerHTML = '<i class="fas fa-times"></i>';
+                                        } else {
+                                            toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                                        }
                                     }
                                     
                                     // Evento para el botón de toggle
@@ -996,6 +1003,13 @@
                     mobileSidebar.classList.toggle('active');
                     mobileOverlay.classList.toggle('active');
                     mobileIframeContainer.classList.toggle('sidebar-open');
+                    
+                    // Cambiar el ícono según el estado
+                    if (isSidebarOpen) {
+                        mobileToggleBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    } else {
+                        mobileToggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                    }
                 }
                 
                 // Evento para el botón de toggle
