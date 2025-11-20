@@ -114,6 +114,175 @@
             display: none;
         }
         
+        /* Estilos específicos para móviles/tabletas */
+        .mobile-dashboard-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background: #f5f5f5;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        
+        .mobile-header {
+            background: linear-gradient(135deg, #1a3a8f 0%, #152c6e 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .mobile-header-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .mobile-logo {
+            height: 40px;
+            width: auto;
+        }
+        
+        .mobile-title {
+            font-size: 16px; /* Más angosto */
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px; /* Limitar el ancho */
+        }
+        
+        .mobile-toggle-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s;
+        }
+        
+        .mobile-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .mobile-sidebar {
+            position: fixed;
+            top: 70px;
+            left: -280px;
+            width: 280px;
+            height: calc(100vh - 70px);
+            background: #152c6e;
+            z-index: 1001;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .mobile-sidebar.active {
+            left: 0;
+        }
+        
+        .mobile-sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 70px);
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .mobile-sidebar-overlay.active {
+            display: block;
+        }
+        
+        .mobile-menu-section {
+            color: #FFD700;
+            font-weight: bold;
+            margin: 20px 0 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            font-size: 16px;
+        }
+        
+        .mobile-menu-item {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 15px;
+        }
+        
+        .mobile-menu-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .mobile-menu-item.active {
+            background: rgba(255,215,0,0.3);
+            border-left: 3px solid #FFD700;
+        }
+        
+        .mobile-menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .mobile-iframe-container {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 70px);
+            background: white;
+            transition: left 0.3s ease;
+        }
+        
+        .mobile-iframe-container.sidebar-open {
+            left: 280px;
+            width: calc(100% - 280px);
+        }
+        
+        .mobile-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .mobile-exit-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .mobile-exit-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
         @media (max-width: 600px) {
             .welcome-container {
                 padding: 25px;
@@ -141,11 +310,37 @@
                 height: 24px;
                 font-size: 12px;
             }
+            
+            /* Ocultar botón salir en móviles */
+            .mobile-exit-btn {
+                display: none !important;
+            }
+            
+            .mobile-title {
+                font-size: 15px;
+                max-width: 100px;
+            }
+            
+            .mobile-header-content {
+                gap: 10px;
+            }
+        }
+        
+        /* Ocultar welcome en móviles y mostrar dashboard móvil */
+        @media (max-width: 1024px) {
+            .welcome-container {
+                display: none !important;
+            }
+            
+            .mobile-dashboard-container {
+                display: block !important;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="welcome-container">
+    <!-- Versión PC/Laptop (original) -->
+    <div class="welcome-container" id="welcomeContainer">
         <img src="https://i.postimg.cc/hGqNYsNp/Isotipo-Perfiles-Marmol01-Photoroom.png" alt="Big Bola Casinos" class="logo">
         <h1>Centro de Business Intelligence</h1>
         <p>Tecnologías de la Información - Big Bola Casinos</p>
@@ -161,741 +356,664 @@
         </div>
     </div>
 
+    <!-- Versión Móvil/Tableta -->
+    <div class="mobile-dashboard-container" id="mobileDashboardContainer">
+        <div class="mobile-header">
+            <div class="mobile-header-content">
+                <button class="mobile-toggle-btn" id="mobileToggleBtn">
+                    <i class="fas fa-bars"></i> Menú
+                </button>
+                <img src="https://i.postimg.cc/9f1mQRcj/Sin-Fondo.png" alt="Big Bola Casinos" class="mobile-logo">
+                <div class="mobile-title">Centro de BI</div>
+            </div>
+            <!-- Botón Salir oculto en móviles -->
+            <button class="mobile-exit-btn" id="mobileExitBtn" style="display: none;">
+                <i class="fas fa-times"></i> Salir
+            </button>
+        </div>
+        
+        <div class="mobile-sidebar-overlay" id="mobileOverlay"></div>
+        
+        <div class="mobile-sidebar" id="mobileSidebar">
+            <!-- Eliminada la sección "Dashboard Principal" y solo queda el ítem con ícono de casa -->
+            <button class="mobile-menu-item active" data-src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-house"></i> Principal
+            </button>
+            
+            <div class="mobile-menu-section">Dashboards</div>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=1149b379-aad5-4876-bfe6-c325dc89308f&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-chart-line"></i> ADT
+            </button>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=a78289b5-2543-4104-aff7-96e30ef79b58&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa fa-search"></i> Auditoría de Salas
+            </button>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=ff7ca313-9e8f-4513-9bcd-df9182f2464a&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-gem"></i> Big Player's
+            </button>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=28c07103-a77e-42f4-a9ca-7d9345b48131&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-tachometer-alt"></i> Desempeño de Máquinas
+            </button>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=4fe689c1-3fa7-4632-8367-4b7a7abc492c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-desktop"></i> Inventario TI
+            </button>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=7253b2c9-12b1-4a8a-b555-2fef1d62e1b3&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-gift"></i> Promociones
+            </button>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=c2e5834e-4e3d-418c-a9dc-43e33d79a62e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-project-diagram"></i> Proyectos BI
+            </button>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=01ac285e-618f-43de-be89-d62b1a46374c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-coins"></i> RTP
+            </button>
+            
+            <div class="mobile-menu-section">Herramientas</div>
+            <button class="mobile-menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                <i class="fas fa-book"></i> Diccionario KPI's
+            </button>
+            <button class="mobile-menu-item" id="mobileWhatsappBtn">
+                <i class="fab fa-whatsapp"></i> Ayuda
+            </button>
+        </div>
+        
+        <div class="mobile-iframe-container" id="mobileIframeContainer">
+            <iframe class="mobile-iframe" id="mobileIframe" src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"></iframe>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const openBtn = document.getElementById('openBtn');
-            const countdownEl = document.getElementById('countdown');
-            
-            let count = 5;
-            let countdownInterval;
-            let popupBlocked = false;
-            
-            // Función para deshabilitar teclas de función
-            function disableFunctionKeys(e) {
-                // Detectar teclas F1-F12 por keyCode (para compatibilidad)
-                if (e.keyCode >= 112 && e.keyCode <= 123) {
-                    e.preventDefault();
-                    console.log('Tecla de función deshabilitada: F' + (e.keyCode - 111));
-                    return false;
-                }
-                
-                // Detectar teclas F1-F12 por key (navegadores modernos)
-                if (e.key && e.key.startsWith('F') && e.key.length <= 3) {
-                    e.preventDefault();
-                    console.log('Tecla de función deshabilitada: ' + e.key);
-                    return false;
-                }
-                
-                // Deshabilitar Ctrl+R (recargar)
-                if (e.ctrlKey && e.keyCode === 82) {
-                    e.preventDefault();
-                    console.log('Recarga deshabilitada');
-                    return false;
-                }
-                
-                // Deshabilitar Ctrl+P (imprimir)
-                if (e.ctrlKey && e.keyCode === 80) {
-                    e.preventDefault();
-                    console.log('Impresión deshabilitada');
-                    return false;
-                }
-                
-                // Deshabilitar Ctrl+S (guardar)
-                if (e.ctrlKey && e.keyCode === 83) {
-                    e.preventDefault();
-                    console.log('Guardar deshabilitado');
-                    return false;
-                }
-                
-                // Deshabilitar Ctrl+U (ver código fuente)
-                if (e.ctrlKey && e.keyCode === 85) {
-                    e.preventDefault();
-                    console.log('Ver código fuente deshabilitado');
-                    return false;
-                }
-                
-                // Deshabilitar F12 (herramientas de desarrollo)
-                if (e.keyCode === 123) {
-                    e.preventDefault();
-                    console.log('Herramientas de desarrollo deshabilitadas');
-                    return false;
-                }
+            // Detectar si es dispositivo móvil/tableta
+            function isMobileDevice() {
+                return (typeof window.orientation !== "undefined") || 
+                       (navigator.userAgent.indexOf('IEMobile') !== -1) ||
+                       (window.innerWidth <= 1024);
             }
             
-            // Función para deshabilitar el menú contextual (click derecho)
-            function disableContextMenu(e) {
-                e.preventDefault();
-                console.log('Menú contextual deshabilitado');
-                return false;
-            }
-            
-            // Agregar event listeners para deshabilitar teclas de función y menú contextual
-            document.addEventListener('keydown', disableFunctionKeys);
-            document.addEventListener('contextmenu', disableContextMenu);
-            
-            // Función para iniciar la cuenta regresiva
-            function startCountdown() {
-                //openBtn.style.display = 'none';
-                countdownInterval = setInterval(function() {
-                    count--;
-                    countdownEl.textContent = count;
-                    
-                    if (count <= 0) {
-                        clearInterval(countdownInterval);
-                        openDashboard();
+            // Si es móvil/tableta, ocultar welcome y mostrar dashboard móvil
+            if (isMobileDevice()) {
+                document.getElementById('welcomeContainer').style.display = 'none';
+                document.getElementById('mobileDashboardContainer').style.display = 'block';
+                initMobileDashboard();
+            } else {
+                // Código original para PC/Laptop
+                const openBtn = document.getElementById('openBtn');
+                const countdownEl = document.getElementById('countdown');
+                
+                let count = 5;
+                let countdownInterval;
+                let popupBlocked = false;
+                
+                // ... (todo el código original para PC aquí)
+                // Función para deshabilitar teclas de función
+                function disableFunctionKeys(e) {
+                    // Detectar teclas F1-F12 por keyCode (para compatibilidad)
+                    if (e.keyCode >= 112 && e.keyCode <= 123) {
+                        e.preventDefault();
+                        console.log('Tecla de función deshabilitada: F' + (e.keyCode - 111));
+                        return false;
                     }
-                }, 1000);
-            }
-            
-            // Función para crear un contador en el botón
-            function addCountdownToButton(seconds) {
-                // Crear el badge para el contador
-                const badge = document.createElement('span');
-                badge.className = 'countdown-badge';
-                badge.textContent = seconds;
-                openBtn.appendChild(badge);
-                
-                // Deshabilitar el botón temporalmente
-                openBtn.disabled = false;
-                
-                let countdown = seconds;
-                const buttonCountdown = setInterval(function() {
-                    countdown--;
-                    badge.textContent = countdown;
                     
-                    if (countdown <= 0) {
-                        clearInterval(buttonCountdown);
-                        badge.remove();
-                        openBtn.disabled = false;
+                    // Detectar teclas F1-F12 por key (navegadores modernos)
+                    if (e.key && e.key.startsWith('F') && e.key.length <= 3) {
+                        e.preventDefault();
+                        console.log('Tecla de función deshabilitada: ' + e.key);
+                        return false;
+                    }
+                    
+                    // Deshabilitar Ctrl+R (recargar)
+                    if (e.ctrlKey && e.keyCode === 82) {
+                        e.preventDefault();
+                        console.log('Recarga deshabilitada');
+                        return false;
+                    }
+                    
+                    // Deshabilitar Ctrl+P (imprimir)
+                    if (e.ctrlKey && e.keyCode === 80) {
+                        e.preventDefault();
+                        console.log('Impresión deshabilitada');
+                        return false;
+                    }
+                    
+                    // Deshabilitar Ctrl+S (guardar)
+                    if (e.ctrlKey && e.keyCode === 83) {
+                        e.preventDefault();
+                        console.log('Guardar deshabilitado');
+                        return false;
+                    }
+                    
+                    // Deshabilitar Ctrl+U (ver código fuente)
+                    if (e.ctrlKey && e.keyCode === 85) {
+                        e.preventDefault();
+                        console.log('Ver código fuente deshabilitado');
+                        return false;
+                    }
+                    
+                    // Deshabilitar F12 (herramientas de desarrollo)
+                    if (e.keyCode === 123) {
+                        e.preventDefault();
+                        console.log('Herramientas de desarrollo deshabilitadas');
+                        return false;
+                    }
+                }
+                
+                // Función para deshabilitar el menú contextual (click derecho)
+                function disableContextMenu(e) {
+                    e.preventDefault();
+                    console.log('Menú contextual deshabilitado');
+                    return false;
+                }
+                
+                // Agregar event listeners para deshabilitar teclas de función y menú contextual
+                document.addEventListener('keydown', disableFunctionKeys);
+                document.addEventListener('contextmenu', disableContextMenu);
+                
+                // Función para iniciar la cuenta regresiva
+                function startCountdown() {
+                    countdownInterval = setInterval(function() {
+                        count--;
+                        countdownEl.textContent = count;
                         
-                        // Si la ventana fue bloqueada, activar el botón automáticamente
-                        if (popupBlocked) {
+                        if (count <= 0) {
+                            clearInterval(countdownInterval);
                             openDashboard();
                         }
-                    }
-                }, 1000);
-            }
-            
-            // Función para abrir el dashboard en pantalla completa
-            function openDashboard() {
-                // Crear la ventana del dashboard - Creación de segunda ventana
-                const dashboardHTML = `
-                    <!DOCTYPE html>
-                    <html lang="es">
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>Business Intelligence de Big Bola Casinos</title>
-                        <link rel="icon" type="image/png" href="https://i.postimg.cc/QCN4dPG1/analisis-de-datos.png">
-                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                        <style>
-                            * {
-                                margin: 0;
-                                padding: 0;
-                                box-sizing: border-box;
-                                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            }
+                    }, 1000);
+                }
+                
+                // Función para crear un contador en el botón
+                function addCountdownToButton(seconds) {
+                    // Crear el badge para el contador
+                    const badge = document.createElement('span');
+                    badge.className = 'countdown-badge';
+                    badge.textContent = seconds;
+                    openBtn.appendChild(badge);
+                    
+                    // Deshabilitar el botón temporalmente
+                    openBtn.disabled = false;
+                    
+                    let countdown = seconds;
+                    const buttonCountdown = setInterval(function() {
+                        countdown--;
+                        badge.textContent = countdown;
+                        
+                        if (countdown <= 0) {
+                            clearInterval(buttonCountdown);
+                            badge.remove();
+                            openBtn.disabled = false;
                             
-                            body {
-                                background-color: #f5f5f5;
-                                overflow: hidden;
-                                margin: 0;
-                                padding: 0;
+                            // Si la ventana fue bloqueada, activar el botón automáticamente
+                            if (popupBlocked) {
+                                openDashboard();
                             }
-                            
-                            .container {
-                                width: 100vw;
-                                height: 100vh;
-                                background-color: #fff;
-                                display: flex;
-                                flex-direction: column;
-                                position: relative;
-                            }
-                            
-                            header {
-                                background: linear-gradient(135deg, #1a3a8f 0%, #152c6e 100%);
-                                color: white;
-                                padding: 15px 20px;
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                flex-shrink: 0;
-                                z-index: 1000;
-                            }
-                            
-                            .header-content {
-                                display: flex;
-                                align-items: center;
-                                gap: 20px;
-                            }
-                            
-                            .logo {
-                                height: 50px;
-                                width: auto;
-                            }
-                            
-                            h1 {
-                                font-size: 20px;
-                                margin: 0;
-                            }
-                            
-                            .dashboard-controls {
-                                display: flex;
-                                gap: 10px;
-                                position: relative;
-                            }
-                            
-                            .dashboard-btn {
-                                background: rgba(255, 255, 255, 0.2);
-                                color: white;
-                                border: none;
-                                padding: 8px 15px;
-                                border-radius: 4px;
-                                cursor: pointer;
-                                font-weight: 500;
-                                transition: background 0.3s;
-                                display: flex;
-                                align-items: center;
-                                gap: 5px;
-                            }
-                            
-                            .dashboard-btn:hover {
-                                background: rgba(255, 255, 255, 0.3);
-                            }
-                            
-                            .dashboard-btn.active {
-                                background: rgba(255, 255, 255, 0.4);
-                            }
-                            
-                            .dropdown {
-                                position: relative;
-                                display: inline-block;
-                            }
-                            
-                            .dropdown-content {
-                                display: none;
-                                position: absolute;
-                                top: 100%;
-                                left: 0;
-                                background-color: #f9f9f9;
-                                min-width: 200px;
-                                box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-                                z-index: 1;
-                                border-radius: 4px;
-                                overflow: hidden;
-                                margin-top: 5px;
-                            }
-                            
-                            .dropdown-content.show {
-                                display: block;
-                            }
-                            
-                            .dropdown-content button {
-                                color: #333;
-                                padding: 10px 14px;
-                                text-decoration: none;
-                                display: block;
-                                text-align: left;
-                                width: 100%;
-                                border: none;
-                                background: white;
-                                cursor: pointer;
-                                transition: background-color 0.3s;
-                                border-bottom: 1px solid #eee;
-                                display: flex;
-                                align-items: center;
-                                gap: 8px;
-                                font-size: 14px;
-                            }
-                            
-                            .dropdown-content button:hover {
-                                background-color: #f1f1f1;
-                            }
-                            
-                            .tools-btn {
-                                background: rgba(70, 130, 180, 0.8);
-                                color: white;
-                                border: none;
-                                padding: 8px 15px;
-                                border-radius: 4px;
-                                cursor: pointer;
-                                font-weight: 500;
-                                transition: background 0.3s;
-                                display: flex;
-                                align-items: center;
-                                gap: 5px;
-                            }
-                            
-                            .tools-btn:hover {
-                                background: rgba(70, 130, 180, 1);
-                            }
-                            
-                            .exit-fullscreen {
-                                background: rgba(255, 255, 255, 0.2);
-                                color: white;
-                                border: none;
-                                padding: 8px 15px;
-                                border-radius: 4px;
-                                cursor: pointer;
-                                font-weight: 500;
-                                transition: background 0.3s;
-                            }
-                            
-                            .exit-fullscreen:hover {
-                                background: rgba(255, 255, 255, 0.3);
-                            }
-                            
-                            .iframe-container {
-                                position: relative;
-                                flex-grow: 1;
-                                overflow: hidden;
-                            }
-                            
-                            iframe {
-                                width: 100%;
-                                height: 100%;
-                                border: none;
-                            }
-                            
-                            /* Overlay solo para click derecho */
-                            .right-click-blocker {
-                                position: absolute;
-                                top: 0;
-                                left: 0;
-                                width: 100%;
-                                height: 100%;
-                                z-index: 999;
-                                /* Solo reacciona al click derecho */
-                                pointer-events: none;
-                            }
-                            
-                            .right-click-blocker.active {
-                                pointer-events: auto;
-                                background: transparent;
-                            }
-                            
-                            /* Estilo para el mensaje de menú deshabilitado */
-                            .context-menu-message {
-                                position: fixed;
-                                top: 10px;
-                                right: 10px;
-                                background: rgba(0,0,0,0.7);
-                                color: white;
-                                padding: 10px;
-                                border-radius: 5px;
-                                z-index: 10000;
-                                font-size: 14px;
-                                display: none;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="context-menu-message" id="contextMenuMessage">Menú contextual deshabilitado</div>
-                        <div class="container">
-                            <header>
-                                <div class="header-content">
-                                    <img src="https://i.postimg.cc/9f1mQRcj/Sin-Fondo.png" alt="Big Bola Casinos" class="logo">
-                                    <h1>Centro de Business Intelligence</h1>
-                                </div>
-                                <div class="dashboard-controls">
-                                    <button class="dashboard-btn active" data-src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                        }
+                    }, 1000);
+                }
+                
+                // Función para abrir el dashboard en pantalla completa
+                function openDashboard() {
+                    // Crear la ventana del dashboard - Creación de segunda ventana
+                    const dashboardHTML = `
+                        <!DOCTYPE html>
+                        <html lang="es">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Business Intelligence de Big Bola Casinos</title>
+                            <link rel="icon" type="image/png" href="https://i.postimg.cc/QCN4dPG1/analisis-de-datos.png">
+                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                            <style>
+                                * {
+                                    margin: 0;
+                                    padding: 0;
+                                    box-sizing: border-box;
+                                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                }
+                                
+                                body {
+                                    background-color: #f5f5f5;
+                                    overflow: hidden;
+                                    margin: 0;
+                                    padding: 0;
+                                }
+                                
+                                .container {
+                                    width: 100vw;
+                                    height: 100vh;
+                                    background-color: #fff;
+                                    display: flex;
+                                    flex-direction: column;
+                                    position: relative;
+                                }
+                                
+                                .floating-toggle {
+                                    position: fixed;
+                                    top: 20px;
+                                    left: 20px;
+                                    width: 50px;
+                                    height: 50px;
+                                    background: rgba(26, 58, 143, 0.8);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 50%;
+                                    cursor: pointer;
+                                    z-index: 1001;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 20px;
+                                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                                    transition: all 0.3s ease;
+                                }
+                                
+                                .floating-toggle:hover {
+                                    background: rgba(26, 58, 143, 0.9);
+                                    transform: scale(1.05);
+                                }
+                                
+                                .sidebar {
+                                    position: fixed;
+                                    top: 0;
+                                    left: -320px;
+                                    width: 320px;
+                                    height: 100vh;
+                                    background: #152c6e;
+                                    z-index: 1002;
+                                    transition: left 0.3s ease;
+                                    overflow-y: auto;
+                                    padding: 20px;
+                                    box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+                                    display: flex;
+                                    flex-direction: column;
+                                }
+                                
+                                .sidebar.active {
+                                    left: 0;
+                                }
+                                
+                                .sidebar-overlay {
+                                    display: none;
+                                    position: fixed;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100%;
+                                    height: 100%;
+                                    background: rgba(0,0,0,0.5);
+                                    z-index: 1001;
+                                }
+                                
+                                .sidebar-overlay.active {
+                                    display: block;
+                                }
+                                
+                                .sidebar-header {
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    padding: 20px 0;
+                                    border-bottom: 1px solid rgba(255,255,255,0.2);
+                                    margin-bottom: 20px;
+                                }
+                                
+                                .sidebar-logo {
+                                    height: 60px;
+                                    width: auto;
+                                    margin-bottom: 15px;
+                                }
+                                
+                                .sidebar-title {
+                                    font-size: 20px;
+                                    font-weight: bold;
+                                    color: white;
+                                    text-align: center;
+                                }
+                                
+                                .menu-section {
+                                    color: #FFD700;
+                                    font-weight: bold;
+                                    margin: 20px 0 10px;
+                                    padding-bottom: 5px;
+                                    border-bottom: 1px solid rgba(255,255,255,0.2);
+                                    font-size: 16px;
+                                }
+                                
+                                .menu-item {
+                                    display: block;
+                                    width: 100%;
+                                    padding: 12px 15px;
+                                    margin-bottom: 8px;
+                                    background: rgba(255,255,255,0.1);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 5px;
+                                    text-align: left;
+                                    cursor: pointer;
+                                    transition: background 0.3s;
+                                    font-size: 15px;
+                                }
+                                
+                                .menu-item:hover {
+                                    background: rgba(255,255,255,0.2);
+                                }
+                                
+                                .menu-item.active {
+                                    background: rgba(255,215,0,0.3);
+                                    border-left: 3px solid #FFD700;
+                                }
+                                
+                                .menu-item i {
+                                    margin-right: 10px;
+                                    width: 20px;
+                                    text-align: center;
+                                }
+                                
+                                .sidebar-footer {
+                                    margin-top: auto;
+                                    padding-top: 20px;
+                                    border-top: 1px solid rgba(255,255,255,0.2);
+                                }
+                                
+                                .exit-btn {
+                                    display: block;
+                                    width: 100%;
+                                    padding: 12px 15px;
+                                    background: rgba(255, 0, 0, 0.2);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                    font-size: 15px;
+                                    transition: background 0.3s;
+                                    text-align: center;
+                                }
+                                
+                                .exit-btn:hover {
+                                    background: rgba(255, 0, 0, 0.3);
+                                }
+                                
+                                .iframe-container {
+                                    position: fixed;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100%;
+                                    height: 100%;
+                                    background: white;
+                                    transition: left 0.3s ease;
+                                }
+                                
+                                .iframe-container.sidebar-open {
+                                    left: 320px;
+                                    width: calc(100% - 320px);
+                                }
+                                
+                                iframe {
+                                    width: 100%;
+                                    height: 100%;
+                                    border: none;
+                                }
+                                
+                                /* Overlay solo para click derecho */
+                                .right-click-blocker {
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100%;
+                                    height: 100%;
+                                    z-index: 999;
+                                    /* Solo reacciona al click derecho */
+                                    pointer-events: none;
+                                }
+                                
+                                .right-click-blocker.active {
+                                    pointer-events: auto;
+                                    background: transparent;
+                                }
+                                
+                                /* Estilo para el mensaje de menú deshabilitado */
+                                .context-menu-message {
+                                    position: fixed;
+                                    top: 10px;
+                                    right: 10px;
+                                    background: rgba(0,0,0,0.7);
+                                    color: white;
+                                    padding: 10px;
+                                    border-radius: 5px;
+                                    z-index: 10000;
+                                    font-size: 14px;
+                                    display: none;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="context-menu-message" id="contextMenuMessage">Menú contextual deshabilitado</div>
+                            <div class="container">
+                                <button class="floating-toggle" id="toggleBtn">
+                                    <i class="fas fa-bars"></i>
+                                </button>
+                                
+                                <div class="sidebar-overlay" id="overlay"></div>
+                                
+                                <div class="sidebar" id="sidebar">
+                                    <div class="sidebar-header">
+                                        <img src="https://i.postimg.cc/9f1mQRcj/Sin-Fondo.png" alt="Big Bola Casinos" class="sidebar-logo">
+                                        <div class="sidebar-title">Centro de BI</div>
+                                    </div>
+                                    
+                                    <button class="menu-item active" data-src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
                                         <i class="fas fa-house"></i> Principal
                                     </button>
                                     
-                                    <div class="dropdown">
-                                        <button class="dashboard-btn" id="dropdownToggle">
-                                            <i class="fas fa-caret-down"></i> Dashboard's
-                                        </button>
-                                        <div class="dropdown-content" id="dropdownMenu">
-                                            <button data-src="https://app.powerbi.com/reportEmbed?reportId=1149b379-aad5-4876-bfe6-c325dc89308f&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa-chart-line"></i> ADT
-                                            </button>
-											<button data-src="https://app.powerbi.com/reportEmbed?reportId=a78289b5-2543-4104-aff7-96e30ef79b58&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa fa-search"></i> Auditoría de Salas
-                                            </button>
-                                            <button data-src="https://app.powerbi.com/reportEmbed?reportId=ff7ca313-9e8f-4513-9bcd-df9182f2464a&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa-gem"></i> Big Player's
-                                            </button>
-                                            <button data-src="https://app.powerbi.com/reportEmbed?reportId=28c07103-a77e-42f4-a9ca-7d9345b48131&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa-tachometer-alt"></i> Desempeño de Máquinas
-                                            </button>
-                                            <button data-src="https://app.powerbi.com/reportEmbed?reportId=4fe689c1-3fa7-4632-8367-4b7a7abc492c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa-desktop"></i> Inventario TI
-                                            </button>
-                                            <button data-src="https://app.powerbi.com/reportEmbed?reportId=7253b2c9-12b1-4a8a-b555-2fef1d62e1b3&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa-gift"></i> Promociones
-                                            </button>
-                                            <button data-src="https://app.powerbi.com/reportEmbed?reportId=c2e5834e-4e3d-418c-a9dc-43e33d79a62e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa-project-diagram"></i> Proyectos BI
-                                            </button>
-                                            <button data-src="https://app.powerbi.com/reportEmbed?reportId=01ac285e-618f-43de-be89-d62b1a46374c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa-coins"></i> RTP
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="dropdown">
-                                        <button class="tools-btn" id="toolsToggle">
-                                            <i class="fas fa-caret-down"></i> Herramientas
-                                        </button>
-                                        <div class="dropdown-content" id="toolsMenu">
-                                            <button data-src="https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
-                                                <i class="fas fa-book"></i> Diccionario KPI's
-                                            </button>
-                                            <button id="whatsappBtn">
-                                                <i class="fab fa-whatsapp"></i> Ayuda
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <button class="exit-fullscreen" onclick="window.close()">
-                                        <i class="fas fa-sign-out-alt"></i> Salir
+                                    <div class="menu-section">Dashboards</div>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=1149b379-aad5-4876-bfe6-c325dc89308f&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa-chart-line"></i> ADT
                                     </button>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=a78289b5-2543-4104-aff7-96e30ef79b58&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa fa-search"></i> Auditoría de Salas
+                                    </button>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=ff7ca313-9e8f-4513-9bcd-df9182f2464a&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa-gem"></i> Big Player's
+                                    </button>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=28c07103-a77e-42f4-a9ca-7d9345b48131&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa-tachometer-alt"></i> Desempeño de Máquinas
+                                    </button>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=4fe689c1-3fa7-4632-8367-4b7a7abc492c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa-desktop"></i> Inventario TI
+                                    </button>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=7253b2c9-12b1-4a8a-b555-2fef1d62e1b3&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa-gift"></i> Promociones
+                                    </button>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=c2e5834e-4e3d-418c-a9dc-43e33d79a62e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa-project-diagram"></i> Proyectos BI
+                                    </button>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=01ac285e-618f-43de-be89-d62b1a46374c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa-coins"></i> RTP
+                                    </button>
+                                    
+                                    <div class="menu-section">Herramientas</div>
+                                    <button class="menu-item" data-src="https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c">
+                                        <i class="fas fa-book"></i> Diccionario KPI's
+                                    </button>
+                                    <button class="menu-item" id="whatsappBtn">
+                                        <i class="fab fa-whatsapp"></i> Ayuda
+                                    </button>
+                                    
+                                    <div class="sidebar-footer">
+                                        <button class="exit-btn" onclick="window.close()">
+                                            <i class="fas fa-sign-out-alt"></i> Salir
+                                        </button>
+                                    </div>
                                 </div>
-                            </header>
-                            <div class="iframe-container">
-                                <div class="right-click-blocker" id="rightClickBlocker"></div>
-                                <iframe id="dashboardFrame" src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"></iframe>
+                                
+                                <div class="iframe-container" id="iframeContainer">
+                                    <div class="right-click-blocker" id="rightClickBlocker"></div>
+                                    <iframe id="dashboardFrame" src="https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"></iframe>
+                                </div>
                             </div>
-                        </div>
 
-                        <script>
-                            // Cargar el favicon dinámicamente para asegurar que se muestre
-                            function loadFavicon() {
-                                const link = document.createElement('link');
-                                link.rel = 'icon';
-                                link.type = 'image/png';
-                                link.href = 'https://i.postimg.cc/QCN4dPG1/analisis-de-datos.png';
-                                document.head.appendChild(link);
-                                
-                                // Método alternativo para navegadores que no respetan el link
-                                const favicon = document.createElement('link');
-                                favicon.rel = 'shortcut icon';
-                                favicon.type = 'image/png';
-                                favicon.href = 'https://i.postimg.cc/QCN4dPG1/analisis-de-datos.png';
-                                document.head.appendChild(favicon);
-                            }
-                            
-                            // Ejecutar cuando el DOM esté listo
-                            document.addEventListener('DOMContentLoaded', function() {
-                                // Cargar el favicon
-                                loadFavicon();
-                                
-                                const buttons = document.querySelectorAll('.dashboard-btn, .dropdown-content button');
-                                const iframe = document.getElementById('dashboardFrame');
-                                const dropdownToggle = document.getElementById('dropdownToggle');
-                                const dropdownMenu = document.getElementById('dropdownMenu');
-                                const toolsToggle = document.getElementById('toolsToggle');
-                                const toolsMenu = document.getElementById('toolsMenu');
-                                const whatsappBtn = document.getElementById('whatsappBtn');
-                                const contextMenuMessage = document.getElementById('contextMenuMessage');
-                                const rightClickBlocker = document.getElementById('rightClickBlocker');
-                                
-                                // Variable para controlar el estado del bloqueador
-                                let isRightClickDetected = false;
-                                
-                                // Función para restaurar el nombre del botón dropdown
-                                function restoreDropdownName() {
-                                    dropdownToggle.innerHTML = '';
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const toggleBtn = document.getElementById('toggleBtn');
+                                    const sidebar = document.getElementById('sidebar');
+                                    const overlay = document.getElementById('overlay');
+                                    const iframeContainer = document.getElementById('iframeContainer');
+                                    const menuItems = document.querySelectorAll('.menu-item');
+                                    const whatsappBtn = document.getElementById('whatsappBtn');
+                                    const iframe = document.getElementById('dashboardFrame');
                                     
-                                    const icon = document.createElement('i');
-                                    icon.className = 'fas fa-caret-down';
-                                    dropdownToggle.appendChild(icon);
-                                    dropdownToggle.appendChild(document.createTextNode(" Dashboard's"));
-                                }
-                                
-                                // Función para restaurar el nombre del botón de herramientas
-                                function restoreToolsName() {
-                                    toolsToggle.innerHTML = '';
+                                    let isSidebarOpen = false;
                                     
-                                    const icon = document.createElement('i');
-                                    icon.className = 'fas fa-caret-down';
-                                    toolsToggle.appendChild(icon);
-                                    toolsToggle.appendChild(document.createTextNode(" Herramientas"));
-                                }
-                                
-                                // Función para deshabilitar teclas de función en la ventana del dashboard
-                                function disableFunctionKeys(e) {
-                                    // Detectar teclas F1-F12 por keyCode (para compatibilidad)
-                                    if (e.keyCode >= 112 && e.keyCode <= 123) {
-                                        e.preventDefault();
-                                        console.log('Tecla de función deshabilitada: F' + (e.keyCode - 111));
-                                        return false;
+                                    // Función para abrir WhatsApp
+                                    function openWhatsApp() {
+                                        const phoneNumber = '+524421974414';
+                                        const message = 'Hola, necesito ayuda en el Centro de Business Intelligence';
+                                        const url = 'https://wa.me/' + phoneNumber + '?text=' + encodeURIComponent(message);
+                                        window.open(url, '_blank');
                                     }
                                     
-                                    // Detectar teclas F1-F12 por key (navegadores modernos)
-                                    if (e.key && e.key.startsWith('F') && e.key.length <= 3) {
-                                        e.preventDefault();
-                                        console.log('Tecla de función deshabilitada: ' + e.key);
-                                        return false;
+                                    // Función para toggle del sidebar
+                                    function toggleSidebar() {
+                                        isSidebarOpen = !isSidebarOpen;
+                                        sidebar.classList.toggle('active');
+                                        overlay.classList.toggle('active');
+                                        iframeContainer.classList.toggle('sidebar-open');
                                     }
                                     
-                                    // Deshabilitar Ctrl+R (recargar)
-                                    if (e.ctrlKey && e.keyCode === 82) {
-                                        e.preventDefault();
-                                        console.log('Recarga deshabilitada');
-                                        return false;
-                                    }
+                                    // Evento para el botón de toggle
+                                    toggleBtn.addEventListener('click', toggleSidebar);
                                     
-                                    // Deshabilitar Ctrl+P (imprimir)
-                                    if (e.ctrlKey && e.keyCode === 80) {
-                                        e.preventDefault();
-                                        console.log('Impresión deshabilitada');
-                                        return false;
-                                    }
+                                    // Evento para el overlay
+                                    overlay.addEventListener('click', toggleSidebar);
                                     
-                                    // Deshabilitar Ctrl+S (guardar)
-                                    if (e.ctrlKey && e.keyCode === 83) {
-                                        e.preventDefault();
-                                        console.log('Guardar deshabilitado');
-                                        return false;
-                                    }
-                                    
-                                    // Deshabilitar Ctrl+U (ver código fuente)
-                                    if (e.ctrlKey && e.keyCode === 85) {
-                                        e.preventDefault();
-                                        console.log('Ver código fuente deshabilitado');
-                                        return false;
-                                    }
-                                    
-                                    // Deshabilitar F12 (herramientas de desarrollo)
-                                    if (e.keyCode === 123) {
-                                        e.preventDefault();
-                                        console.log('Herramientas de desarrollo deshabilitadas');
-                                        return false;
-                                    }
-                                }
-                                
-                                // Función para deshabilitar el menú contextual (click derecho)
-                                function disableContextMenu(e) {
-                                    e.preventDefault();
-                                    console.log('Menú contextual deshabilitado');
-                                    
-                                    // Mostrar mensaje temporal
-                                    contextMenuMessage.style.display = 'block';
-                                    setTimeout(function() {
-                                        contextMenuMessage.style.display = 'none';
-                                    }, 2000);
-                                    
-                                    return false;
-                                }
-                                
-                                // Detectar click derecho en el iframe
-                                function handleIframeRightClick(e) {
-                                    if (e.button === 2) { // Click derecho
-                                        isRightClickDetected = true;
-                                        rightClickBlocker.classList.add('active');
-                                        setTimeout(() => {
-                                            rightClickBlocker.classList.remove('active');
-                                            isRightClickDetected = false;
-                                        }, 100);
-                                        disableContextMenu(e);
-                                    }
-                                }
-                                
-                                // Agregar event listeners para deshabilitar teclas de función y menú contextual
-                                document.addEventListener('keydown', disableFunctionKeys);
-                                document.addEventListener('contextmenu', disableContextMenu);
-                                
-                                // Agregar event listener al bloqueador de click derecho
-                                rightClickBlocker.addEventListener('contextmenu', disableContextMenu);
-                                
-                                // Detectar eventos de mouse en el iframe
-                                iframe.addEventListener('load', function() {
-                                    try {
-                                        // Intentar agregar event listeners al contenido del iframe
-                                        iframe.contentDocument.addEventListener('mousedown', handleIframeRightClick);
-                                        iframe.contentDocument.addEventListener('contextmenu', disableContextMenu);
-                                    } catch (e) {
-                                        console.log('No se pudo agregar event listeners al iframe (política de mismo origen)');
-                                    }
-                                });
-                                
-                                // Función para abrir WhatsApp
-                                function openWhatsApp() {
-                                    const phoneNumber = '+524421974414';
-                                    const message = 'Hola, necesito ayuda en el Centro de Business Intelligence';
-                                    const url = 'https://wa.me/' + phoneNumber + '?text=' + encodeURIComponent(message);
-                                    window.open(url, '_blank');
-                                }
-                                
-                                // Evento para el botón de WhatsApp (Soporte)
-                                whatsappBtn.addEventListener('click', function() {
-                                    restoreDropdownName();
-                                    restoreToolsName();
-                                    toolsMenu.classList.remove('show');
-                                    openWhatsApp();
-                                });
-                                
-                                // Función para alternar el menú desplegable de Dashboards
-                                function toggleDropdown() {
-                                    dropdownMenu.classList.toggle('show');
-                                    // Cerrar el menú de herramientas si está abierto
-                                    if (toolsMenu.classList.contains('show')) {
-                                        toolsMenu.classList.remove('show');
-                                    }
-                                }
-                                
-                                // Función para alternar el menú desplegable de Herramientas
-                                function toggleToolsMenu() {
-                                    toolsMenu.classList.toggle('show');
-                                    // Cerrar el menú de dashboards si está abierto
-                                    if (dropdownMenu.classList.contains('show')) {
-                                        dropdownMenu.classList.remove('show');
-                                    }
-                                }
-                                
-                                // Cerrar los menús desplegables si se hace clic fuera
-                                document.addEventListener('click', function(event) {
-                                    const isClickInsideDropdown = dropdownToggle.contains(event.target) || dropdownMenu.contains(event.target);
-                                    const isClickInsideTools = toolsToggle.contains(event.target) || toolsMenu.contains(event.target);
-                                    
-                                    if (!isClickInsideDropdown && dropdownMenu.classList.contains('show')) {
-                                        dropdownMenu.classList.remove('show');
-                                    }
-                                    
-                                    if (!isClickInsideTools && toolsMenu.classList.contains('show')) {
-                                        toolsMenu.classList.remove('show');
-                                    }
-                                });
-                                
-                                // Evento para el botón del dropdown de Dashboards
-                                dropdownToggle.addEventListener('click', function(event) {
-                                    event.stopPropagation();
-                                    toggleDropdown();
-                                });
-                                
-                                // Evento para el botón del dropdown de Herramientas
-                                toolsToggle.addEventListener('click', function(event) {
-                                    event.stopPropagation();
-                                    toggleToolsMenu();
-                                });
-                                
-                                buttons.forEach(button => {
-                                    button.addEventListener('click', function(e) {
-                                        const dashboardUrl = this.getAttribute('data-src');
-                                        
-                                        if (dashboardUrl) {
-                                            // Remover la clase active de todos los botones
-                                            document.querySelectorAll('.dashboard-btn.active, .tools-btn.active').forEach(btn => {
-                                                btn.classList.remove('active');
-                                            });
+                                    // Eventos para los items del menú
+                                    menuItems.forEach(item => {
+                                        item.addEventListener('click', function() {
+                                            const dashboardUrl = this.getAttribute('data-src');
                                             
-                                            // Si es un botón del menú desplegable de dashboards, actualizar el texto del botón principal
-                                            if (this.parentElement === dropdownMenu) {
-                                                const icon = dropdownToggle.querySelector('i').cloneNode(true);
-                                                dropdownToggle.innerHTML = '';
-                                                dropdownToggle.appendChild(icon);
-                                                dropdownToggle.appendChild(document.createTextNode(' ' + this.textContent.trim()));
+                                            if (dashboardUrl) {
+                                                // Remover active de todos los items
+                                                menuItems.forEach(menuItem => {
+                                                    menuItem.classList.remove('active');
+                                                });
                                                 
-                                                // Cerrar el menú desplegable
-                                                dropdownMenu.classList.remove('show');
-                                                
-                                                // Marcar el botón del dropdown como activo
-                                                dropdownToggle.classList.add('active');
-                                                
-                                                // Restaurar el nombre del botón de herramientas
-                                                restoreToolsName();
-                                            } 
-                                            // Si es un botón del menú desplegable de herramientas, actualizar el texto del botón de herramientas
-                                            else if (this.parentElement === toolsMenu && dashboardUrl) {
-                                                const icon = toolsToggle.querySelector('i').cloneNode(true);
-                                                toolsToggle.innerHTML = '';
-                                                toolsToggle.appendChild(icon);
-                                                toolsToggle.appendChild(document.createTextNode(' ' + this.textContent.trim()));
-                                                
-                                                // Cerrar el menú desplegable
-                                                toolsMenu.classList.remove('show');
-                                                
-                                                // Marcar el botón de herramientas como activo
-                                                toolsToggle.classList.add('active');
-                                                
-                                                // Restaurar el nombre del botón de dashboards
-                                                restoreDropdownName();
-                                            } 
-                                            else {
-                                                // Marcar el botón clickeado como activo
+                                                // Agregar active al item clickeado
                                                 this.classList.add('active');
                                                 
-                                                // Restaurar los nombres de los botones desplegables
-                                                restoreDropdownName();
-                                                restoreToolsName();
+                                                // Cargar el dashboard en el iframe
+                                                iframe.src = dashboardUrl;
+                                                
+                                                // Cerrar el sidebar después de seleccionar
+                                                if (isSidebarOpen) {
+                                                    toggleSidebar();
+                                                }
                                             }
-                                            
-                                            // Actualizar el iframe con la nueva URL
-                                            iframe.src = dashboardUrl;
-                                        }
-                                    });
-                                });
-                                
-                                // Evento para el botón Principal
-                                document.querySelector('.dashboard-btn[data-src*="64e771e3-425f-43f0-84a0-cc42155baea2"]').addEventListener('click', function() {
-                                    restoreDropdownName();
-                                    restoreToolsName();
-                                    
-                                    // Remover la clase active de todos los botones
-                                    document.querySelectorAll('.dashboard-btn.active, .tools-btn.active').forEach(btn => {
-                                        btn.classList.remove('active');
-                                    });
-                                    
-                                    // Marcar el botón clickeado como activo
-                                    this.classList.add('active');
-                                    
-                                    // Actualizar el iframe con la nueva URL
-                                    iframe.src = this.getAttribute('data-src');
-                                });
-                                
-                                // Intentar entrar en pantalla completa
-                                function activateFullscreen() {
-                                    if (document.documentElement.requestFullscreen) {
-                                        document.documentElement.requestFullscreen().catch(err => {
-                                            console.log('Error al intentar pantalla completa: ', err);
                                         });
-                                    } else if (document.documentElement.webkitRequestFullscreen) {
-                                        document.documentElement.webkitRequestFullscreen();
-                                    } else if (document.documentElement.msRequestFullscreen) {
-                                        document.documentElement.msRequestFullscreen();
-                                    }
-                                }
-                                
-                                // Activar pantalla completa al cargar
-                                setTimeout(activateFullscreen, 100);
-                            });
-                        <\/script>
-                    </body>
-                    </html>
-                `;
-                
-                // Abrir la ventana del dashboard maximizada
-                const dashboardWindow = window.open('', '_blank', 'width=' + screen.width + ',height=' + screen.height + ',left=0,top=0,fullscreen=yes');
-                
-                if (dashboardWindow) {
-                    dashboardWindow.document.write(dashboardHTML);
-                    dashboardWindow.document.close();
+                                    });
+                                    
+                                    // Evento para el botón de WhatsApp
+                                    whatsappBtn.addEventListener('click', function() {
+                                        openWhatsApp();
+                                    });
+                                    
+                                    // Pantalla completa
+                                    setTimeout(function() {
+                                        if (document.documentElement.requestFullscreen) {
+                                            document.documentElement.requestFullscreen();
+                                        }
+                                    }, 100);
+                                });
+                            <\/script>
+                        </body>
+                        </html>
+                    `;
                     
-                    // Enfocar la ventana
-                    dashboardWindow.focus();
+                    // Abrir la ventana del dashboard maximizada
+                    const dashboardWindow = window.open('', '_blank', 'width=' + screen.width + ',height=' + screen.height + ',left=0,top=0,fullscreen=yes');
                     
-                    // Si la ventana se abrió correctamente, reiniciar estado
-                    popupBlocked = false;
-                } else {
-                    // La ventana fue bloqueada
-                    popupBlocked = true;
-                    openBtn.style.display = 'inline-block';
-                    
-                    // Iniciar cuenta regresiva en el botón
-                    addCountdownToButton(5);
+                    if (dashboardWindow) {
+                        dashboardWindow.document.write(dashboardHTML);
+                        dashboardWindow.document.close();
+                        dashboardWindow.focus();
+                        popupBlocked = false;
+                    } else {
+                        popupBlocked = true;
+                        openBtn.style.display = 'inline-block';
+                        addCountdownToButton(5);
+                    }
                 }
+                
+                // Evento para el botón de abrir
+                openBtn.addEventListener('click', function() {
+                    clearInterval(countdownInterval);
+                    openDashboard();
+                });
+                
+                // Iniciar cuenta regresiva automáticamente
+                startCountdown();
             }
             
-            // Evento para el botón de abrir
-            openBtn.addEventListener('click', function() {
-                clearInterval(countdownInterval);
-                openDashboard();
-            });
-            
-            // Iniciar cuenta regresiva automáticamente
-            startCountdown();
+            // Función para inicializar el dashboard móvil
+            function initMobileDashboard() {
+                const mobileToggleBtn = document.getElementById('mobileToggleBtn');
+                const mobileSidebar = document.getElementById('mobileSidebar');
+                const mobileOverlay = document.getElementById('mobileOverlay');
+                const mobileIframeContainer = document.getElementById('mobileIframeContainer');
+                const mobileIframe = document.getElementById('mobileIframe');
+                const mobileMenuItems = document.querySelectorAll('.mobile-menu-item');
+                const mobileWhatsappBtn = document.getElementById('mobileWhatsappBtn');
+                
+                let isSidebarOpen = false;
+                
+                // Función para abrir WhatsApp
+                function openWhatsApp() {
+                    const phoneNumber = '+524421974414';
+                    const message = 'Hola, necesito ayuda en el Centro de Business Intelligence';
+                    const url = 'https://wa.me/' + phoneNumber + '?text=' + encodeURIComponent(message);
+                    window.open(url, '_blank');
+                }
+                
+                // Función para toggle del sidebar
+                function toggleSidebar() {
+                    isSidebarOpen = !isSidebarOpen;
+                    mobileSidebar.classList.toggle('active');
+                    mobileOverlay.classList.toggle('active');
+                    mobileIframeContainer.classList.toggle('sidebar-open');
+                }
+                
+                // Evento para el botón de toggle
+                mobileToggleBtn.addEventListener('click', toggleSidebar);
+                
+                // Evento para el overlay
+                mobileOverlay.addEventListener('click', toggleSidebar);
+                
+                // Eventos para los items del menú
+                mobileMenuItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        const dashboardUrl = this.getAttribute('data-src');
+                        
+                        if (dashboardUrl) {
+                            // Remover active de todos los items
+                            mobileMenuItems.forEach(menuItem => {
+                                menuItem.classList.remove('active');
+                            });
+                            
+                            // Agregar active al item clickeado
+                            this.classList.add('active');
+                            
+                            // Cargar el dashboard en el iframe
+                            mobileIframe.src = dashboardUrl;
+                            
+                            // Cerrar el sidebar después de seleccionar
+                            if (isSidebarOpen) {
+                                toggleSidebar();
+                            }
+                        }
+                    });
+                });
+                
+                // Evento para el botón de WhatsApp
+                mobileWhatsappBtn.addEventListener('click', function() {
+                    openWhatsApp();
+                });
+            }
         });
     </script>
 </body>
