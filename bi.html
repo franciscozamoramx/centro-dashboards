@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="https://i.postimg.cc/PJSBFV7L/panel.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Tus estilos CSS existentes aquí */
         * {
             margin: 0;
             padding: 0;
@@ -341,6 +342,28 @@
             color: #FFD700;
         }
         
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .status-success {
+            background: rgba(0, 255, 0, 0.2);
+            color: #90EE90;
+        }
+        
+        .status-error {
+            background: rgba(255, 0, 0, 0.2);
+            color: #FFB6C1;
+        }
+        
+        .status-loading {
+            background: rgba(255, 255, 0, 0.2);
+            color: #FFD700;
+        }
+
         @media (max-width: 600px) {
             .welcome-container {
                 padding: 25px;
@@ -419,6 +442,8 @@
                 <i class="fas fa-sign-in-alt"></i> Ingresar
             </button>
         </div>
+        
+        <div class="status-message" id="statusMessage" style="display: none;"></div>
         
         <div class="user-info" id="userInfo" style="display: none;">
             <p>Bienvenido: <span id="userEmail"></span></p>
@@ -519,8 +544,29 @@
         let currentUser = null;
         let currentUserPermissions = [];
 
+        // Permisos por defecto que se usarán si falla la carga del JSON
+        const defaultPermissions = {
+            "users": {
+                "franciso.zamora@bigbola.com": {
+                    "dashboards": ["principal", "adt", "auditoria"]
+                },
+                "gerente@bigbola.com": {
+                    "dashboards": ["principal", "adt"]
+                },
+                "demo@bigbola.com": {
+                    "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno"]
+                },
+                "admin@bigbola.com": {
+                    "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "promociones", "proyectos", "rtp", "diccionario"]
+                }
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Cargar permisos desde el JSON
+            // Mostrar mensaje de carga
+            showStatus('Cargando permisos...', 'loading');
+            
+            // Cargar permisos desde el JSON usando CORS proxy
             loadPermissions();
             
             // Configurar evento de login
@@ -536,26 +582,115 @@
             });
         });
 
-        // Función para cargar los permisos desde el JSON
-        async function loadPermissions() {
-            try {
-                const response = await fetch('https://franciscozamoramx.github.io/centro-dashboards/PERMISSION_FILES_BI/permissions.json');
-                permissionsData = await response.json();
-                console.log('Permisos cargados correctamente');
-            } catch (error) {
-                console.error('Error al cargar permisos:', error);
-                // En caso de error, usar permisos por defecto
-                permissionsData = {
-                    "users": {
-                        "francisco.zamora@bigbola.com": {
-                            "dashboards": ["principal", "adt", "auditoria"]
-                        },
-                        "gerente@bigbola.com": {
-                            "dashboards": ["principal", "adt"]
-                        }
-                    }
-                };
+        // Función para mostrar mensajes de estado
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = 'status-message';
+            
+            if (type === 'success') {
+                statusElement.classList.add('status-success');
+            } else if (type === 'error') {
+                statusElement.classList.add('status-error');
+            } else if (type === 'loading') {
+                statusElement.classList.add('status-loading');
             }
+            
+            statusElement.style.display = 'block';
+        }
+
+        // Función para ocultar mensajes de estado
+        function hideStatus() {
+            document.getElementById('statusMessage').style.display = 'none';
+        }
+
+        // Función para cargar los permisos desde el JSON usando diferentes métodos
+        async function loadPermissions() {
+            const jsonUrl = 'https://franciscozamoramx.github.io/centro-dashboards/PERMISSION_FILES_BI/permissions.json';
+            
+            // Método 1: Intentar con fetch directo
+            try {
+                console.log('Intentando cargar permisos directamente...');
+                const response = await fetch(jsonUrl + '?t=' + new Date().getTime());
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                permissionsData = data;
+                console.log('Permisos cargados correctamente (método directo)');
+                showStatus('Permisos cargados correctamente', 'success');
+                setTimeout(hideStatus, 2000);
+                return;
+            } catch (error) {
+                console.log('Método directo falló:', error.message);
+            }
+            
+            // Método 2: Usar CORS proxy
+            try {
+                console.log('Intentando cargar permisos con CORS proxy...');
+                // Usar un proxy CORS público
+                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                const response = await fetch(proxyUrl + jsonUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                permissionsData = data;
+                console.log('Permisos cargados correctamente (método proxy)');
+                showStatus('Permisos cargados correctamente', 'success');
+                setTimeout(hideStatus, 2000);
+                return;
+            } catch (error) {
+                console.log('Método proxy falló:', error.message);
+            }
+            
+            // Método 3: Usar JSONP alternativo
+            try {
+                console.log('Intentando cargar permisos con JSONP alternativo...');
+                await loadWithJSONP();
+                return;
+            } catch (error) {
+                console.log('Método JSONP falló:', error.message);
+            }
+            
+            // Si todos los métodos fallan, usar permisos por defecto
+            console.log('Todos los métodos fallaron, usando permisos por defecto');
+            permissionsData = defaultPermissions;
+            showStatus('Usando permisos por defecto (problema de CORS)', 'error');
+        }
+
+        // Método alternativo usando JSONP
+        function loadWithJSONP() {
+            return new Promise((resolve, reject) => {
+                // Crear un script element para JSONP
+                const script = document.createElement('script');
+                script.src = 'https://franciscozamoramx.github.io/centro-dashboards/PERMISSION_FILES_BI/permissions.json?callback=handleJSONP';
+                script.onerror = reject;
+                
+                // Función global para manejar la respuesta JSONP
+                window.handleJSONP = function(data) {
+                    permissionsData = data;
+                    console.log('Permisos cargados correctamente (método JSONP)');
+                    showStatus('Permisos cargados correctamente', 'success');
+                    setTimeout(hideStatus, 2000);
+                    document.head.removeChild(script);
+                    delete window.handleJSONP;
+                    resolve(data);
+                };
+                
+                document.head.appendChild(script);
+                
+                // Timeout después de 5 segundos
+                setTimeout(() => {
+                    document.head.removeChild(script);
+                    delete window.handleJSONP;
+                    reject(new Error('Timeout cargando JSONP'));
+                }, 5000);
+            });
         }
 
         // Función para manejar el login
@@ -563,12 +698,12 @@
             const email = document.getElementById('email').value.trim().toLowerCase();
             
             if (!email) {
-                alert('Por favor ingresa tu correo electrónico');
+                showStatus('Por favor ingresa tu correo electrónico', 'error');
                 return;
             }
             
             if (!permissionsData) {
-                alert('Error: Los permisos no se han cargado correctamente. Intenta nuevamente.');
+                showStatus('Error: Los permisos no se han cargado correctamente. Intenta nuevamente.', 'error');
                 return;
             }
             
@@ -582,6 +717,8 @@
                 document.getElementById('dashboardsCount').textContent = currentUserPermissions.length;
                 document.getElementById('userInfo').style.display = 'block';
                 
+                hideStatus();
+                
                 // Ocultar login y mostrar welcome
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('welcomeContainer').style.display = 'block';
@@ -589,9 +726,12 @@
                 // Iniciar la cuenta regresiva
                 startCountdown();
             } else {
-                alert('No tienes permisos para acceder al Centro de BI o el correo no está registrado.');
+                showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
             }
         }
+
+        // El resto del código permanece igual...
+        // [Aquí va el resto de tu código JavaScript existente]
 
         // Detectar si es dispositivo móvil/tableta
         function isMobileDevice() {
@@ -633,15 +773,16 @@
             }
             
             // Agregar sección de Dashboards si hay más de un dashboard
-            if (currentUserPermissions.filter(d => d !== 'principal').length > 0) {
+            const otherDashboards = currentUserPermissions.filter(d => d !== 'principal' && d !== 'diccionario');
+            if (otherDashboards.length > 0) {
                 const dashboardsSection = document.createElement('div');
                 dashboardsSection.className = 'mobile-menu-section';
                 dashboardsSection.textContent = 'Dashboards';
                 mobileSidebar.appendChild(dashboardsSection);
                 
                 // Agregar cada dashboard permitido
-                currentUserPermissions.forEach(dashboard => {
-                    if (dashboard !== 'principal' && dashboardUrls[dashboard]) {
+                otherDashboards.forEach(dashboard => {
+                    if (dashboardUrls[dashboard]) {
                         const menuItem = document.createElement('button');
                         menuItem.className = 'mobile-menu-item';
                         menuItem.setAttribute('data-src', dashboardUrls[dashboard]);
@@ -685,7 +826,9 @@
             
             // Cargar el primer dashboard permitido
             const firstDashboard = currentUserPermissions.includes('principal') ? 'principal' : currentUserPermissions[0];
-            document.getElementById('mobileIframe').src = dashboardUrls[firstDashboard];
+            if (dashboardUrls[firstDashboard]) {
+                document.getElementById('mobileIframe').src = dashboardUrls[firstDashboard];
+            }
         }
         
         // Inicializar funcionalidad del dashboard móvil
@@ -870,9 +1013,12 @@
             `;
             
             // Determinar el dashboard inicial
-            const initialDashboard = currentUserPermissions.includes('principal') ? 
-                dashboardUrls.principal : 
-                dashboardUrls[currentUserPermissions[0]];
+            let initialDashboard = dashboardUrls.principal; // Por defecto
+            if (currentUserPermissions.includes('principal')) {
+                initialDashboard = dashboardUrls.principal;
+            } else if (currentUserPermissions.length > 0) {
+                initialDashboard = dashboardUrls[currentUserPermissions[0]] || dashboardUrls.principal;
+            }
             
             return `
                 <!DOCTYPE html>
