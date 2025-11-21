@@ -1,10 +1,10 @@
 {
     "users": {
         "francisco.zamora@bigbola.com": {
-            "dashboards": ["principal", "adt", "bigplayers","desempeno","proyectos","rtp","diccionario"],
+            "dashboards": ["principal", "adt", "bigplayers", "desempeno", "proyectos", "rtp", "diccionario"]
         },
         "gerente@bigbola.com": {
-            "dashboards": ["principal", "adt"],
+            "dashboards": ["principal", "adt"]
         }
     }
 }
