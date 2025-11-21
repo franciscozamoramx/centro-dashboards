@@ -1023,22 +1023,7 @@
                             border: none;
                         }
                         
-                        /* Overlay para bloqueo de clic derecho */
-                        .right-click-blocker {
-                            position: absolute;
-                            top: 0;
-                            left: 0;
-                            width: 100%;
-                            height: 100%;
-                            z-index: 999;
-                            /* Solo reacciona al click derecho */
-                            pointer-events: none;
-                        }
-                        
-                        .right-click-blocker.active {
-                            pointer-events: auto;
-                            background: transparent;
-                        }
+                        /* Overlay para bloqueo de clic derecho - ELIMINADO */
                         
                         /* Estilo para el mensaje de menú deshabilitado */
                         .context-menu-message {
@@ -1092,7 +1077,6 @@
                         </div>
                         
                         <div class="iframe-container" id="iframeContainer">
-                            <div class="right-click-blocker" id="rightClickBlocker"></div>
                             <iframe id="dashboardFrame" src="${initialDashboard}"></iframe>
                         </div>
                     </div>
@@ -1106,51 +1090,17 @@
                             const menuItems = document.querySelectorAll('.menu-item');
                             const whatsappBtn = document.getElementById('whatsappBtn');
                             const iframe = document.getElementById('dashboardFrame');
-                            const rightClickBlocker = document.getElementById('rightClickBlocker');
                             const contextMenuMessage = document.getElementById('contextMenuMessage');
                             
                             let isSidebarOpen = false;
                             
-                            // 🔒 FUNCIONES DE BLOQUEO DE SEGURIDAD
+                            // 🔒 FUNCIONES DE BLOQUEO DE SEGURIDAD - SOLO PARA EL MENÚ
                             
-                            // Bloquear clic derecho en toda la ventana
-                            function blockRightClick(e) {
+                            // Bloquear clic derecho SOLO en el sidebar
+                            function blockRightClickOnSidebar(e) {
                                 e.preventDefault();
                                 showContextMenuMessage();
                                 return false;
-                            }
-                            
-                            // Bloquear teclas de función y atajos
-                            function blockFunctionKeys(e) {
-                                // Teclas F1-F12
-                                if (e.keyCode >= 112 && e.keyCode <= 123) {
-                                    e.preventDefault();
-                                    return false;
-                                }
-                                
-                                // Ctrl+Shift+I (DevTools)
-                                if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
-                                    e.preventDefault();
-                                    return false;
-                                }
-                                
-                                // F12 (DevTools)
-                                if (e.keyCode === 123) {
-                                    e.preventDefault();
-                                    return false;
-                                }
-                                
-                                // Ctrl+U (Ver código fuente)
-                                if (e.ctrlKey && e.keyCode === 85) {
-                                    e.preventDefault();
-                                    return false;
-                                }
-                                
-                                // Ctrl+Shift+C (Inspector)
-                                if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
-                                    e.preventDefault();
-                                    return false;
-                                }
                             }
                             
                             // Mostrar mensaje de menú contextual deshabilitado
@@ -1161,32 +1111,27 @@
                                 }, 3000);
                             }
                             
-                            // Activar/desactivar bloqueo de clic derecho en el iframe
-                            function toggleRightClickBlocker(active) {
-                                if (active) {
-                                    rightClickBlocker.classList.add('active');
-                                } else {
-                                    rightClickBlocker.classList.remove('active');
-                                }
-                            }
-                            
-                            // Aplicar bloqueos de seguridad
+                            // Aplicar bloqueos de seguridad SOLO al sidebar
                             function applySecurityBlocks() {
-                                // Bloquear clic derecho en el documento
-                                document.addEventListener('contextmenu', blockRightClick);
+                                // Bloquear clic derecho SOLO en el sidebar
+                                sidebar.addEventListener('contextmenu', blockRightClickOnSidebar);
                                 
-                                // Bloquear teclas
-                                document.addEventListener('keydown', blockFunctionKeys);
+                                // Permitir clic derecho en el resto de la página
+                                document.addEventListener('contextmenu', function(e) {
+                                    // Permitir clic derecho en todo excepto en el sidebar
+                                    if (!sidebar.contains(e.target)) {
+                                        return true; // Permitir el comportamiento normal
+                                    }
+                                });
                                 
                                 // Bloquear clic derecho en el iframe cuando tiene el foco
                                 iframe.addEventListener('load', function() {
                                     try {
                                         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                                        iframeDoc.addEventListener('contextmenu', blockRightClick);
-                                        iframeDoc.addEventListener('keydown', blockFunctionKeys);
+                                        // Permitir clic derecho dentro del iframe (Power BI)
+                                        // No aplicar bloqueo aquí para permitir funcionalidad normal de Power BI
                                     } catch (e) {
-                                        // Si hay error de CORS, usar el bloqueador overlay
-                                        toggleRightClickBlocker(true);
+                                        // Si hay error de CORS, no hacer nada - permitir comportamiento normal
                                     }
                                 });
                             }
@@ -1205,9 +1150,6 @@
                                 sidebar.classList.toggle('active');
                                 overlay.classList.toggle('active');
                                 iframeContainer.classList.toggle('sidebar-open');
-                                
-                                // Cuando el sidebar está abierto, desactivar bloqueo temporalmente
-                                toggleRightClickBlocker(!isSidebarOpen);
                                 
                                 if (isSidebarOpen) {
                                     toggleBtn.innerHTML = '<i class="fas fa-times"></i>';
@@ -1246,7 +1188,7 @@
                             
                             // INICIALIZACIÓN
                             
-                            // Aplicar bloqueos de seguridad
+                            // Aplicar bloqueos de seguridad SOLO al sidebar
                             applySecurityBlocks();
                             
                             // Pantalla completa
@@ -1276,6 +1218,12 @@
             const mobileExitBtn = document.getElementById('mobileExitBtn');
             
             let isSidebarOpen = false;
+            
+            // 🔒 Bloquear clic derecho SOLO en el menú móvil
+            mobileSidebar.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
             
             function openWhatsApp() {
                 const phoneNumber = '+524421974414';
