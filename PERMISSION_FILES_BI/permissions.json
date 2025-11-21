@@ -5,6 +5,15 @@
         },
         "guillermo.luna@bigbola.com": {
             "dashboards": ["principal", "adt", "bigplayers", "desempeno", "proyectos", "promociones", "rtp", "diccionario"]
+        },
+        "rafael.blanco@bigbola.com": {
+            "dashboards": ["principal", "adt", "bigplayers", "promociones"]
+        },
+        "renato.delapena@bigbola.com": {
+            "dashboards": ["principal", "adt", "bigplayers", "desempeno", "rtp", "diccionario"]
+        },
+        "edgar.delatorre@bigbola.com": {
+            "dashboards": ["principal", "auditoria", "promociones"]
         }
     }
 }
