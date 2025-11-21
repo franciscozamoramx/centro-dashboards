@@ -604,64 +604,41 @@
             document.getElementById('statusMessage').style.display = 'none';
         }
 
-        // Función para cargar los permisos desde el JSON usando diferentes métodos
-        async function loadPermissions() {
-            const jsonUrl = 'https://franciscozamoramx.github.io/centro-dashboards/PERMISSION_FILES_BI/permissions.json';
-            
-            // Método 1: Intentar con fetch directo
-            try {
-                console.log('Intentando cargar permisos directamente...');
-                const response = await fetch(jsonUrl + '?t=' + new Date().getTime());
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                permissionsData = data;
-                console.log('Permisos cargados correctamente (método directo)');
-                showStatus('Permisos cargados correctamente', 'success');
-                setTimeout(hideStatus, 2000);
-                return;
-            } catch (error) {
-                console.log('Método directo falló:', error.message);
-            }
-            
-            // Método 2: Usar CORS proxy
-            try {
-                console.log('Intentando cargar permisos con CORS proxy...');
-                // Usar un proxy CORS público
-                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-                const response = await fetch(proxyUrl + jsonUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                permissionsData = data;
-                console.log('Permisos cargados correctamente (método proxy)');
-                showStatus('Permisos cargados correctamente', 'success');
-                setTimeout(hideStatus, 2000);
-                return;
-            } catch (error) {
-                console.log('Método proxy falló:', error.message);
-            }
-            
-            // Método 3: Usar JSONP alternativo
-            try {
-                console.log('Intentando cargar permisos con JSONP alternativo...');
-                await loadWithJSONP();
-                return;
-            } catch (error) {
-                console.log('Método JSONP falló:', error.message);
-            }
-            
-            // Si todos los métodos fallan, usar permisos por defecto
-            console.log('Todos los métodos fallaron, usando permisos por defecto');
-            permissionsData = defaultPermissions;
-            showStatus('Usando permisos por defecto (problema de CORS)', 'error');
-        }
+		// Función para cargar los permisos desde el JSON
+		async function loadPermissions() {
+			try {
+				// Para GitHub Pages, usa la ruta relativa
+				const jsonUrl = './PERMISSION_FILES_BI/permissions.json';
+				
+				console.log('Cargando permisos desde:', jsonUrl);
+				
+				const response = await fetch(jsonUrl + '?t=' + new Date().getTime());
+				
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				
+				const data = await response.json();
+				
+				// Validar estructura del JSON
+				if (!data.users) {
+					throw new Error('Estructura de JSON inválida: falta propiedad "users"');
+				}
+				
+				permissionsData = data;
+				console.log('Permisos cargados correctamente desde GitHub Pages');
+				showStatus('Permisos cargados correctamente', 'success');
+				setTimeout(hideStatus, 2000);
+				
+			} catch (error) {
+				console.error('Error al cargar permisos:', error);
+				
+				// Usar permisos por defecto
+				permissionsData = defaultPermissions;
+				showStatus('Usando permisos por defecto', 'error');
+				console.log('Permisos por defecto cargados:', permissionsData);
+			}
+		}
 
         // Método alternativo usando JSONP
         function loadWithJSONP() {
