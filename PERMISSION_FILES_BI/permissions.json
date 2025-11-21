@@ -1,20 +1,10 @@
 {
     "users": {
         "franciso.zamora@bigbola.com": {
-            "dashboards": ["principal", "adt", "auditoria"],
-            "groups": ["admin"]
+            "dashboards": ["principal", "adt", "bigplayers","desempeno","proyectos","rtp","diccionario"],
         },
         "gerente@bigbola.com": {
             "dashboards": ["principal", "adt"],
-            "groups": ["gerentes"]
-        }
-    },
-    "groups": {
-        "admin": {
-            "dashboards": ["principal", "adt", "auditoria", "inventario"]
-        },
-        "gerentes": {
-            "dashboards": ["principal", "adt"]
         }
     }
 }
