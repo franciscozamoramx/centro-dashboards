@@ -3,8 +3,8 @@
         "francisco.zamora@bigbola.com": {
             "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno","inventario", "proyectos", "promociones", "rtp", "diccionario"]
         },
-        "gerente@bigbola.com": {
-            "dashboards": ["principal", "adt"]
+        "guillermo.luna@bigbola.com": {
+            "dashboards": ["principal", "adt", "bigplayers", "desempeno", "proyectos", "promociones", "rtp", "diccionario"]
         }
     }
 }
