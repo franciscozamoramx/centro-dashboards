@@ -14,6 +14,9 @@
         },
         "edgar.delatorre@bigbola.com": {
             "dashboards": ["principal", "auditoria", "promociones"]
+        },
+        "ruben.vargas@bigbola.com": {
+            "dashboards": ["principal", "inventario"]
         }
     }
 }
