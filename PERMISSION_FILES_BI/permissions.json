@@ -17,6 +17,9 @@
         },
         "ruben.vargas@bigbola.com": {
             "dashboards": ["principal", "inventario"]
+        },
+        "javier.dominguez@bigbola.com": {
+            "dashboards": ["principal", "inventario"]
         }
     }
 }
