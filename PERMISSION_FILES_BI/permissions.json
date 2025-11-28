@@ -7,7 +7,7 @@
             "dashboards": ["principal", "adt", "bigplayers", "desempeno", "proyectos", "promociones", "rtp", "diccionario"]
         },
         "rafael.blanco@bigbola.com": {
-            "dashboards": ["principal", "adt", "bigplayers", "promociones"]
+            "dashboards": ["principal", "adt", "bigplayers", "promociones", "diccionario"]
         },
         "renato.delapena@bigbola.com": {
             "dashboards": ["principal", "adt", "bigplayers", "desempeno", "rtp", "diccionario"]
