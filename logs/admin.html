@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Logs BI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f5f5f5; color: #333; }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1a3a8f 0%, #152c6e 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: #152c6e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #1a3a8f;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 42px;
+            font-weight: bold;
+            color: #152c6e;
+            margin: 15px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 20px;
+            color: #152c6e;
+            text-align: center;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #152c6e;
+            color: white;
+        }
+        
+        th {
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-login { background: #d4edda; color: #155724; }
+        .badge-view { background: #cce5ff; color: #004085; }
+        .badge-logout { background: #fff3cd; color: #856404; }
+        
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #152c6e;
+        }
+        
+        .filter-group input, .filter-group select {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .filter-group input:focus, .filter-group select:focus {
+            border-color: #152c6e;
+            outline: none;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .page-btn {
+            padding: 10px 16px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .page-btn.active {
+            background: #152c6e;
+            color: white;
+            border-color: #152c6e;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .charts {
+                grid-template-columns: 1fr;
+            }
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            th, td {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> Panel de Administración - Logs BI</h1>
+            <p>Registros de acceso al Centro de Business Intelligence</p>
+            <p style="margin-top: 10px; font-size: 14px; opacity: 0.8;">
+                <i class="fas fa-database"></i> Sistema basado en GitHub | Actualizado automáticamente
+            </p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="loadLogs()">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+            <button class="btn btn-success" onclick="exportLogs()">
+                <i class="fas fa-download"></i> Exportar JSON
+            </button>
+            <button class="btn" onclick="clearLocalCache()">
+                <i class="fas fa-trash"></i> Limpiar Cache Local
+            </button>
+            <button class="btn btn-danger" onclick="clearAllLogs()">
+                <i class="fas fa-broom"></i> Limpiar Todos los Logs
+            </button>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label><i class="fas fa-user"></i> Usuario:</label>
+                <input type="text" id="filterUser" placeholder="Filtrar por usuario..." onkeyup="filterTable()">
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-chart-bar"></i> Dashboard:</label>
+                <select id="filterDashboard" onchange="filterTable()">
+                    <option value="">Todos los dashboards</option>
+                    <!-- Se llenará dinámicamente -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-play-circle"></i> Acción:</label>
+                <select id="filterAction" onchange="filterTable()">
+                    <option value="">Todas las acciones</option>
+                    <option value="login">Login</option>
+                    <option value="dashboard_view">Ver Dashboard</option>
+                    <option value="logout">Logout</option>
+                    <option value="login_failed">Login Fallido</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-calendar"></i> Fecha desde:</label>
+                <input type="date" id="filterDateFrom" onchange="filterTable()">
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-calendar"></i> Fecha hasta:</label>
+                <input type="date" id="filterDateTo" onchange="filterTable()">
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid">
+            <!-- Las estadísticas se cargarán aquí -->
+        </div>
+        
+        <div class="charts">
+            <div class="chart-container">
+                <h3><i class="fas fa-chart-pie"></i> Distribución por Acción</h3>
+                <canvas id="actionChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3><i class="fas fa-chart-bar"></i> Actividad por Hora</h3>
+                <canvas id="timeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3><i class="fas fa-users"></i> Top Usuarios</h3>
+                <canvas id="usersChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3><i class="fas fa-tachometer-alt"></i> Top Dashboards</h3>
+                <canvas id="dashboardsChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Dashboard</th>
+                        <th>Dispositivo</th>
+                        <th>IP</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody">
+                    <!-- Los logs se cargarán aquí -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination" id="pagination">
+            <!-- Paginación se generará aquí -->
+        </div>
+        
+        <div class="export-buttons">
+            <button class="btn btn-success" onclick="exportToCSV()">
+                <i class="fas fa-file-csv"></i> Exportar CSV
+            </button>
+            <button class="btn" onclick="exportToExcel()">
+                <i class="fas fa-file-excel"></i> Exportar Excel
+            </button>
+            <button class="btn" onclick="generateReport()">
+                <i class="fas fa-file-pdf"></i> Generar Reporte PDF
+            </button>
+            <button class="btn" onclick="viewRealTime()">
+                <i class="fas fa-bolt"></i> Vista en Tiempo Real
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let allLogs = [];
+        let filteredLogs = [];
+        let currentPage = 1;
+        const logsPerPage = 50;
+        let charts = {};
+        
+        // Cargar logs desde GitHub Pages
+        async function loadLogs() {
+            try {
+                showLoading();
+                
+                // Intentar cargar desde diferentes fuentes
+                const sources = [
+                    'logs/logs.json',
+                    'logs/today.json',
+                    'https://raw.githubusercontent.com/franciscozamoramx/centro-dashboards/main/logs/logs.json'
+                ];
+                
+                let logsLoaded = false;
+                
+                for (const source of sources) {
+                    try {
+                        const response = await fetch(source + '?t=' + Date.now());
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (Array.isArray(data) && data.length > 0) {
+                                allLogs = data;
+                                logsLoaded = true;
+                                console.log(`✅ Logs cargados desde: ${source}`);
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        console.log(`❌ Falló ${source}:`, e.message);
+                        continue;
+                    }
+                }
+                
+                if (!logsLoaded) {
+                    // Intentar cargar logs locales como respaldo
+                    const localLogs = JSON.parse(localStorage.getItem('bi_local_logs') || '[]');
+                    if (localLogs.length > 0) {
+                        allLogs = localLogs;
+                        console.log('📂 Usando logs locales como respaldo');
+                    } else {
+                        throw new Error('No se pudieron cargar logs de ninguna fuente');
+                    }
+                }
+                
+                // Ordenar por fecha (más reciente primero)
+                allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                // Actualizar UI
+                updateStats();
+                populateFilters();
+                renderTable();
+                createCharts();
+                
+                hideLoading();
+                
+                // Mostrar notificación
+                showNotification(`✅ ${allLogs.length} logs cargados`, 'success');
+                
+            } catch (error) {
+                console.error('Error cargando logs:', error);
+                hideLoading();
+                showNotification(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Mostrar loading
+        function showLoading() {
+            document.getElementById('logsTableBody').innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 50px;">
+                        <i class="fas fa-spinner fa-spin fa-2x" style="color: #152c6e;"></i>
+                        <p style="margin-top: 20px;">Cargando logs...</p>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Ocultar loading
+        function hideLoading() {
+            // Solo se ejecuta cuando se cargan los datos
+        }
+        
+        // Actualizar estadísticas
+        function updateStats() {
+            const statsGrid = document.getElementById('statsGrid');
+            
+            const totalLogs = allLogs.length;
+            const uniqueUsers = [...new Set(allLogs.map(log => log.user))].length;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const todayLogs = allLogs.filter(log => 
+                log.timestamp && log.timestamp.startsWith(today)
+            ).length;
+            
+            const dashboardViews = allLogs.filter(log => 
+                log.action === 'dashboard_view'
+            ).length;
+            
+            const failedLogins = allLogs.filter(log => 
+                log.action === 'login_failed'
+            ).length;
+            
+            // Última actividad
+            const lastActivity = allLogs.length > 0 
+                ? formatTimeAgo(new Date(allLogs[0].timestamp))
+                : 'Ninguna';
+            
+            // Usuario más activo
+            const userActivity = {};
+            allLogs.forEach(log => {
+                userActivity[log.user] = (userActivity[log.user] || 0) + 1;
+            });
+            const mostActiveUser = Object.keys(userActivity).length > 0
+                ? Object.keys(userActivity).reduce((a, b) => userActivity[a] > userActivity[b] ? a : b)
+                : 'N/A';
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total de Logs</div>
+                    <div class="stat-value">${totalLogs}</div>
+                    <div style="font-size: 14px; color: #666;">Registros totales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Usuarios Únicos</div>
+                    <div class="stat-value">${uniqueUsers}</div>
+                    <div style="font-size: 14px; color: #666;">Personas diferentes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Actividad Hoy</div>
+                    <div class="stat-value">${todayLogs}</div
