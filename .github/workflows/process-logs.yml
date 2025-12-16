@@ -1,0 +1,86 @@
+name: Process BI Logs
+
+on:
+  schedule:
+    # Ejecutar cada hora
+    - cron: '0 * * * *'
+  workflow_dispatch: # Permitir ejecución manual
+  push:
+    paths:
+      - 'logs/logs.json' # Cuando se actualicen logs
+
+jobs:
+  process-logs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Process logs
+      run: |
+        if [ -f "logs/logs.json" ]; then
+          # Crear resumen diario
+          node -e "
+            const fs = require('fs');
+            const logs = JSON.parse(fs.readFileSync('logs/logs.json', 'utf8'));
+            
+            // Estadísticas
+            const today = new Date().toISOString().split('T')[0];
+            const todayLogs = logs.filter(log => 
+              log.timestamp && log.timestamp.startsWith(today)
+            );
+            
+            const stats = {
+              date: today,
+              total_logs: logs.length,
+              today_logs: todayLogs.length,
+              unique_users: [...new Set(logs.map(l => l.user))].length,
+              unique_users_today: [...new Set(todayLogs.map(l => l.user))].length,
+              actions_summary: {},
+              dashboards_summary: {}
+            };
+            
+            // Contar acciones
+            logs.forEach(log => {
+              stats.actions_summary[log.action] = (stats.actions_summary[log.action] || 0) + 1;
+              if (log.dashboard) {
+                stats.dashboards_summary[log.dashboard] = (stats.dashboards_summary[log.dashboard] || 0) + 1;
+              }
+            });
+            
+            // Guardar estadísticas
+            fs.writeFileSync('logs/stats.json', JSON.stringify(stats, null, 2));
+            
+            // Crear archivo de resumen para hoy
+            fs.writeFileSync('logs/today.json', JSON.stringify(todayLogs, null, 2));
+            
+            console.log('✅ Procesados', logs.length, 'logs');
+            console.log('📊 Hoy:', todayLogs.length, 'logs');
+          "
+        else
+          echo 'No hay logs para procesar'
+        fi
+    
+    - name: Commit and push if changed
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add logs/
+        git diff --quiet && git diff --staged --quiet || (
+          git commit -m "📊 Update log statistics [skip ci]"
+          git push
+        )
+    
+    - name: Create summary comment
+      if: always()
+      run: |
+        echo "📊 Log processing complete"
+        echo "Check logs/stats.json for updated statistics"
