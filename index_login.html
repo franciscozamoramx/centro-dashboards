@@ -231,6 +231,11 @@
             "diccionario": "fas fa-book"
         };
 
+        // ==================== CONFIGURACIÓN DE LOGGING ====================
+        const LOGGING_ENABLED = true;
+        const LOGS_URL = 'https://franciscozamoramx.github.io/centro-dashboards/logs/update-log.php';
+        let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
         // Permisos por defecto
         const defaultPermissions = {
             "users": {
@@ -249,6 +254,175 @@
         let permissionsData = null;
         let currentUser = null;
         let currentUserPermissions = [];
+
+        // Detectar si es dispositivo móvil/tableta
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || 
+                   (navigator.userAgent.indexOf('IEMobile') !== -1) ||
+                   (window.innerWidth <= 1024);
+        }
+
+        // ==================== FUNCIONES DE LOGGING ====================
+
+        // Función principal para registrar accesos
+        async function logAccess(action, dashboardKey = null) {
+            if (!currentUser || !LOGGING_ENABLED) return;
+            
+            try {
+                const logData = {
+                    // Identificación
+                    sessionId: currentSessionId,
+                    timestamp: new Date().toISOString(),
+                    
+                    // Información del usuario
+                    user: currentUser,
+                    
+                    // Acción realizada
+                    action: action,
+                    
+                    // Información del dashboard (si aplica)
+                    dashboard: dashboardKey,
+                    dashboardName: dashboardKey ? dashboardNames[dashboardKey] : null,
+                    
+                    // Información del dispositivo
+                    deviceType: isMobileDevice() ? 'mobile' : 'desktop',
+                    screen: `${window.screen.width}x${window.screen.height}`,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    userAgent: navigator.userAgent.substring(0, 150),
+                    language: navigator.language,
+                    platform: navigator.platform,
+                    
+                    // Información de navegación
+                    url: window.location.href,
+                    referrer: document.referrer || 'direct'
+                };
+                
+                // Enviar log de forma asíncrona (no bloqueante)
+                sendLogToServer(logData);
+                
+                // También guardar localmente como respaldo
+                saveLogLocally(logData);
+                
+            } catch (error) {
+                console.error('Error en logAccess:', error);
+            }
+        }
+
+        // Enviar log al servidor (GitHub Pages)
+        async function sendLogToServer(logData) {
+            try {
+                // Usar FormData para evitar problemas CORS
+                const formData = new FormData();
+                formData.append('log', JSON.stringify(logData));
+                
+                // Enviar con fetch (no-cors para evitar problemas)
+                await fetch(LOGS_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors' // Importante: evita errores CORS
+                });
+                
+                console.log('✅ Log enviado:', logData.action, logData.user);
+                
+            } catch (error) {
+                console.warn('⚠️ No se pudo enviar log, guardando localmente:', error);
+                savePendingLog(logData);
+            }
+        }
+
+        // Guardar log localmente como respaldo
+        function saveLogLocally(logData) {
+            try {
+                const key = 'bi_local_logs';
+                let logs = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                logs.push({
+                    ...logData,
+                    storedAt: new Date().toISOString()
+                });
+                
+                // Mantener solo últimos 100 logs locales
+                if (logs.length > 100) {
+                    logs = logs.slice(-100);
+                }
+                
+                localStorage.setItem(key, JSON.stringify(logs));
+                
+            } catch (error) {
+                console.warn('Error guardando log local:', error);
+            }
+        }
+
+        // Guardar logs pendientes (cuando falla el envío)
+        function savePendingLog(logData) {
+            try {
+                const key = 'bi_pending_logs';
+                let pending = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                pending.push({
+                    ...logData,
+                    retryCount: 0,
+                    lastTry: new Date().toISOString()
+                });
+                
+                // Mantener solo últimos 50 pendientes
+                if (pending.length > 50) {
+                    pending = pending.slice(-50);
+                }
+                
+                localStorage.setItem(key, JSON.stringify(pending));
+                
+            } catch (error) {
+                console.error('Error guardando log pendiente:', error);
+            }
+        }
+
+        // Reintentar enviar logs pendientes
+        function retryPendingLogs() {
+            try {
+                const pending = JSON.parse(localStorage.getItem('bi_pending_logs') || '[]');
+                if (pending.length === 0) return;
+                
+                console.log(`🔄 Reintentando ${pending.length} logs pendientes...`);
+                
+                pending.forEach(log => {
+                    if (log.retryCount < 3) { // Máximo 3 intentos
+                        setTimeout(() => sendLogToServer(log), 1000);
+                    }
+                });
+                
+                // Limpiar después de intentar
+                localStorage.removeItem('bi_pending_logs');
+                
+            } catch (error) {
+                console.error('Error reintentando logs:', error);
+            }
+        }
+
+        // Función para cerrar sesión con logging
+        function logoutUser() {
+            // 🔐 LOGGING: Registrar cierre de sesión
+            if (currentUser) {
+                const logoutData = {
+                    sessionId: currentSessionId,
+                    timestamp: new Date().toISOString(),
+                    user: currentUser,
+                    action: 'logout',
+                    deviceType: isMobileDevice() ? 'mobile' : 'desktop'
+                };
+                saveLogLocally(logoutData);
+                
+                // Intentar enviar al servidor
+                sendLogToServer(logoutData);
+            }
+            
+            // Cerrar la ventana o recargar para login
+            if (window.opener) {
+                window.close();
+            } else {
+                window.location.reload();
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             // 🔒 BLOQUEO DE SEGURIDAD EN LOGIN
@@ -356,6 +530,12 @@
                     handleLogin();
                 }
             });
+
+            // Reintentar logs pendientes cada 30 segundos
+            setInterval(retryPendingLogs, 30000);
+            
+            // También al cargar la página
+            setTimeout(retryPendingLogs, 5000);
         });
 
         // Función para cargar los permisos desde el JSON
@@ -438,6 +618,12 @@
                 currentUser = email;
                 currentUserPermissions = permissionsData.users[email].dashboards || [];
                 
+                // 🔐 LOGGING: Registrar inicio de sesión
+                logAccess('login');
+                
+                // Generar nueva sesión para este usuario
+                currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
                 // Mostrar información breve
                 document.getElementById('userEmail').textContent = email;
                 document.getElementById('dashboardsCount').textContent = currentUserPermissions.length;
@@ -457,15 +643,19 @@
                 }, 1000);
                 
             } else {
+                // 🔐 LOGGING: Registrar intento fallido de login
+                const failedLoginData = {
+                    sessionId: 'failed_' + Date.now(),
+                    timestamp: new Date().toISOString(),
+                    user: email,
+                    action: 'login_failed',
+                    deviceType: isMobileDevice() ? 'mobile' : 'desktop',
+                    userAgent: navigator.userAgent.substring(0, 100)
+                };
+                saveLogLocally(failedLoginData);
+                
                 showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
             }
-        }
-
-        // Detectar si es dispositivo móvil/tableta
-        function isMobileDevice() {
-            return (typeof window.orientation !== "undefined") || 
-                   (navigator.userAgent.indexOf('IEMobile') !== -1) ||
-                   (window.innerWidth <= 1024);
         }
 
         // Función para abrir el dashboard en pantalla completa
@@ -1070,7 +1260,7 @@
                             </div>
                             ${menuItemsHTML}
                             <div class="sidebar-footer">
-                                <button class="exit-btn" onclick="window.close()">
+                                <button class="exit-btn" onclick="logoutUser()">
                                     <i class="fas fa-sign-out-alt"></i> Salir
                                 </button>
                             </div>
@@ -1167,6 +1357,21 @@
                                 item.addEventListener('click', function() {
                                     const dashboardUrl = this.getAttribute('data-src');
                                     
+                                    // 🔐 LOGGING: Obtener qué dashboard se está accediendo
+                                    const dashboardKey = Object.keys(dashboardUrls).find(key => 
+                                        dashboardUrls[key] === dashboardUrl
+                                    );
+                                    
+                                    // Registrar acceso al dashboard
+                                    if (dashboardKey && currentUser) {
+                                        // Enviar mensaje al parent para logging
+                                        window.opener?.postMessage({
+                                            type: 'log_dashboard_view',
+                                            dashboardKey: dashboardKey,
+                                            user: currentUser
+                                        }, '*');
+                                    }
+                                    
                                     if (dashboardUrl) {
                                         menuItems.forEach(menuItem => {
                                             menuItem.classList.remove('active');
@@ -1253,6 +1458,20 @@
                     const dashboardUrl = this.getAttribute('data-src');
                     
                     if (dashboardUrl) {
+                        // 🔐 LOGGING: Obtener qué dashboard se está accediendo
+                        const dashboardKey = Object.keys(dashboardUrls).find(key => 
+                            dashboardUrls[key] === dashboardUrl
+                        );
+                        
+                        // Registrar acceso al dashboard
+                        if (dashboardKey && currentUser) {
+                            // Usar la función logAccess del scope principal
+                            // Como estamos en el mismo contexto, podemos llamarla directamente
+                            if (typeof logAccess === 'function') {
+                                logAccess('dashboard_view', dashboardKey);
+                            }
+                        }
+                        
                         mobileMenuItems.forEach(menuItem => {
                             menuItem.classList.remove('active');
                         });
@@ -1273,7 +1492,7 @@
             
             mobileExitBtn.addEventListener('click', function() {
                 if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                    window.location.reload();
+                    logoutUser();
                 }
             });
         }
