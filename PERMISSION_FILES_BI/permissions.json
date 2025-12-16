@@ -4,20 +4,8 @@
             "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno","inventario", "proyectos", "promociones", "rtp", "incidencias_calor", "incidencias_pie", "diccionario"]
         },
         "guillermo.luna@bigbola.com": {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno","inventario", "proyectos", "promociones", "rtp", "diccionario"]
-=======
-            "dashboards": ["principal", "adt", "bigplayers", "desempeno", "proyectos", "promociones", "rtp", "incidencias_calor", "incidencias_pie", "diccionario"]
->>>>>>> Stashed changes
-=======
-            "dashboards": ["principal", "adt", "bigplayers", "desempeno", "proyectos", "promociones", "rtp", "incidencias_calor", "incidencias_pie", "diccionario"]
->>>>>>> Stashed changes
-=======
-            "dashboards": ["principal", "adt", "bigplayers", "desempeno", "proyectos", "promociones", "rtp", "incidencias_calor", "incidencias_pie", "diccionario"]
->>>>>>> Stashed changes
-        },
+		},
         "rafael.blanco@bigbola.com": {
             "dashboards": ["principal", "adt", "bigplayers", "promociones", "diccionario"]
         },
