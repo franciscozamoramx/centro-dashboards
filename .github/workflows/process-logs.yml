@@ -1,94 +1,40 @@
-name: Process BI Logs - Hourly Stats
+name: Generate Hourly Stats
 
 on:
   schedule:
-    # Ejecutar cada hora
     - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
-  process-stats:
+  stats:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     
     steps:
-    - name: Checkout repository
+    - name: Checkout
       uses: actions/checkout@v3
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        
-    - name: Generate hourly statistics
+    - name: Generate Stats
       run: |
-        echo "📊 Generando estadísticas por hora..."
+        mkdir -p stats
         
-        # Crear directorios si no existen
-        mkdir -p logs/hourly
+        # Crear archivo simple de estadísticas
+        echo "{
+          \"last_updated\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+          \"hour\": \"$(date -u +%Y-%m-%d-%H)\",
+          \"note\": \"Estadísticas generadas automáticamente\"
+        }" > stats/latest.json
         
+        # Contar logs si existen
         if [ -f "logs/logs.json" ]; then
-          # Generar archivo por hora
-          HOUR=$(date +%Y-%m-%d-%H)
-          
-          node -e "
-          const fs = require('fs');
-          const logs = JSON.parse(fs.readFileSync('logs/logs.json', 'utf8') || '[]');
-          
-          const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-          const hourlyLogs = logs.filter(log => 
-            log.timestamp && log.timestamp >= hourAgo
-          );
-          
-          const stats = {
-            hour: '$HOUR',
-            generated_at: new Date().toISOString(),
-            logs_in_hour: hourlyLogs.length,
-            unique_users: [...new Set(hourlyLogs.map(l => l.user))].length,
-            actions_summary: {}
-          };
-          
-          hourlyLogs.forEach(log => {
-            stats.actions_summary[log.action] = (stats.actions_summary[log.action] || 0) + 1;
-          });
-          
-          fs.writeFileSync(\`logs/hourly/\${'$HOUR'}.json\`, JSON.stringify(stats, null, 2));
-          
-          // Actualizar resumen diario
-          const today = new Date().toISOString().split('T')[0];
-          const todayFile = \`logs/\${today}-summary.json\`;
-          let todayStats = {};
-          
-          if (fs.existsSync(todayFile)) {
-            todayStats = JSON.parse(fs.readFileSync(todayFile, 'utf8'));
-          }
-          
-          todayStats['$HOUR'] = stats;
-          fs.writeFileSync(todayFile, JSON.stringify(todayStats, null, 2));
-          
-          console.log(\`✅ Estadísticas generadas para hora \${'$HOUR'}:\`, hourlyLogs.length, 'logs');
-          "
-        else
-          echo "No hay logs para procesar"
+          COUNT=$(jq 'length' logs/logs.json 2>/dev/null || echo "0")
+          echo "{\"total_logs\": $COUNT}" > stats/count.json
         fi
         
-    - name: Clean old hourly files (keep last 7 days)
-      run: |
-        echo "🧹 Limpiando archivos antiguos..."
-        find logs/hourly -name "*.json" -mtime +7 -delete
-        echo "✅ Archivos antiguos eliminados"
-        
-    - name: Commit and push if changed
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        
-        git add logs/
-        
-        if git diff --quiet && git diff --staged --quiet; then
-          echo "No hay cambios para commitear"
-        else
-          git commit -m "📈 Actualizar estadísticas por hora [skip ci]"
-          git push
-        fi
+    - name: Upload stats as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: bi-stats
+        path: stats/
+        retention-days: 7
