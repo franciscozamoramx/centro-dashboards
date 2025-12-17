@@ -1,80 +1,204 @@
-name: Handle BI Logs via Issues
+name: Handle BI Logs via GitHub Issues
 
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]
   workflow_dispatch:
 
 jobs:
-  process-log-issue:
-    if: contains(github.event.issue.labels.*.name, 'log')
+  process-bi-log:
+    # Solo procesar issues con label 'log'
+    if: contains(github.event.issue.labels.*.name, 'log') || github.event_name == 'workflow_dispatch'
+    
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
       
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
     - name: Extract log data from issue
-      id: extract
+      id: extract-log
       run: |
+        echo "🔍 Extrayendo datos del issue..."
+        
+        # Usamos jq para parsear el issue
+        ISSUE_TITLE="${{ github.event.issue.title }}"
         ISSUE_BODY="${{ github.event.issue.body }}"
-        # Extraer JSON del código markdown
-        JSON_DATA=$(echo "$ISSUE_BODY" | sed -n '/```json/,/```/p' | sed '1d;$d')
         
-        if [ -n "$JSON_DATA" ]; then
-          echo "JSON_DATA=$JSON_DATA" >> $GITHUB_OUTPUT
-          
-          # Parsear datos
-          TIMESTAMP=$(echo "$JSON_DATA" | jq -r '.timestamp // empty')
-          USER=$(echo "$JSON_DATA" | jq -r '.user // empty')
-          ACTION=$(echo "$JSON_DATA" | jq -r '.action // empty')
-          
-          echo "USER=$USER" >> $GITHUB_OUTPUT
-          echo "ACTION=$ACTION" >> $GITHUB_OUTPUT
-          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_OUTPUT
-        fi
+        echo "Issue Title: $ISSUE_TITLE"
+        echo "Issue Body preview: ${ISSUE_BODY:0:200}..."
         
-    - name: Update logs.json
-      if: steps.extract.outputs.JSON_DATA != ''
-      run: |
-        LOGS_FILE="logs/logs.json"
-        
-        # Crear archivo si no existe
-        if [ ! -f "$LOGS_FILE" ]; then
-          echo '[]' > "$LOGS_FILE"
-        fi
+        # Crear directorio de logs si no existe
+        mkdir -p logs
         
         # Leer logs existentes
-        LOGS=$(cat "$LOGS_FILE")
+        if [ -f "logs/logs.json" ]; then
+          LOGS_COUNT=$(jq 'length' logs/logs.json)
+          echo "Logs existentes: $LOGS_COUNT"
+        else
+          echo '[]' > logs/logs.json
+          echo "Archivo logs.json creado"
+        fi
         
-        # Crear nuevo log entry
-        NEW_LOG=$(echo '{}' | jq \
+        # Extraer JSON del cuerpo del issue
+        if [[ "$ISSUE_BODY" =~ \`\`\`json([^`]+)\`\`\` ]]; then
+          JSON_DATA="${BASH_REMATCH[1]}"
+          echo "JSON extraído: ${JSON_DATA:0:100}..."
+          
+          # Guardar JSON extraído para uso posterior
+          echo "$JSON_DATA" > extracted_log.json
+          
+          # Extraer campos importantes
+          TIMESTAMP=$(echo "$JSON_DATA" | jq -r '.timestamp // .Timestamp // empty')
+          USER=$(echo "$JSON_DATA" | jq -r '.user // .User // empty')
+          ACTION=$(echo "$JSON_DATA" | jq -r '.action // .Action // empty')
+          
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "user=$USER" >> $GITHUB_OUTPUT
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          echo "has_json=true" >> $GITHUB_OUTPUT
+          
+        else
+          echo "No se encontró JSON en el issue"
+          echo "has_json=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Process and save log
+      if: steps.extract-log.outputs.has_json == 'true'
+      run: |
+        echo "📝 Procesando log..."
+        
+        # Leer el JSON extraído
+        JSON_DATA=$(cat extracted_log.json)
+        
+        # Crear nuevo objeto de log
+        NEW_LOG=$(jq -n \
           --arg id "${{ github.event.issue.number }}" \
-          --arg timestamp "${{ steps.extract.outputs.TIMESTAMP }}" \
-          --arg user "${{ steps.extract.outputs.USER }}" \
-          --arg action "${{ steps.extract.outputs.ACTION }}" \
-          --argjson data "${{ steps.extract.outputs.JSON_DATA }}" \
-          '.id = $id | .timestamp = $timestamp | .user = $user | .action = $action | .data = $data')
+          --arg timestamp "${{ steps.extract-log.outputs.timestamp }}" \
+          --arg user "${{ steps.extract-log.outputs.user }}" \
+          --arg action "${{ steps.extract-log.outputs.action }}" \
+          --argjson data "$JSON_DATA" \
+          '{
+            "id": $id,
+            "timestamp": $timestamp,
+            "user": $user,
+            "action": $action,
+            "source": "github_issue",
+            "issue_url": "https://github.com/${{ github.repository }}/issues/${{ github.event.issue.number }}",
+            "original_data": $data
+          }')
         
-        # Agregar al array de logs
-        UPDATED_LOGS=$(echo "$LOGS" | jq --argjson new "$NEW_LOG" '. += [$new]')
+        echo "Nuevo log:"
+        echo "$NEW_LOG" | jq '.'
         
-        # Limitar a 1000 logs
-        UPDATED_LOGS=$(echo "$UPDATED_LOGS" | jq '.[-1000:]')
+        # Agregar al archivo logs.json
+        jq --argjson new "$NEW_LOG" '. += [$new]' logs/logs.json > logs/logs.tmp.json
         
-        # Guardar
-        echo "$UPDATED_LOGS" | jq '.' > "$LOGS_FILE"
+        # Limitar a últimos 1000 logs
+        jq '.[-1000:]' logs/logs.tmp.json > logs/logs.json
         
-        echo "✅ Log agregado. Total: $(echo "$UPDATED_LOGS" | jq 'length')"
+        # Calcular estadísticas
+        TOTAL_LOGS=$(jq 'length' logs/logs.json)
+        TODAY=$(date +%Y-%m-%d)
+        TODAY_LOGS=$(jq --arg today "$TODAY" '[.[] | select(.timestamp | startswith($today))] | length' logs/logs.json)
         
-    - name: Close issue after processing
-      if: success()
+        echo "📊 Estadísticas:"
+        echo "Total logs: $TOTAL_LOGS"
+        echo "Logs hoy: $TODAY_LOGS"
+        
+    - name: Create stats file
+      if: steps.extract-log.outputs.has_json == 'true'
+      run: |
+        echo "📈 Generando estadísticas..."
+        
+        node -e "
+        const fs = require('fs');
+        const logs = JSON.parse(fs.readFileSync('logs/logs.json', 'utf8'));
+        
+        const stats = {
+          generated_at: new Date().toISOString(),
+          total_logs: logs.length,
+          by_action: {},
+          by_user: {},
+          by_day: {},
+          recent_logs: logs.slice(-10).map(log => ({
+            id: log.id,
+            timestamp: log.timestamp,
+            user: log.user,
+            action: log.action
+          }))
+        };
+        
+        // Contar por acción y usuario
+        logs.forEach(log => {
+          stats.by_action[log.action] = (stats.by_action[log.action] || 0) + 1;
+          stats.by_user[log.user] = (stats.by_user[log.user] || 0) + 1;
+          
+          // Por día
+          const day = log.timestamp?.substring(0, 10);
+          if (day) {
+            stats.by_day[day] = (stats.by_day[day] || 0) + 1;
+          }
+        });
+        
+        fs.writeFileSync('logs/stats.json', JSON.stringify(stats, null, 2));
+        console.log('Estadísticas guardadas en logs/stats.json');
+        "
+        
+    - name: Commit and push updated logs
+      if: steps.extract-log.outputs.has_json == 'true'
+      run: |
+        echo "💾 Guardando cambios en GitHub..."
+        
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        git add logs/
+        git status
+        
+        if git diff --quiet && git diff --staged --quiet; then
+          echo "No hay cambios para commitear"
+        else
+          git commit -m "📊 Actualizar logs: agregar log del issue #${{ github.event.issue.number }}"
+          git push
+        fi
+        
+    - name: Close processed issue
+      if: steps.extract-log.outputs.has_json == 'true'
       uses: actions/github-script@v6
       with:
         script: |
-          github.rest.issues.update({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-            state: 'closed'
-          })
+          try {
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
+            
+            console.log(`✅ Issue #${context.issue.number} cerrado`);
+            
+          } catch (error) {
+            console.error('Error cerrando issue:', error);
+          }
+          
+    - name: Create summary comment
+      if: always()
+      run: |
+        echo "🎯 Proceso de logs completado"
+        echo "---"
+        echo "Issue: #${{ github.event.issue.number }}"
+        echo "Usuario: ${{ steps.extract-log.outputs.user || 'No identificado' }}"
+        echo "Acción: ${{ steps.extract-log.outputs.action || 'Desconocida' }}"
+        echo "Logs totales: $(jq 'length' logs/logs.json 2>/dev/null || echo '0')"
+        echo "---"
+        echo "📊 Ver logs: https://github.com/${{ github.repository }}/blob/main/logs/logs.json"
+        echo "📈 Estadísticas: https://github.com/${{ github.repository }}/blob/main/logs/stats.json"
