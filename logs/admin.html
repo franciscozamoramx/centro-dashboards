@@ -527,6 +527,86 @@
             padding: 5px;
         }
         
+        /* Configuración GitHub */
+        .github-config {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .github-config h3 {
+            color: #152c6e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .github-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .token-input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .token-input-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .token-input-group input {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        
+        .token-input-group input:focus {
+            border-color: #152c6e;
+            outline: none;
+        }
+        
+        .token-help {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .github-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+            font-size: 14px;
+        }
+        
+        .github-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .github-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .github-status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
         @media (max-width: 768px) {
             .charts {
                 grid-template-columns: 1fr;
@@ -559,6 +639,10 @@
             
             .export-buttons {
                 flex-direction: column;
+            }
+            
+            .github-form {
+                grid-template-columns: 1fr;
             }
         }
         
@@ -595,6 +679,42 @@
             </div>
         </div>
         
+        <!-- Configuración GitHub -->
+        <div class="github-config" id="githubConfig">
+            <h3><i class="fab fa-github"></i> Configuración GitHub</h3>
+            <div class="github-form">
+                <div class="token-input-group">
+                    <label for="githubTokenInput">
+                        <i class="fas fa-key"></i> Token de Acceso Personal:
+                    </label>
+                    <input type="password" id="githubTokenInput" 
+                           placeholder="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">
+                    <div class="token-help">
+                        Settings → Developer Settings → Personal Access Tokens → Tokens (classic)
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-success" onclick="saveGitHubToken()">
+                        <i class="fas fa-save"></i> Guardar Token
+                    </button>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn" onclick="testGitHubConnection()">
+                    <i class="fas fa-plug"></i> Probar Conexión
+                </button>
+                <button class="btn btn-info" onclick="syncPendingLogs()">
+                    <i class="fas fa-sync-alt"></i> Sincronizar Pendientes
+                </button>
+                <button class="btn btn-warning" onclick="showTokenInfo()">
+                    <i class="fas fa-question-circle"></i> Ayuda
+                </button>
+            </div>
+            
+            <div class="github-status" id="githubStatus"></div>
+        </div>
+        
         <div class="controls">
             <button class="btn" onclick="loadLogs()" id="refreshBtn">
                 <i class="fas fa-sync-alt"></i> Actualizar Logs
@@ -610,6 +730,9 @@
             </button>
             <button class="btn btn-danger" onclick="clearAllLogs()">
                 <i class="fas fa-broom"></i> Limpiar Todos los Logs
+            </button>
+            <button class="btn" onclick="openGitHubRepo()">
+                <i class="fab fa-github"></i> Ver Repositorio
             </button>
         </div>
         
@@ -726,6 +849,9 @@
             <button class="btn" onclick="viewRealTime()">
                 <i class="fas fa-bolt"></i> Vista en Tiempo Real
             </button>
+            <button class="btn btn-danger" onclick="exportLocalLogs()">
+                <i class="fas fa-download"></i> Exportar Locales
+            </button>
         </div>
     </div>
     
@@ -754,7 +880,18 @@
         const logsPerPage = 50;
         let charts = {};
         let autoRefreshInterval = null;
+        
+        // Configuración GitHub
+        const GITHUB_CONFIG = {
+            owner: 'franciscozamoramx',
+            repo: 'centro-dashboards',
+            branch: 'main',
+            token: localStorage.getItem('github_pat_token') || ''
+        };
+        
+        // URLs
         const LOGS_URL = 'https://franciscozamoramx.github.io/centro-dashboards/logs/logs.json';
+        const GITHUB_REPO_URL = 'https://github.com/franciscozamoramx/centro-dashboards';
         
         // Dashboard names para referencia
         const dashboardNames = {
@@ -803,6 +940,234 @@
             document.getElementById('loadingIndicator').style.display = 'none';
         }
         
+        // ==================== FUNCIONES GITHUB ====================
+        
+        // Guardar token GitHub
+        function saveGitHubToken() {
+            const token = document.getElementById('githubTokenInput').value.trim();
+            
+            if (!token || !token.startsWith('ghp_')) {
+                showNotification('Token inválido. Debe empezar con "ghp_"', 'error');
+                return;
+            }
+            
+            // Guardar en localStorage
+            localStorage.setItem('github_pat_token', token);
+            GITHUB_CONFIG.token = token;
+            
+            showNotification('Token guardado correctamente en tu navegador', 'success');
+            
+            // Actualizar estado
+            updateGitHubStatus('Token guardado localmente', 'success');
+        }
+        
+        // Probar conexión GitHub
+        async function testGitHubConnection() {
+            const token = localStorage.getItem('github_pat_token') || GITHUB_CONFIG.token;
+            
+            if (!token) {
+                showNotification('Primero guarda un token', 'error');
+                updateGitHubStatus('No hay token configurado', 'error');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('githubStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Probando conexión...';
+            statusDiv.className = 'github-status info';
+            
+            try {
+                // Probar acceso al repositorio
+                const response = await fetch(
+                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/logs`,
+                    {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        Conexión exitosa ✓
+                        <br>
+                        <small>Token válido y con permisos de escritura</small>
+                    `;
+                    statusDiv.className = 'github-status success';
+                    
+                    showNotification('Conexión a GitHub exitosa', 'success');
+                    
+                } else if (response.status === 404) {
+                    // El directorio logs/ no existe, pero la conexión funciona
+                    statusDiv.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        Conexión exitosa (creará directorio logs al primer uso)
+                        <br>
+                        <small>El directorio logs/ será creado automáticamente</small>
+                    `;
+                    statusDiv.className = 'github-status success';
+                    
+                    showNotification('Conexión exitosa - Directorio logs será creado', 'success');
+                    
+                } else {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <i class="fas fa-times-circle"></i>
+                    Error: ${error.message}
+                    <br>
+                    <small>Verifica que el token tenga permisos "repo"</small>
+                `;
+                statusDiv.className = 'github-status error';
+                
+                showNotification(`Error de conexión: ${error.message}`, 'error');
+            }
+        }
+        
+        // Sincronizar logs pendientes
+        async function syncPendingLogs() {
+            const token = localStorage.getItem('github_pat_token') || GITHUB_CONFIG.token;
+            
+            if (!token) {
+                showNotification('Configura primero el token', 'error');
+                return;
+            }
+            
+            showNotification('Sincronizando logs pendientes...', 'info');
+            
+            try {
+                // Leer logs pendientes del localStorage
+                const pendingKey = 'bi_logs_pending';
+                const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                
+                if (pending.length === 0) {
+                    showNotification('No hay logs pendientes para sincronizar', 'info');
+                    return;
+                }
+                
+                console.log(`🔄 Sincronizando ${pending.length} logs pendientes...`);
+                
+                // Leer logs.json actual de GitHub
+                const fileUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/logs/logs.json`;
+                
+                const response = await fetch(fileUrl, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                let currentContent = '[]';
+                let sha = null;
+                
+                if (response.ok) {
+                    const fileData = await response.json();
+                    currentContent = atob(fileData.content);
+                    sha = fileData.sha;
+                } else if (response.status !== 404) {
+                    throw new Error(`Error leyendo archivo: ${response.status}`);
+                }
+                
+                // Parsear logs existentes
+                let logs = JSON.parse(currentContent || '[]');
+                
+                // Agregar pendientes
+                const logsToAdd = pending.map(p => ({
+                    id: p.id,
+                    timestamp: p.timestamp,
+                    user: p.user,
+                    action: p.action,
+                    dashboard: p.dashboard,
+                    dashboardName: p.dashboardName,
+                    deviceType: p.deviceType,
+                    screen: p.screen,
+                    userAgent: p.userAgent,
+                    language: p.language,
+                    sessionId: p.sessionId,
+                    referrer: p.referrer
+                }));
+                
+                logs.push(...logsToAdd);
+                
+                // Limitar a 5000 logs
+                const trimmedLogs = logs.slice(-5000);
+                
+                // Subir a GitHub
+                const updateResponse = await fetch(fileUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        message: `🔄 Sincronizar ${logsToAdd.length} logs pendientes`,
+                        content: btoa(JSON.stringify(trimmedLogs, null, 2)),
+                        sha: sha,
+                        branch: GITHUB_CONFIG.branch
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    // Limpiar pendientes
+                    localStorage.removeItem(pendingKey);
+                    
+                    showNotification(`✅ ${logsToAdd.length} logs sincronizados`, 'success');
+                    updateGitHubStatus(`${logsToAdd.length} logs sincronizados`, 'success');
+                    
+                    // Recargar logs
+                    loadLogs();
+                    
+                } else {
+                    throw new Error(`Error subiendo: ${updateResponse.status}`);
+                }
+                
+            } catch (error) {
+                console.error('Error sincronizando:', error);
+                showNotification(`Error sincronizando: ${error.message}`, 'error');
+                updateGitHubStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Actualizar estado GitHub
+        function updateGitHubStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('githubStatus');
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'times-circle' : 'info-circle';
+            
+            statusDiv.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                ${message}
+            `;
+            statusDiv.className = `github-status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+        
+        // Mostrar información del token
+        function showTokenInfo() {
+            alert(`ℹ️ Cómo obtener token GitHub:
+1. Ve a GitHub → Tu foto → Settings
+2. Baja hasta "Developer settings"
+3. "Personal access tokens" → "Tokens (classic)"
+4. "Generate new token" (classic)
+5. Nombre: "BI-Logger"
+6. Expiración: "No expiration" (recomendado)
+7. Seleccionar scopes: ✅ repo (todo)
+8. Copia el token (empieza con "ghp_")
+9. Pégala en el campo de arriba`);
+        }
+        
+        // Abrir repositorio
+        function openGitHubRepo() {
+            window.open(GITHUB_REPO_URL, '_blank');
+        }
+        
+        // ==================== FUNCIONES PRINCIPALES ====================
+        
         // Cargar logs desde GitHub
         async function loadLogs() {
             try {
@@ -846,13 +1211,19 @@
                 
                 // Intentar cargar logs locales como respaldo
                 try {
-                    const localLogs = JSON.parse(localStorage.getItem('bi_local_logs') || '[]');
-                    if (localLogs.length > 0) {
-                        allLogs = localLogs;
+                    const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
+                    const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
+                    
+                    allLogs = [...localLogs, ...pendingLogs].sort((a, b) => 
+                        new Date(b.timestamp) - new Date(a.timestamp)
+                    );
+                    
+                    if (allLogs.length > 0) {
                         updateStats();
                         populateFilters();
                         renderTable();
-                        showNotification(`📂 Usando ${localLogs.length} logs locales (respaldo)`, 'warning');
+                        createCharts();
+                        showNotification(`📂 Usando ${allLogs.length} logs locales (respaldo)`, 'warning');
                     } else {
                         document.getElementById('emptyState').style.display = 'block';
                         showNotification(`❌ Error: ${error.message}`, 'error');
@@ -904,6 +1275,9 @@
             const lastActivity = lastLog ? 
                 formatTimeAgo(new Date(lastLog.timestamp)) : 'Ninguna';
             
+            // Logs pendientes
+            const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length;
+            
             statsGrid.innerHTML = `
                 <div class="stat-card">
                     <div class="stat-label">Total de Logs</div>
@@ -937,9 +1311,17 @@
                     <div>Intentos no autorizados</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Última Actividad</div>
-                    <div class="stat-value" style="font-size: 24px;">${lastActivity}</div>
-                    <div>${lastLog ? formatDateTime(lastLog.timestamp) : 'N/A'}</div>
+                    <div class="stat-label">Estado</div>
+                    <div class="stat-value" style="font-size: 24px;">
+                        ${pendingLogs > 0 ? '⚠️' : '✅'}
+                    </div>
+                    <div>
+                        ${pendingLogs > 0 ? 
+                            `${pendingLogs} pendientes` : 
+                            'Sincronizado'}
+                        <br>
+                        ${lastActivity}
+                    </div>
                 </div>
             `;
         }
@@ -1319,10 +1701,6 @@
                     </div>
                 </div>
                 <div class="detail-row">
-                    <div class="detail-label">IP:</div>
-                    <div class="detail-value">${log.ip || 'N/A'}</div>
-                </div>
-                <div class="detail-row">
                     <div class="detail-label">Sesión:</div>
                     <div class="detail-value">${log.sessionId || 'N/A'}</div>
                 </div>
@@ -1390,7 +1768,8 @@
         
         // Funciones de exportación
         function exportLogs() {
-            const dataStr = JSON.stringify(filteredLogs.length > 0 ? filteredLogs : allLogs, null, 2);
+            const logsToExport = filteredLogs.length > 0 ? filteredLogs : allLogs;
+            const dataStr = JSON.stringify(logsToExport, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             const exportFileDefaultName = `bi_logs_${new Date().toISOString().split('T')[0]}.json`;
             
@@ -1399,7 +1778,7 @@
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
             
-            showNotification('Logs exportados como JSON', 'success');
+            showNotification(`${logsToExport.length} logs exportados como JSON`, 'success');
         }
         
         function exportToCSV() {
@@ -1409,7 +1788,7 @@
                 return;
             }
             
-            const headers = ['Fecha', 'Usuario', 'Acción', 'Dashboard', 'Dispositivo', 'IP', 'Sesión'];
+            const headers = ['Fecha', 'Usuario', 'Acción', 'Dashboard', 'Dispositivo', 'Sesión', 'Navegador'];
             const csvContent = [
                 headers.join(','),
                 ...logsToExport.map(log => [
@@ -1418,8 +1797,8 @@
                     `"${log.action || ''}"`,
                     `"${dashboardNames[log.dashboard] || log.dashboard || ''}"`,
                     `"${log.deviceType || ''}"`,
-                    `"${log.ip || ''}"`,
-                    `"${log.sessionId || ''}"`
+                    `"${log.sessionId || ''}"`,
+                    `"${log.userAgent?.substring(0, 50) || ''}"`
                 ].join(','))
             ].join('\n');
             
@@ -1429,7 +1808,7 @@
             link.download = `bi_logs_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
             
-            showNotification('Logs exportados como CSV', 'success');
+            showNotification(`${logsToExport.length} logs exportados como CSV`, 'success');
         }
         
         function exportToExcel() {
@@ -1454,15 +1833,18 @@
         
         function viewLocalLogs() {
             try {
-                const localLogs = JSON.parse(localStorage.getItem('bi_local_logs') || '[]');
-                const pendingLogs = JSON.parse(localStorage.getItem('bi_pending_logs') || '[]');
+                const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
+                const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
                 
                 if (localLogs.length === 0 && pendingLogs.length === 0) {
                     showNotification('No hay logs locales almacenados', 'info');
                     return;
                 }
                 
-                allLogs = [...localLogs, ...pendingLogs];
+                allLogs = [...localLogs, ...pendingLogs].sort((a, b) => 
+                    new Date(b.timestamp) - new Date(a.timestamp)
+                );
+                
                 updateStats();
                 populateFilters();
                 renderTable();
@@ -1477,8 +1859,10 @@
         
         function clearLocalCache() {
             if (confirm('¿Estás seguro de eliminar todos los logs locales?')) {
-                localStorage.removeItem('bi_local_logs');
-                localStorage.removeItem('bi_pending_logs');
+                localStorage.removeItem('bi_logs_local');
+                localStorage.removeItem('bi_logs_pending');
+                localStorage.removeItem('github_pat_token');
+                
                 showNotification('Cache local limpiado correctamente', 'success');
                 loadLogs(); // Recargar logs del servidor
             }
@@ -1488,10 +1872,45 @@
             showNotification('Función de limpieza completa en desarrollo', 'info');
         }
         
+        function exportLocalLogs() {
+            try {
+                const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
+                const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
+                
+                const allLocalLogs = [...localLogs, ...pendingLogs];
+                
+                if (allLocalLogs.length === 0) {
+                    showNotification('No hay logs locales para exportar', 'info');
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(allLocalLogs, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = `bi_logs_locales_${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                showNotification(`${allLocalLogs.length} logs locales exportados`, 'success');
+                
+            } catch (error) {
+                showNotification('Error exportando logs locales: ' + error.message, 'error');
+            }
+        }
+        
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
             // Cargar logs al iniciar
             loadLogs();
+            
+            // Configurar token si existe
+            const savedToken = localStorage.getItem('github_pat_token');
+            if (savedToken) {
+                document.getElementById('githubTokenInput').value = savedToken;
+                GITHUB_CONFIG.token = savedToken;
+            }
             
             // Configurar fecha por defecto (últimos 7 días)
             const weekAgo = new Date();
@@ -1517,6 +1936,13 @@
                     closeDetailModal();
                 }
             });
+            
+            // Mostrar estado inicial
+            if (savedToken) {
+                updateGitHubStatus('Token configurado', 'success');
+            } else {
+                updateGitHubStatus('Configura tu token GitHub para sincronizar logs', 'info');
+            }
         });
     </script>
 </body>

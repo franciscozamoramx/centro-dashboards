@@ -239,8 +239,317 @@
 
         // ==================== CONFIGURACIÓN DE LOGGING ====================
         const LOGGING_ENABLED = true;
-        const LOGS_URL = 'https://franciscozamoramx.github.io/centro-dashboards/logs/update-log.php';
         let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+        // Configuración de GitHub
+        const GITHUB_CONFIG = {
+            owner: 'franciscozamoramx',
+            repo: 'centro-dashboards',
+            branch: 'main'
+        };
+
+        // Clase para manejar logging en GitHub
+        class GitHubLogger {
+            constructor() {
+                this.pendingLogs = [];
+                this.isOnline = navigator.onLine;
+                this.init();
+            }
+            
+            init() {
+                // Cargar logs pendientes
+                this.loadPendingLogs();
+                
+                // Detectar cambios de conexión
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    this.flushPendingLogs();
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                });
+                
+                // Intentar enviar pendientes cada 30 segundos
+                setInterval(() => this.flushPendingLogs(), 30000);
+            }
+            
+            // Registrar un evento
+            async log(action, dashboard = null, user = null) {
+                const logEntry = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    timestamp: new Date().toISOString(),
+                    user: user || currentUser || 'anonymous',
+                    action: action,
+                    dashboard: dashboard,
+                    dashboardName: dashboard ? dashboardNames[dashboard] : null,
+                    deviceType: isMobileDevice() ? 'mobile' : 'desktop',
+                    screen: `${window.screen.width}x${window.screen.height}`,
+                    userAgent: navigator.userAgent.substring(0, 150),
+                    language: navigator.language,
+                    sessionId: currentSessionId,
+                    referrer: document.referrer || 'direct'
+                };
+                
+                // 1. Guardar en localStorage
+                this.saveToLocalStorage(logEntry);
+                
+                // 2. Intentar enviar a GitHub
+                const token = localStorage.getItem('github_pat_token');
+                if (token && this.isOnline) {
+                    try {
+                        await this.sendToGitHub(logEntry, token);
+                        console.log('✅ Log enviado a GitHub:', action);
+                    } catch (error) {
+                        console.warn('⚠️ Error enviando a GitHub, guardando como pendiente:', error);
+                        this.saveAsPending(logEntry);
+                    }
+                } else {
+                    // Guardar como pendiente
+                    this.saveAsPending(logEntry);
+                }
+                
+                return logEntry;
+            }
+            
+            // Guardar en localStorage
+            saveToLocalStorage(logEntry) {
+                try {
+                    const key = 'bi_logs_local';
+                    let logs = JSON.parse(localStorage.getItem(key) || '[]');
+                    logs.push(logEntry);
+                    
+                    // Mantener solo últimos 500 logs
+                    if (logs.length > 500) {
+                        logs = logs.slice(-500);
+                    }
+                    
+                    localStorage.setItem(key, JSON.stringify(logs));
+                } catch (error) {
+                    console.error('Error guardando localmente:', error);
+                }
+            }
+            
+            // Guardar como pendiente
+            saveAsPending(logEntry) {
+                try {
+                    const key = 'bi_logs_pending';
+                    let pending = JSON.parse(localStorage.getItem(key) || '[]');
+                    
+                    pending.push({
+                        ...logEntry,
+                        retries: 0,
+                        lastTry: null
+                    });
+                    
+                    // Mantener solo últimos 200 pendientes
+                    if (pending.length > 200) {
+                        pending = pending.slice(-200);
+                    }
+                    
+                    localStorage.setItem(key, JSON.stringify(pending));
+                } catch (error) {
+                    console.error('Error guardando pendiente:', error);
+                }
+            }
+            
+            // Enviar a GitHub
+            async sendToGitHub(logEntry, token) {
+                try {
+                    // Leer archivo logs.json actual
+                    const fileUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/logs/logs.json`;
+                    
+                    const response = await fetch(fileUrl, {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    let currentContent = '[]';
+                    let sha = null;
+                    
+                    if (response.ok) {
+                        const fileData = await response.json();
+                        currentContent = atob(fileData.content);
+                        sha = fileData.sha;
+                    } else if (response.status === 404) {
+                        // Archivo no existe, lo crearemos
+                        console.log('Archivo logs.json no existe, se creará');
+                    } else {
+                        throw new Error(`GitHub error: ${response.status}`);
+                    }
+                    
+                    // Parsear logs existentes y agregar nuevo
+                    const logs = JSON.parse(currentContent || '[]');
+                    logs.push(logEntry);
+                    
+                    // Limitar a 5000 logs
+                    const trimmedLogs = logs.slice(-5000);
+                    
+                    // Actualizar archivo
+                    const updateResponse = await fetch(fileUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            message: `📝 Log: ${logEntry.action} - ${logEntry.user}`,
+                            content: btoa(JSON.stringify(trimmedLogs, null, 2)),
+                            sha: sha,
+                            branch: GITHUB_CONFIG.branch
+                        })
+                    });
+                    
+                    if (!updateResponse.ok) {
+                        throw new Error(`Error actualizando: ${updateResponse.status}`);
+                    }
+                    
+                    return true;
+                    
+                } catch (error) {
+                    throw error;
+                }
+            }
+            
+            // Enviar logs pendientes
+            async flushPendingLogs() {
+                const token = localStorage.getItem('github_pat_token');
+                if (!token || !this.isOnline) return;
+                
+                try {
+                    const pendingKey = 'bi_logs_pending';
+                    let pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                    
+                    if (pending.length === 0) return;
+                    
+                    console.log(`🔄 Enviando ${pending.length} logs pendientes...`);
+                    
+                    // Leer logs actuales
+                    const fileUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/logs/logs.json`;
+                    const response = await fetch(fileUrl, {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (!response.ok && response.status !== 404) return;
+                    
+                    let currentContent = '[]';
+                    let sha = null;
+                    
+                    if (response.ok) {
+                        const fileData = await response.json();
+                        currentContent = atob(fileData.content);
+                        sha = fileData.sha;
+                    }
+                    
+                    // Parsear logs existentes
+                    let logs = JSON.parse(currentContent || '[]');
+                    
+                    // Agregar todos los pendientes
+                    const logsToAdd = pending.map(p => ({
+                        id: p.id,
+                        timestamp: p.timestamp,
+                        user: p.user,
+                        action: p.action,
+                        dashboard: p.dashboard,
+                        dashboardName: p.dashboardName,
+                        deviceType: p.deviceType,
+                        screen: p.screen,
+                        userAgent: p.userAgent,
+                        language: p.language,
+                        sessionId: p.sessionId,
+                        referrer: p.referrer
+                    }));
+                    
+                    logs.push(...logsToAdd);
+                    
+                    // Limitar y guardar
+                    const trimmedLogs = logs.slice(-5000);
+                    
+                    const updateResponse = await fetch(fileUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            message: `🔄 Sincronizar ${logsToAdd.length} logs pendientes`,
+                            content: btoa(JSON.stringify(trimmedLogs, null, 2)),
+                            sha: sha,
+                            branch: GITHUB_CONFIG.branch
+                        })
+                    });
+                    
+                    if (updateResponse.ok) {
+                        // Limpiar pendientes
+                        localStorage.removeItem(pendingKey);
+                        console.log(`✅ ${logsToAdd.length} logs sincronizados`);
+                    }
+                    
+                } catch (error) {
+                    console.warn('Error sincronizando pendientes:', error);
+                }
+            }
+            
+            // Cargar logs pendientes
+            loadPendingLogs() {
+                try {
+                    const pendingKey = 'bi_logs_pending';
+                    const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                    console.log(`📦 ${pending.length} logs pendientes cargados`);
+                } catch (error) {
+                    console.error('Error cargando pendientes:', error);
+                }
+            }
+            
+            // Exportar logs locales
+            exportLocalLogs() {
+                try {
+                    const localKey = 'bi_logs_local';
+                    const pendingKey = 'bi_logs_pending';
+                    
+                    const localLogs = JSON.parse(localStorage.getItem(localKey) || '[]');
+                    const pendingLogs = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                    
+                    const allLogs = [...localLogs, ...pendingLogs];
+                    
+                    if (allLogs.length === 0) {
+                        return { success: false, message: 'No hay logs locales' };
+                    }
+                    
+                    // Crear archivo JSON
+                    const jsonStr = JSON.stringify(allLogs, null, 2);
+                    const blob = new Blob([jsonStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `bi-logs-local-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    return { 
+                        success: true, 
+                        message: `Exportados ${allLogs.length} logs`,
+                        count: allLogs.length 
+                    };
+                    
+                } catch (error) {
+                    return { success: false, message: error.message };
+                }
+            }
+        }
+
+        // Instancia global del logger
+        const gitHubLogger = new GitHubLogger();
 
         // Permisos por defecto
         const defaultPermissions = {
@@ -266,172 +575,6 @@
             return (typeof window.orientation !== "undefined") || 
                    (navigator.userAgent.indexOf('IEMobile') !== -1) ||
                    (window.innerWidth <= 1024);
-        }
-
-        // ==================== FUNCIONES DE LOGGING ====================
-
-        // Función principal para registrar accesos
-        async function logAccess(action, dashboardKey = null) {
-            if (!currentUser || !LOGGING_ENABLED) return;
-            
-            try {
-                const logData = {
-                    // Identificación
-                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    sessionId: currentSessionId,
-                    timestamp: new Date().toISOString(),
-                    
-                    // Información del usuario
-                    user: currentUser,
-                    
-                    // Acción realizada
-                    action: action,
-                    
-                    // Información del dashboard (si aplica)
-                    dashboard: dashboardKey,
-                    dashboardName: dashboardKey ? dashboardNames[dashboardKey] : null,
-                    
-                    // Información del dispositivo
-                    deviceType: isMobileDevice() ? 'mobile' : 'desktop',
-                    screen: `${window.screen.width}x${window.screen.height}`,
-                    viewport: `${window.innerWidth}x${window.innerHeight}`,
-                    userAgent: navigator.userAgent.substring(0, 150),
-                    language: navigator.language,
-                    platform: navigator.platform,
-                    
-                    // Información de navegación
-                    url: window.location.href,
-                    referrer: document.referrer || 'direct'
-                };
-                
-                // Enviar log de forma asíncrona (no bloqueante)
-                sendLogToServer(logData);
-                
-                // También guardar localmente como respaldo
-                saveLogLocally(logData);
-                
-                console.log('📊 Log registrado:', action, dashboardKey || '');
-                
-            } catch (error) {
-                console.error('Error en logAccess:', error);
-            }
-        }
-
-        // Enviar log al servidor (GitHub Pages)
-        async function sendLogToServer(logData) {
-            try {
-                // Usar FormData para evitar problemas CORS
-                const formData = new FormData();
-                formData.append('log', JSON.stringify(logData));
-                
-                // Enviar con fetch (no-cors para evitar problemas)
-                await fetch(LOGS_URL, {
-                    method: 'POST',
-                    body: formData,
-                    mode: 'no-cors' // Importante: evita errores CORS
-                });
-                
-                console.log('✅ Log enviado:', logData.action, logData.user);
-                
-            } catch (error) {
-                console.warn('⚠️ No se pudo enviar log, guardando localmente:', error.message);
-                savePendingLog(logData);
-            }
-        }
-
-        // Guardar log localmente como respaldo
-        function saveLogLocally(logData) {
-            try {
-                const key = 'bi_local_logs';
-                let logs = JSON.parse(localStorage.getItem(key) || '[]');
-                
-                logs.push({
-                    ...logData,
-                    storedAt: new Date().toISOString()
-                });
-                
-                // Mantener solo últimos 100 logs locales
-                if (logs.length > 100) {
-                    logs = logs.slice(-100);
-                }
-                
-                localStorage.setItem(key, JSON.stringify(logs));
-                
-            } catch (error) {
-                console.warn('Error guardando log local:', error);
-            }
-        }
-
-        // Guardar logs pendientes (cuando falla el envío)
-        function savePendingLog(logData) {
-            try {
-                const key = 'bi_pending_logs';
-                let pending = JSON.parse(localStorage.getItem(key) || '[]');
-                
-                pending.push({
-                    ...logData,
-                    retryCount: 0,
-                    lastTry: new Date().toISOString()
-                });
-                
-                // Mantener solo últimos 50 pendientes
-                if (pending.length > 50) {
-                    pending = pending.slice(-50);
-                }
-                
-                localStorage.setItem(key, JSON.stringify(pending));
-                
-            } catch (error) {
-                console.error('Error guardando log pendiente:', error);
-            }
-        }
-
-        // Reintentar enviar logs pendientes
-        function retryPendingLogs() {
-            try {
-                const pending = JSON.parse(localStorage.getItem('bi_pending_logs') || '[]');
-                if (pending.length === 0) return;
-                
-                console.log(`🔄 Reintentando ${pending.length} logs pendientes...`);
-                
-                pending.forEach(log => {
-                    if (log.retryCount < 3) { // Máximo 3 intentos
-                        setTimeout(() => sendLogToServer(log), 1000);
-                    }
-                });
-                
-                // Limpiar después de intentar
-                localStorage.removeItem('bi_pending_logs');
-                
-            } catch (error) {
-                console.error('Error reintentando logs:', error);
-            }
-        }
-
-        // Función para cerrar sesión con logging
-        function logoutUser() {
-            // 🔐 LOGGING: Registrar cierre de sesión
-            if (currentUser) {
-                const logoutData = {
-                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    sessionId: currentSessionId,
-                    timestamp: new Date().toISOString(),
-                    user: currentUser,
-                    action: 'logout',
-                    deviceType: isMobileDevice() ? 'mobile' : 'desktop'
-                };
-                saveLogLocally(logoutData);
-                
-                // Intentar enviar al servidor
-                sendLogToServer(logoutData);
-            }
-            
-            // Cerrar la ventana o recargar para login
-            if (window.opener) {
-                window.close();
-            } else {
-                window.location.reload();
-            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -541,23 +684,17 @@
                 }
             });
 
-            // Reintentar logs pendientes cada 30 segundos
-            setInterval(retryPendingLogs, 30000);
-            
-            // También al cargar la página
-            setTimeout(retryPendingLogs, 5000);
-            
             // Escuchar mensajes desde la ventana del dashboard
             window.addEventListener('message', function(event) {
                 if (event.data && event.data.type === 'log_dashboard_view') {
                     // Registrar acceso desde la ventana del dashboard
-                    logAccess('dashboard_view', event.data.dashboardKey);
+                    gitHubLogger.log('dashboard_view', event.data.dashboardKey, event.data.user);
                     console.log('📊 Log recibido desde dashboard:', event.data.dashboardKey);
                 }
                 
                 if (event.data && event.data.type === 'logout') {
                     // Registrar logout desde la ventana del dashboard
-                    logAccess('logout');
+                    gitHubLogger.log('logout', null, event.data.user);
                     console.log('🚪 Logout recibido desde dashboard');
                 }
             });
@@ -626,7 +763,7 @@
             document.getElementById('statusMessage').style.display = 'none';
         }
 
-        function handleLogin() {
+        async function handleLogin() {
             const email = document.getElementById('email').value.trim().toLowerCase();
             
             if (!email) {
@@ -642,12 +779,10 @@
             if (permissionsData.users && permissionsData.users[email]) {
                 currentUser = email;
                 currentUserPermissions = permissionsData.users[email].dashboards || [];
-                
-                // 🔐 LOGGING: Registrar inicio de sesión
-                logAccess('login');
-                
-                // Generar nueva sesión para este usuario
                 currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                // Registrar inicio de sesión
+                gitHubLogger.log('login', null, currentUser);
                 
                 // Mostrar información breve
                 document.getElementById('userEmail').textContent = email;
@@ -668,17 +803,8 @@
                 }, 1000);
                 
             } else {
-                // 🔐 LOGGING: Registrar intento fallido de login
-                const failedLoginData = {
-                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    sessionId: 'failed_' + Date.now(),
-                    timestamp: new Date().toISOString(),
-                    user: email,
-                    action: 'login_failed',
-                    deviceType: isMobileDevice() ? 'mobile' : 'desktop',
-                    userAgent: navigator.userAgent.substring(0, 100)
-                };
-                saveLogLocally(failedLoginData);
+                // Registrar intento fallido de login
+                gitHubLogger.log('login_failed', null, email);
                 
                 showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
             }
@@ -1006,7 +1132,115 @@
             `;
         }
 
-        // Función para generar el HTML del dashboard para PC (VERSIÓN CORREGIDA)
+        // Función para inicializar funcionalidad del dashboard móvil
+        function initMobileDashboardFunctionality() {
+            const mobileToggleBtn = document.getElementById('mobileToggleBtn');
+            const mobileSidebar = document.getElementById('mobileSidebar');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            const mobileIframeContainer = document.getElementById('mobileIframeContainer');
+            const mobileIframe = document.getElementById('mobileIframe');
+            const mobileIframeLoading = document.getElementById('mobileIframeLoading');
+            const mobileMenuItems = document.querySelectorAll('.mobile-menu-item');
+            const mobileWhatsappBtn = document.getElementById('mobileWhatsappBtn');
+            const mobileExitBtn = document.getElementById('mobileExitBtn');
+            
+            let isSidebarOpen = false;
+            
+            // 🔒 Bloquear clic derecho SOLO en el menú móvil
+            mobileSidebar.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            function openWhatsApp() {
+                const phoneNumber = '+524421974414';
+                const message = 'Hola, necesito ayuda en el Centro de Business Intelligence';
+                const url = 'https://wa.me/' + phoneNumber + '?text=' + encodeURIComponent(message);
+                window.open(url, '_blank');
+            }
+            
+            function toggleSidebar() {
+                isSidebarOpen = !isSidebarOpen;
+                mobileSidebar.classList.toggle('active');
+                mobileOverlay.classList.toggle('active');
+                mobileIframeContainer.classList.toggle('sidebar-open');
+                
+                if (isSidebarOpen) {
+                    mobileToggleBtn.innerHTML = '<i class="fas fa-times"></i>';
+                } else {
+                    mobileToggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                }
+            }
+            
+            function loadMobileDashboard(dashboardUrl, dashboardKey) {
+                // Mostrar loading
+                mobileIframeLoading.style.display = 'block';
+                mobileIframe.style.opacity = '0.3';
+                
+                // Registrar acceso
+                gitHubLogger.log('dashboard_view', dashboardKey, currentUser);
+                
+                // Cargar el dashboard
+                mobileIframe.src = dashboardUrl;
+                
+                // Ocultar sidebar si está abierto
+                if (isSidebarOpen) {
+                    toggleSidebar();
+                }
+            }
+            
+            mobileToggleBtn.addEventListener('click', toggleSidebar);
+            mobileOverlay.addEventListener('click', toggleSidebar);
+            
+            mobileMenuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const dashboardUrl = this.getAttribute('data-src');
+                    
+                    if (dashboardUrl) {
+                        // Obtener qué dashboard se está accediendo
+                        const dashboardKey = Object.keys(dashboardUrls).find(key => 
+                            dashboardUrls[key] === dashboardUrl
+                        );
+                        
+                        // Actualizar estado activo
+                        mobileMenuItems.forEach(menuItem => {
+                            menuItem.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        // Cargar dashboard
+                        loadMobileDashboard(dashboardUrl, dashboardKey);
+                    }
+                });
+            });
+            
+            mobileWhatsappBtn.addEventListener('click', function() {
+                openWhatsApp();
+            });
+            
+            mobileExitBtn.addEventListener('click', function() {
+                if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                    gitHubLogger.log('logout', null, currentUser);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+            });
+            
+            // Evento cuando el iframe carga
+            mobileIframe.addEventListener('load', function() {
+                // Ocultar loading
+                mobileIframeLoading.style.display = 'none';
+                mobileIframe.style.opacity = '1';
+            });
+            
+            // Manejar errores del iframe
+            mobileIframe.addEventListener('error', function() {
+                mobileIframeLoading.innerHTML = '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px;"></i><p>Error al cargar el dashboard</p><button onclick="location.reload()" style="margin-top: 10px; padding: 8px 15px; background: #152c6e; color: white; border: none; border-radius: 4px; cursor: pointer;">Reintentar</button></div>';
+            });
+        }
+
+        // Función para generar el HTML del dashboard para PC
         function generateDashboardHTML() {
             let menuItemsHTML = '';
             
@@ -1389,7 +1623,7 @@
                                 sidebar.addEventListener('contextmenu', blockRightClickOnSidebar);
                             }
                             
-                            // 📊 FUNCIONES DE LOGGING (simplificadas para esta ventana)
+                            // 📊 ENVIAR LOG AL PADRE (login page)
                             function logDashboardAccess(dashboardKey) {
                                 try {
                                     // Enviar mensaje al padre para logging
@@ -1524,111 +1758,6 @@
                 </body>
                 </html>
             `;
-        }
-        
-        // Función para inicializar funcionalidad del dashboard móvil
-        function initMobileDashboardFunctionality() {
-            const mobileToggleBtn = document.getElementById('mobileToggleBtn');
-            const mobileSidebar = document.getElementById('mobileSidebar');
-            const mobileOverlay = document.getElementById('mobileOverlay');
-            const mobileIframeContainer = document.getElementById('mobileIframeContainer');
-            const mobileIframe = document.getElementById('mobileIframe');
-            const mobileIframeLoading = document.getElementById('mobileIframeLoading');
-            const mobileMenuItems = document.querySelectorAll('.mobile-menu-item');
-            const mobileWhatsappBtn = document.getElementById('mobileWhatsappBtn');
-            const mobileExitBtn = document.getElementById('mobileExitBtn');
-            
-            let isSidebarOpen = false;
-            
-            // 🔒 Bloquear clic derecho SOLO en el menú móvil
-            mobileSidebar.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                return false;
-            });
-            
-            function openWhatsApp() {
-                const phoneNumber = '+524421974414';
-                const message = 'Hola, necesito ayuda en el Centro de Business Intelligence';
-                const url = 'https://wa.me/' + phoneNumber + '?text=' + encodeURIComponent(message);
-                window.open(url, '_blank');
-            }
-            
-            function toggleSidebar() {
-                isSidebarOpen = !isSidebarOpen;
-                mobileSidebar.classList.toggle('active');
-                mobileOverlay.classList.toggle('active');
-                mobileIframeContainer.classList.toggle('sidebar-open');
-                
-                if (isSidebarOpen) {
-                    mobileToggleBtn.innerHTML = '<i class="fas fa-times"></i>';
-                } else {
-                    mobileToggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
-                }
-            }
-            
-            function loadMobileDashboard(dashboardUrl, dashboardKey) {
-                // Mostrar loading
-                mobileIframeLoading.style.display = 'block';
-                mobileIframe.style.opacity = '0.3';
-                
-                // Registrar acceso
-                logAccess('dashboard_view', dashboardKey);
-                
-                // Cargar el dashboard
-                mobileIframe.src = dashboardUrl;
-                
-                // Ocultar sidebar si está abierto
-                if (isSidebarOpen) {
-                    toggleSidebar();
-                }
-            }
-            
-            mobileToggleBtn.addEventListener('click', toggleSidebar);
-            mobileOverlay.addEventListener('click', toggleSidebar);
-            
-            mobileMenuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    const dashboardUrl = this.getAttribute('data-src');
-                    
-                    if (dashboardUrl) {
-                        // 🔐 LOGGING: Obtener qué dashboard se está accediendo
-                        const dashboardKey = Object.keys(dashboardUrls).find(key => 
-                            dashboardUrls[key] === dashboardUrl
-                        );
-                        
-                        // Actualizar estado activo
-                        mobileMenuItems.forEach(menuItem => {
-                            menuItem.classList.remove('active');
-                        });
-                        this.classList.add('active');
-                        
-                        // Cargar dashboard
-                        loadMobileDashboard(dashboardUrl, dashboardKey);
-                    }
-                });
-            });
-            
-            mobileWhatsappBtn.addEventListener('click', function() {
-                openWhatsApp();
-            });
-            
-            mobileExitBtn.addEventListener('click', function() {
-                if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                    logoutUser();
-                }
-            });
-            
-            // Evento cuando el iframe carga
-            mobileIframe.addEventListener('load', function() {
-                // Ocultar loading
-                mobileIframeLoading.style.display = 'none';
-                mobileIframe.style.opacity = '1';
-            });
-            
-            // Manejar errores del iframe
-            mobileIframe.addEventListener('error', function() {
-                mobileIframeLoading.innerHTML = '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px;"></i><p>Error al cargar el dashboard</p><button onclick="location.reload()" style="margin-top: 10px; padding: 8px 15px; background: #152c6e; color: white; border: none; border-radius: 4px; cursor: pointer;">Reintentar</button></div>';
-            });
         }
     </script>
 </body>
