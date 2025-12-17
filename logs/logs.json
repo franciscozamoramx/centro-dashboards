@@ -250,5 +250,19 @@
     "language": "es-MX",
     "sessionId": "session_1766000596771_9pvulg5ti",
     "referrer": "direct"
+  },
+  {
+    "id": "1766004135990_l49306fcf",
+    "timestamp": "2025-12-17T20:42:15.990Z",
+    "user": "hola@bigbola.com",
+    "action": "login_failed",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1766000596771_9pvulg5ti",
+    "referrer": "direct"
   }
 ]
