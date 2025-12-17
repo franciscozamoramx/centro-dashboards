@@ -200,7 +200,9 @@
             "promociones": "https://app.powerbi.com/reportEmbed?reportId=7253b2c9-12b1-4a8a-b555-2fef1d62e1b3&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "proyectos": "https://app.powerbi.com/reportEmbed?reportId=c2e5834e-4e3d-418c-a9dc-43e33d79a62e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "rtp": "https://app.powerbi.com/reportEmbed?reportId=01ac285e-618f-43de-be89-d62b1a46374c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "diccionario": "https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"
+            "diccionario": "https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
+            "incidencias_calor": "https://app.powerbi.com/reportEmbed?reportId=COLOCA_AQUI_EL_ID_REAL&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
+            "incidencias_pie": "https://app.powerbi.com/reportEmbed?reportId=COLOCA_AQUI_EL_ID_REAL&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"
         };
 
         // Mapeo de nombres de dashboards
@@ -214,7 +216,9 @@
             "promociones": "Promociones",
             "proyectos": "Proyectos BI",
             "rtp": "RTP",
-            "diccionario": "Diccionario KPI's"
+            "diccionario": "Diccionario KPI's",
+            "incidencias_calor": "Incidencias Calor",
+            "incidencias_pie": "Incidencias Pie"
         };
 
         // Mapeo de íconos para dashboards
@@ -228,7 +232,9 @@
             "promociones": "fas fa-gift",
             "proyectos": "fas fa-project-diagram",
             "rtp": "fas fa-coins",
-            "diccionario": "fas fa-book"
+            "diccionario": "fas fa-book",
+            "incidencias_calor": "fas fa-temperature-high",
+            "incidencias_pie": "fas fa-exclamation-triangle"
         };
 
         // ==================== CONFIGURACIÓN DE LOGGING ====================
@@ -271,6 +277,7 @@
             try {
                 const logData = {
                     // Identificación
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     sessionId: currentSessionId,
                     timestamp: new Date().toISOString(),
                     
@@ -303,6 +310,8 @@
                 // También guardar localmente como respaldo
                 saveLogLocally(logData);
                 
+                console.log('📊 Log registrado:', action, dashboardKey || '');
+                
             } catch (error) {
                 console.error('Error en logAccess:', error);
             }
@@ -325,7 +334,7 @@
                 console.log('✅ Log enviado:', logData.action, logData.user);
                 
             } catch (error) {
-                console.warn('⚠️ No se pudo enviar log, guardando localmente:', error);
+                console.warn('⚠️ No se pudo enviar log, guardando localmente:', error.message);
                 savePendingLog(logData);
             }
         }
@@ -404,6 +413,7 @@
             // 🔐 LOGGING: Registrar cierre de sesión
             if (currentUser) {
                 const logoutData = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     sessionId: currentSessionId,
                     timestamp: new Date().toISOString(),
                     user: currentUser,
@@ -645,6 +655,7 @@
             } else {
                 // 🔐 LOGGING: Registrar intento fallido de login
                 const failedLoginData = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     sessionId: 'failed_' + Date.now(),
                     timestamp: new Date().toISOString(),
                     user: email,
@@ -1260,7 +1271,7 @@
                             </div>
                             ${menuItemsHTML}
                             <div class="sidebar-footer">
-                                <button class="exit-btn" onclick="logoutUser()">
+                                <button class="exit-btn" onclick="parent.logoutUser()">
                                     <i class="fas fa-sign-out-alt"></i> Salir
                                 </button>
                             </div>
@@ -1358,18 +1369,13 @@
                                     const dashboardUrl = this.getAttribute('data-src');
                                     
                                     // 🔐 LOGGING: Obtener qué dashboard se está accediendo
-                                    const dashboardKey = Object.keys(dashboardUrls).find(key => 
-                                        dashboardUrls[key] === dashboardUrl
+                                    const dashboardKey = Object.keys(parent.dashboardUrls).find(key => 
+                                        parent.dashboardUrls[key] === dashboardUrl
                                     );
                                     
                                     // Registrar acceso al dashboard
-                                    if (dashboardKey && currentUser) {
-                                        // Enviar mensaje al parent para logging
-                                        window.opener?.postMessage({
-                                            type: 'log_dashboard_view',
-                                            dashboardKey: dashboardKey,
-                                            user: currentUser
-                                        }, '*');
+                                    if (dashboardKey && parent.currentUser) {
+                                        parent.logAccess('dashboard_view', dashboardKey);
                                     }
                                     
                                     if (dashboardUrl) {
@@ -1465,11 +1471,7 @@
                         
                         // Registrar acceso al dashboard
                         if (dashboardKey && currentUser) {
-                            // Usar la función logAccess del scope principal
-                            // Como estamos en el mismo contexto, podemos llamarla directamente
-                            if (typeof logAccess === 'function') {
-                                logAccess('dashboard_view', dashboardKey);
-                            }
+                            logAccess('dashboard_view', dashboardKey);
                         }
                         
                         mobileMenuItems.forEach(menuItem => {
