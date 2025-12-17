@@ -208,5 +208,33 @@
     "language": "es-MX",
     "sessionId": "session_1766000194022_exjz4xoq9",
     "referrer": "direct"
+  },
+  {
+    "id": "1766000596771_50kt1n5bs",
+    "timestamp": "2025-12-17T19:43:16.771Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "login",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1766000596771_9pvulg5ti",
+    "referrer": "direct"
+  },
+  {
+    "id": "1766000606593_0y4sd96z0",
+    "timestamp": "2025-12-17T19:43:26.593Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "dashboard_view",
+    "dashboard": "inventario",
+    "dashboardName": "Inventario TI",
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1766000596771_9pvulg5ti",
+    "referrer": "direct"
   }
 ]
