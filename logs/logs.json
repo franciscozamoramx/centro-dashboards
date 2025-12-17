@@ -68,5 +68,33 @@
     "language": "es-MX",
     "sessionId": "session_1765999987782_0qlk4kj4p",
     "referrer": "direct"
+  },
+  {
+    "id": "1765999997881_m30njffn7",
+    "timestamp": "2025-12-17T19:33:17.881Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "dashboard_view",
+    "dashboard": "diccionario",
+    "dashboardName": "Diccionario KPI's",
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1765999987782_0qlk4kj4p",
+    "referrer": "direct"
+  },
+  {
+    "id": "1766000004525_z203v72cd",
+    "timestamp": "2025-12-17T19:33:24.525Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "dashboard_view",
+    "dashboard": "auditoria",
+    "dashboardName": "Auditoría de Salas",
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1765999987782_0qlk4kj4p",
+    "referrer": "direct"
   }
 ]
