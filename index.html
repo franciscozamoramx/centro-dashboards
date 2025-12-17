@@ -201,8 +201,8 @@
             "proyectos": "https://app.powerbi.com/reportEmbed?reportId=c2e5834e-4e3d-418c-a9dc-43e33d79a62e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "rtp": "https://app.powerbi.com/reportEmbed?reportId=01ac285e-618f-43de-be89-d62b1a46374c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "diccionario": "https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-			"incidencias_calor": "https://app.powerbi.com/reportEmbed?reportId=840a78f0-8c6f-4d29-a71f-10b1f6b54e9b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-			"incidencias_pie": "https://app.powerbi.com/reportEmbed?reportId=dc4faf8a-7cf3-4f23-9902-280e0971aa64&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"
+            "incidencias_calor": "https://app.powerbi.com/reportEmbed?reportId=COLOCA_AQUI_EL_ID_REAL&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
+            "incidencias_pie": "https://app.powerbi.com/reportEmbed?reportId=COLOCA_AQUI_EL_ID_REAL&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"
         };
 
         // Mapeo de nombres de dashboards
@@ -217,8 +217,8 @@
             "proyectos": "Proyectos BI",
             "rtp": "RTP",
             "diccionario": "Diccionario KPI's",
-			"incidencias_calor": "Incidencias Atendidas 1",
-			"incidencias_pie": "Incidencias Atendidas 2"
+            "incidencias_calor": "Incidencias Calor",
+            "incidencias_pie": "Incidencias Pie"
         };
 
         // Mapeo de íconos para dashboards
@@ -233,9 +233,14 @@
             "proyectos": "fas fa-project-diagram",
             "rtp": "fas fa-coins",
             "diccionario": "fas fa-book",
-			"incidencias_calor": "fas fa-exclamation-triangl",
-			"incidencias_pie": "fas fa-task"
+            "incidencias_calor": "fas fa-temperature-high",
+            "incidencias_pie": "fas fa-exclamation-triangle"
         };
+
+        // ==================== CONFIGURACIÓN DE LOGGING ====================
+        const LOGGING_ENABLED = true;
+        const LOGS_URL = 'https://franciscozamoramx.github.io/centro-dashboards/logs/update-log.php';
+        let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
         // Permisos por defecto
         const defaultPermissions = {
@@ -255,6 +260,179 @@
         let permissionsData = null;
         let currentUser = null;
         let currentUserPermissions = [];
+
+        // Detectar si es dispositivo móvil/tableta
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || 
+                   (navigator.userAgent.indexOf('IEMobile') !== -1) ||
+                   (window.innerWidth <= 1024);
+        }
+
+        // ==================== FUNCIONES DE LOGGING ====================
+
+        // Función principal para registrar accesos
+        async function logAccess(action, dashboardKey = null) {
+            if (!currentUser || !LOGGING_ENABLED) return;
+            
+            try {
+                const logData = {
+                    // Identificación
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    sessionId: currentSessionId,
+                    timestamp: new Date().toISOString(),
+                    
+                    // Información del usuario
+                    user: currentUser,
+                    
+                    // Acción realizada
+                    action: action,
+                    
+                    // Información del dashboard (si aplica)
+                    dashboard: dashboardKey,
+                    dashboardName: dashboardKey ? dashboardNames[dashboardKey] : null,
+                    
+                    // Información del dispositivo
+                    deviceType: isMobileDevice() ? 'mobile' : 'desktop',
+                    screen: `${window.screen.width}x${window.screen.height}`,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    userAgent: navigator.userAgent.substring(0, 150),
+                    language: navigator.language,
+                    platform: navigator.platform,
+                    
+                    // Información de navegación
+                    url: window.location.href,
+                    referrer: document.referrer || 'direct'
+                };
+                
+                // Enviar log de forma asíncrona (no bloqueante)
+                sendLogToServer(logData);
+                
+                // También guardar localmente como respaldo
+                saveLogLocally(logData);
+                
+                console.log('📊 Log registrado:', action, dashboardKey || '');
+                
+            } catch (error) {
+                console.error('Error en logAccess:', error);
+            }
+        }
+
+        // Enviar log al servidor (GitHub Pages)
+        async function sendLogToServer(logData) {
+            try {
+                // Usar FormData para evitar problemas CORS
+                const formData = new FormData();
+                formData.append('log', JSON.stringify(logData));
+                
+                // Enviar con fetch (no-cors para evitar problemas)
+                await fetch(LOGS_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors' // Importante: evita errores CORS
+                });
+                
+                console.log('✅ Log enviado:', logData.action, logData.user);
+                
+            } catch (error) {
+                console.warn('⚠️ No se pudo enviar log, guardando localmente:', error.message);
+                savePendingLog(logData);
+            }
+        }
+
+        // Guardar log localmente como respaldo
+        function saveLogLocally(logData) {
+            try {
+                const key = 'bi_local_logs';
+                let logs = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                logs.push({
+                    ...logData,
+                    storedAt: new Date().toISOString()
+                });
+                
+                // Mantener solo últimos 100 logs locales
+                if (logs.length > 100) {
+                    logs = logs.slice(-100);
+                }
+                
+                localStorage.setItem(key, JSON.stringify(logs));
+                
+            } catch (error) {
+                console.warn('Error guardando log local:', error);
+            }
+        }
+
+        // Guardar logs pendientes (cuando falla el envío)
+        function savePendingLog(logData) {
+            try {
+                const key = 'bi_pending_logs';
+                let pending = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                pending.push({
+                    ...logData,
+                    retryCount: 0,
+                    lastTry: new Date().toISOString()
+                });
+                
+                // Mantener solo últimos 50 pendientes
+                if (pending.length > 50) {
+                    pending = pending.slice(-50);
+                }
+                
+                localStorage.setItem(key, JSON.stringify(pending));
+                
+            } catch (error) {
+                console.error('Error guardando log pendiente:', error);
+            }
+        }
+
+        // Reintentar enviar logs pendientes
+        function retryPendingLogs() {
+            try {
+                const pending = JSON.parse(localStorage.getItem('bi_pending_logs') || '[]');
+                if (pending.length === 0) return;
+                
+                console.log(`🔄 Reintentando ${pending.length} logs pendientes...`);
+                
+                pending.forEach(log => {
+                    if (log.retryCount < 3) { // Máximo 3 intentos
+                        setTimeout(() => sendLogToServer(log), 1000);
+                    }
+                });
+                
+                // Limpiar después de intentar
+                localStorage.removeItem('bi_pending_logs');
+                
+            } catch (error) {
+                console.error('Error reintentando logs:', error);
+            }
+        }
+
+        // Función para cerrar sesión con logging
+        function logoutUser() {
+            // 🔐 LOGGING: Registrar cierre de sesión
+            if (currentUser) {
+                const logoutData = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    sessionId: currentSessionId,
+                    timestamp: new Date().toISOString(),
+                    user: currentUser,
+                    action: 'logout',
+                    deviceType: isMobileDevice() ? 'mobile' : 'desktop'
+                };
+                saveLogLocally(logoutData);
+                
+                // Intentar enviar al servidor
+                sendLogToServer(logoutData);
+            }
+            
+            // Cerrar la ventana o recargar para login
+            if (window.opener) {
+                window.close();
+            } else {
+                window.location.reload();
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             // 🔒 BLOQUEO DE SEGURIDAD EN LOGIN
@@ -362,6 +540,27 @@
                     handleLogin();
                 }
             });
+
+            // Reintentar logs pendientes cada 30 segundos
+            setInterval(retryPendingLogs, 30000);
+            
+            // También al cargar la página
+            setTimeout(retryPendingLogs, 5000);
+            
+            // Escuchar mensajes desde la ventana del dashboard
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'log_dashboard_view') {
+                    // Registrar acceso desde la ventana del dashboard
+                    logAccess('dashboard_view', event.data.dashboardKey);
+                    console.log('📊 Log recibido desde dashboard:', event.data.dashboardKey);
+                }
+                
+                if (event.data && event.data.type === 'logout') {
+                    // Registrar logout desde la ventana del dashboard
+                    logAccess('logout');
+                    console.log('🚪 Logout recibido desde dashboard');
+                }
+            });
         });
 
         // Función para cargar los permisos desde el JSON
@@ -444,6 +643,12 @@
                 currentUser = email;
                 currentUserPermissions = permissionsData.users[email].dashboards || [];
                 
+                // 🔐 LOGGING: Registrar inicio de sesión
+                logAccess('login');
+                
+                // Generar nueva sesión para este usuario
+                currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
                 // Mostrar información breve
                 document.getElementById('userEmail').textContent = email;
                 document.getElementById('dashboardsCount').textContent = currentUserPermissions.length;
@@ -463,15 +668,20 @@
                 }, 1000);
                 
             } else {
+                // 🔐 LOGGING: Registrar intento fallido de login
+                const failedLoginData = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    sessionId: 'failed_' + Date.now(),
+                    timestamp: new Date().toISOString(),
+                    user: email,
+                    action: 'login_failed',
+                    deviceType: isMobileDevice() ? 'mobile' : 'desktop',
+                    userAgent: navigator.userAgent.substring(0, 100)
+                };
+                saveLogLocally(failedLoginData);
+                
                 showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
             }
-        }
-
-        // Detectar si es dispositivo móvil/tableta
-        function isMobileDevice() {
-            return (typeof window.orientation !== "undefined") || 
-                   (navigator.userAgent.indexOf('IEMobile') !== -1) ||
-                   (window.innerWidth <= 1024);
         }
 
         // Función para abrir el dashboard en pantalla completa
@@ -593,6 +803,10 @@
                     </div>
                     
                     <div class="mobile-iframe-container" id="mobileIframeContainer">
+                        <div class="iframe-loading" id="mobileIframeLoading" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #152c6e; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+                            <p>Cargando dashboard...</p>
+                        </div>
                         <iframe class="mobile-iframe" id="mobileIframe" src="${initialUrl}"></iframe>
                     </div>
                 </div>
@@ -702,14 +916,19 @@
                         border-radius: 5px;
                         text-align: left;
                         cursor: pointer;
-                        transition: background 0.3s;
+                        transition: background 0.3s, transform 0.2s;
                         font-size: 15px;
                     }
                     
-                    .mobile-menu-item:hover { background: rgba(255,255,255,0.2); }
+                    .mobile-menu-item:hover { 
+                        background: rgba(255,255,255,0.2); 
+                        transform: translateX(5px);
+                    }
+                    
                     .mobile-menu-item.active {
                         background: rgba(255,215,0,0.3);
                         border-left: 3px solid #FFD700;
+                        font-weight: bold;
                     }
                     
                     .mobile-menu-item i {
@@ -759,6 +978,12 @@
                         width: 100%;
                         height: 100%;
                         border: none;
+                        transition: opacity 0.3s;
+                    }
+                    
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
                     }
                     
                     @media (max-width: 600px) {
@@ -781,7 +1006,7 @@
             `;
         }
 
-        // Función para generar el HTML del dashboard para PC
+        // Función para generar el HTML del dashboard para PC (VERSIÓN CORREGIDA)
         function generateDashboardHTML() {
             let menuItemsHTML = '';
             
@@ -830,6 +1055,11 @@
             } else if (currentUserPermissions.length > 0) {
                 initialDashboard = dashboardUrls[currentUserPermissions[0]] || dashboardUrls.principal;
             }
+            
+            // Convertir las constantes a JSON para pasarlas al dashboard
+            const dashboardUrlsJson = JSON.stringify(dashboardUrls);
+            const dashboardNamesJson = JSON.stringify(dashboardNames);
+            const dashboardIconsJson = JSON.stringify(dashboardIcons);
             
             return `
                 <!DOCTYPE html>
@@ -970,14 +1200,19 @@
                             border-radius: 5px;
                             text-align: left;
                             cursor: pointer;
-                            transition: background 0.3s;
+                            transition: background 0.3s, transform 0.2s;
                             font-size: 15px;
                         }
                         
-                        .menu-item:hover { background: rgba(255,255,255,0.2); }
+                        .menu-item:hover { 
+                            background: rgba(255,255,255,0.2); 
+                            transform: translateX(5px);
+                        }
+                        
                         .menu-item.active {
                             background: rgba(255,215,0,0.3);
                             border-left: 3px solid #FFD700;
+                            font-weight: bold;
                         }
                         
                         .menu-item i {
@@ -1027,9 +1262,8 @@
                             width: 100%;
                             height: 100%;
                             border: none;
+                            transition: opacity 0.3s;
                         }
-                        
-                        /* Overlay para bloqueo de clic derecho - ELIMINADO */
                         
                         /* Estilo para el mensaje de menú deshabilitado */
                         .context-menu-message {
@@ -1051,6 +1285,31 @@
                             10% { opacity: 1; }
                             90% { opacity: 1; }
                             100% { opacity: 0; }
+                        }
+
+                        /* Loading spinner para iframe */
+                        .iframe-loading {
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            text-align: center;
+                            z-index: 100;
+                        }
+
+                        .spinner {
+                            border: 4px solid #f3f3f3;
+                            border-top: 4px solid #152c6e;
+                            border-radius: 50%;
+                            width: 40px;
+                            height: 40px;
+                            animation: spin 1s linear infinite;
+                            margin: 0 auto 15px;
+                        }
+
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
                         }
                     </style>
                 </head>
@@ -1076,18 +1335,28 @@
                             </div>
                             ${menuItemsHTML}
                             <div class="sidebar-footer">
-                                <button class="exit-btn" onclick="window.close()">
+                                <button class="exit-btn" id="exitBtn">
                                     <i class="fas fa-sign-out-alt"></i> Salir
                                 </button>
                             </div>
                         </div>
                         
                         <div class="iframe-container" id="iframeContainer">
+                            <div class="iframe-loading" id="iframeLoading" style="display: none;">
+                                <div class="spinner"></div>
+                                <p>Cargando dashboard...</p>
+                            </div>
                             <iframe id="dashboardFrame" src="${initialDashboard}"></iframe>
                         </div>
                     </div>
 
                     <script>
+                        // 🔧 DECLARAR VARIABLES GLOBALES PARA ESTE SCRIPT
+                        const dashboardUrls = ${dashboardUrlsJson};
+                        const dashboardNames = ${dashboardNamesJson};
+                        const dashboardIcons = ${dashboardIconsJson};
+                        const currentUser = "${currentUser}";
+                        
                         document.addEventListener('DOMContentLoaded', function() {
                             const toggleBtn = document.getElementById('toggleBtn');
                             const sidebar = document.getElementById('sidebar');
@@ -1095,21 +1364,20 @@
                             const iframeContainer = document.getElementById('iframeContainer');
                             const menuItems = document.querySelectorAll('.menu-item');
                             const whatsappBtn = document.getElementById('whatsappBtn');
+                            const exitBtn = document.getElementById('exitBtn');
                             const iframe = document.getElementById('dashboardFrame');
+                            const iframeLoading = document.getElementById('iframeLoading');
                             const contextMenuMessage = document.getElementById('contextMenuMessage');
                             
                             let isSidebarOpen = false;
                             
-                            // 🔒 FUNCIONES DE BLOQUEO DE SEGURIDAD - SOLO PARA EL MENÚ
-                            
-                            // Bloquear clic derecho SOLO en el sidebar
+                            // 🔒 FUNCIONES DE SEGURIDAD
                             function blockRightClickOnSidebar(e) {
                                 e.preventDefault();
                                 showContextMenuMessage();
                                 return false;
                             }
                             
-                            // Mostrar mensaje de menú contextual deshabilitado
                             function showContextMenuMessage() {
                                 contextMenuMessage.style.display = 'block';
                                 setTimeout(() => {
@@ -1117,33 +1385,29 @@
                                 }, 3000);
                             }
                             
-                            // Aplicar bloqueos de seguridad SOLO al sidebar
                             function applySecurityBlocks() {
-                                // Bloquear clic derecho SOLO en el sidebar
                                 sidebar.addEventListener('contextmenu', blockRightClickOnSidebar);
-                                
-                                // Permitir clic derecho en el resto de la página
-                                document.addEventListener('contextmenu', function(e) {
-                                    // Permitir clic derecho en todo excepto en el sidebar
-                                    if (!sidebar.contains(e.target)) {
-                                        return true; // Permitir el comportamiento normal
-                                    }
-                                });
-                                
-                                // Bloquear clic derecho en el iframe cuando tiene el foco
-                                iframe.addEventListener('load', function() {
-                                    try {
-                                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                                        // Permitir clic derecho dentro del iframe (Power BI)
-                                        // No aplicar bloqueo aquí para permitir funcionalidad normal de Power BI
-                                    } catch (e) {
-                                        // Si hay error de CORS, no hacer nada - permitir comportamiento normal
-                                    }
-                                });
                             }
                             
-                            // FUNCIONES DE LA APLICACIÓN
+                            // 📊 FUNCIONES DE LOGGING (simplificadas para esta ventana)
+                            function logDashboardAccess(dashboardKey) {
+                                try {
+                                    // Enviar mensaje al padre para logging
+                                    if (window.opener && !window.opener.closed) {
+                                        window.opener.postMessage({
+                                            type: 'log_dashboard_view',
+                                            dashboardKey: dashboardKey,
+                                            user: currentUser,
+                                            timestamp: new Date().toISOString()
+                                        }, '*');
+                                    }
+                                    console.log('📊 Dashboard accedido:', dashboardKey);
+                                } catch (error) {
+                                    console.warn('Error en logging:', error);
+                                }
+                            }
                             
+                            // 📱 FUNCIONES DE LA APLICACIÓN
                             function openWhatsApp() {
                                 const phoneNumber = '+524421974414';
                                 const message = 'Hola, necesito ayuda en el Centro de Business Intelligence';
@@ -1157,15 +1421,46 @@
                                 overlay.classList.toggle('active');
                                 iframeContainer.classList.toggle('sidebar-open');
                                 
+                                toggleBtn.innerHTML = isSidebarOpen ? 
+                                    '<i class="fas fa-times"></i>' : 
+                                    '<i class="fas fa-bars"></i>';
+                            }
+                            
+                            function loadDashboard(dashboardUrl, dashboardKey) {
+                                // Mostrar loading
+                                iframeLoading.style.display = 'block';
+                                iframe.style.opacity = '0.3';
+                                
+                                // Registrar acceso
+                                logDashboardAccess(dashboardKey);
+                                
+                                // Cargar el dashboard
+                                iframe.src = dashboardUrl;
+                                
+                                // Ocultar sidebar si está abierto
                                 if (isSidebarOpen) {
-                                    toggleBtn.innerHTML = '<i class="fas fa-times"></i>';
-                                } else {
-                                    toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                                    toggleSidebar();
                                 }
                             }
                             
-                            // EVENT LISTENERS
+                            function logout() {
+                                if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                                    try {
+                                        // Enviar mensaje de logout al padre
+                                        if (window.opener && !window.opener.closed) {
+                                            window.opener.postMessage({
+                                                type: 'logout',
+                                                user: currentUser
+                                            }, '*');
+                                        }
+                                        window.close();
+                                    } catch (error) {
+                                        window.close();
+                                    }
+                                }
+                            }
                             
+                            // 🎯 EVENT LISTENERS
                             toggleBtn.addEventListener('click', toggleSidebar);
                             overlay.addEventListener('click', toggleSidebar);
                             
@@ -1174,35 +1469,54 @@
                                     const dashboardUrl = this.getAttribute('data-src');
                                     
                                     if (dashboardUrl) {
+                                        // Encontrar la clave del dashboard
+                                        const dashboardKey = Object.keys(dashboardUrls).find(key => 
+                                            dashboardUrls[key] === dashboardUrl
+                                        );
+                                        
+                                        // Actualizar estado activo
                                         menuItems.forEach(menuItem => {
                                             menuItem.classList.remove('active');
                                         });
-                                        
                                         this.classList.add('active');
-                                        iframe.src = dashboardUrl;
                                         
-                                        if (isSidebarOpen) {
-                                            toggleSidebar();
-                                        }
+                                        // Cargar el dashboard
+                                        loadDashboard(dashboardUrl, dashboardKey);
                                     }
                                 });
                             });
                             
-                            whatsappBtn.addEventListener('click', function() {
-                                openWhatsApp();
+                            // Botón de WhatsApp
+                            if (whatsappBtn) {
+                                whatsappBtn.addEventListener('click', openWhatsApp);
+                            }
+                            
+                            // Botón de salir
+                            exitBtn.addEventListener('click', logout);
+                            
+                            // Evento cuando el iframe carga
+                            iframe.addEventListener('load', function() {
+                                // Ocultar loading
+                                iframeLoading.style.display = 'none';
+                                iframe.style.opacity = '1';
                             });
                             
-                            // INICIALIZACIÓN
+                            // Manejar errores del iframe
+                            iframe.addEventListener('error', function() {
+                                iframeLoading.innerHTML = '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px;"></i><p>Error al cargar el dashboard</p><button onclick="location.reload()" style="margin-top: 10px; padding: 8px 15px; background: #152c6e; color: white; border: none; border-radius: 4px; cursor: pointer;">Reintentar</button></div>';
+                            });
                             
-                            // Aplicar bloqueos de seguridad SOLO al sidebar
+                            // 📋 INICIALIZACIÓN
                             applySecurityBlocks();
                             
                             // Pantalla completa
                             setTimeout(function() {
-                                if (document.documentElement.requestFullscreen) {
-                                    document.documentElement.requestFullscreen().catch(err => {
-                                        console.log('Error al intentar pantalla completa:', err);
-                                    });
+                                try {
+                                    if (document.documentElement.requestFullscreen) {
+                                        document.documentElement.requestFullscreen();
+                                    }
+                                } catch (err) {
+                                    console.log('Pantalla completa no disponible:', err);
                                 }
                             }, 100);
                         });
@@ -1219,6 +1533,7 @@
             const mobileOverlay = document.getElementById('mobileOverlay');
             const mobileIframeContainer = document.getElementById('mobileIframeContainer');
             const mobileIframe = document.getElementById('mobileIframe');
+            const mobileIframeLoading = document.getElementById('mobileIframeLoading');
             const mobileMenuItems = document.querySelectorAll('.mobile-menu-item');
             const mobileWhatsappBtn = document.getElementById('mobileWhatsappBtn');
             const mobileExitBtn = document.getElementById('mobileExitBtn');
@@ -1251,6 +1566,23 @@
                 }
             }
             
+            function loadMobileDashboard(dashboardUrl, dashboardKey) {
+                // Mostrar loading
+                mobileIframeLoading.style.display = 'block';
+                mobileIframe.style.opacity = '0.3';
+                
+                // Registrar acceso
+                logAccess('dashboard_view', dashboardKey);
+                
+                // Cargar el dashboard
+                mobileIframe.src = dashboardUrl;
+                
+                // Ocultar sidebar si está abierto
+                if (isSidebarOpen) {
+                    toggleSidebar();
+                }
+            }
+            
             mobileToggleBtn.addEventListener('click', toggleSidebar);
             mobileOverlay.addEventListener('click', toggleSidebar);
             
@@ -1259,16 +1591,19 @@
                     const dashboardUrl = this.getAttribute('data-src');
                     
                     if (dashboardUrl) {
+                        // 🔐 LOGGING: Obtener qué dashboard se está accediendo
+                        const dashboardKey = Object.keys(dashboardUrls).find(key => 
+                            dashboardUrls[key] === dashboardUrl
+                        );
+                        
+                        // Actualizar estado activo
                         mobileMenuItems.forEach(menuItem => {
                             menuItem.classList.remove('active');
                         });
-                        
                         this.classList.add('active');
-                        mobileIframe.src = dashboardUrl;
                         
-                        if (isSidebarOpen) {
-                            toggleSidebar();
-                        }
+                        // Cargar dashboard
+                        loadMobileDashboard(dashboardUrl, dashboardKey);
                     }
                 });
             });
@@ -1279,8 +1614,20 @@
             
             mobileExitBtn.addEventListener('click', function() {
                 if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                    window.location.reload();
+                    logoutUser();
                 }
+            });
+            
+            // Evento cuando el iframe carga
+            mobileIframe.addEventListener('load', function() {
+                // Ocultar loading
+                mobileIframeLoading.style.display = 'none';
+                mobileIframe.style.opacity = '1';
+            });
+            
+            // Manejar errores del iframe
+            mobileIframe.addEventListener('error', function() {
+                mobileIframeLoading.innerHTML = '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px;"></i><p>Error al cargar el dashboard</p><button onclick="location.reload()" style="margin-top: 10px; padding: 8px 15px; background: #152c6e; color: white; border: none; border-radius: 4px; cursor: pointer;">Reintentar</button></div>';
             });
         }
     </script>
