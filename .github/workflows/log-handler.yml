@@ -1,0 +1,80 @@
+name: Handle BI Logs via Issues
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
+jobs:
+  process-log-issue:
+    if: contains(github.event.issue.labels.*.name, 'log')
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Extract log data from issue
+      id: extract
+      run: |
+        ISSUE_BODY="${{ github.event.issue.body }}"
+        # Extraer JSON del código markdown
+        JSON_DATA=$(echo "$ISSUE_BODY" | sed -n '/```json/,/```/p' | sed '1d;$d')
+        
+        if [ -n "$JSON_DATA" ]; then
+          echo "JSON_DATA=$JSON_DATA" >> $GITHUB_OUTPUT
+          
+          # Parsear datos
+          TIMESTAMP=$(echo "$JSON_DATA" | jq -r '.timestamp // empty')
+          USER=$(echo "$JSON_DATA" | jq -r '.user // empty')
+          ACTION=$(echo "$JSON_DATA" | jq -r '.action // empty')
+          
+          echo "USER=$USER" >> $GITHUB_OUTPUT
+          echo "ACTION=$ACTION" >> $GITHUB_OUTPUT
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Update logs.json
+      if: steps.extract.outputs.JSON_DATA != ''
+      run: |
+        LOGS_FILE="logs/logs.json"
+        
+        # Crear archivo si no existe
+        if [ ! -f "$LOGS_FILE" ]; then
+          echo '[]' > "$LOGS_FILE"
+        fi
+        
+        # Leer logs existentes
+        LOGS=$(cat "$LOGS_FILE")
+        
+        # Crear nuevo log entry
+        NEW_LOG=$(echo '{}' | jq \
+          --arg id "${{ github.event.issue.number }}" \
+          --arg timestamp "${{ steps.extract.outputs.TIMESTAMP }}" \
+          --arg user "${{ steps.extract.outputs.USER }}" \
+          --arg action "${{ steps.extract.outputs.ACTION }}" \
+          --argjson data "${{ steps.extract.outputs.JSON_DATA }}" \
+          '.id = $id | .timestamp = $timestamp | .user = $user | .action = $action | .data = $data')
+        
+        # Agregar al array de logs
+        UPDATED_LOGS=$(echo "$LOGS" | jq --argjson new "$NEW_LOG" '. += [$new]')
+        
+        # Limitar a 1000 logs
+        UPDATED_LOGS=$(echo "$UPDATED_LOGS" | jq '.[-1000:]')
+        
+        # Guardar
+        echo "$UPDATED_LOGS" | jq '.' > "$LOGS_FILE"
+        
+        echo "✅ Log agregado. Total: $(echo "$UPDATED_LOGS" | jq 'length')"
+        
+    - name: Close issue after processing
+      if: success()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            state: 'closed'
+          })
