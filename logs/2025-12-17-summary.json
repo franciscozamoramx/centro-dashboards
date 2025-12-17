@@ -138,5 +138,12 @@
     "actions_summary": {
       "login_failed": 1
     }
+  },
+  "2025-12-17-22": {
+    "hour": "2025-12-17-22",
+    "generated_at": "2025-12-17T22:15:00.685Z",
+    "logs_in_hour": 0,
+    "unique_users": 0,
+    "actions_summary": {}
   }
 }
