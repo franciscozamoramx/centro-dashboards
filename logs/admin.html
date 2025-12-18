@@ -734,6 +734,9 @@
             <button class="btn" onclick="openGitHubRepo()">
                 <i class="fab fa-github"></i> Ver Repositorio
             </button>
+            <button class="btn btn-info" onclick="diagnoseLogsIssue()">
+                <i class="fas fa-bug"></i> Diagnóstico
+            </button>
         </div>
         
         <div class="filters">
@@ -778,6 +781,11 @@
         
         <div class="stats-grid" id="statsGrid">
             <!-- Las estadísticas se cargarán aquí -->
+            <div class="stat-card">
+                <div class="stat-label">Total de Logs</div>
+                <div class="stat-value">0</div>
+                <div>Cargando...</div>
+            </div>
         </div>
         
         <div class="charts">
@@ -814,6 +822,11 @@
                 </thead>
                 <tbody id="logsTableBody">
                     <!-- Los logs se cargarán aquí -->
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #6c757d;">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando logs...
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -909,6 +922,8 @@
             "incidencias_pie": "Incidencias Pie"
         };
         
+        // ==================== FUNCIONES DE UTILIDAD ====================
+        
         // Mostrar notificación
         function showNotification(message, type = 'info', duration = 5000) {
             const notification = document.createElement('div');
@@ -931,13 +946,175 @@
         function showLoading() {
             document.getElementById('loadingIndicator').style.display = 'flex';
             document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('logsTableBody').innerHTML = '';
-            document.getElementById('pagination').innerHTML = '';
         }
         
         // Ocultar loading
         function hideLoading() {
             document.getElementById('loadingIndicator').style.display = 'none';
+        }
+        
+        // Función auxiliar para formatear fecha relativa
+        function formatTimeAgo(date) {
+            if (!date) return 'Ninguna';
+            
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Ahora mismo';
+            if (diffMins < 60) return `Hace ${diffMins} min`;
+            if (diffHours < 24) return `Hace ${diffHours} h`;
+            if (diffDays === 1) return 'Ayer';
+            if (diffDays < 7) return `Hace ${diffDays} días`;
+            if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+            return `Hace ${Math.floor(diffDays / 30)} meses`;
+        }
+        
+        // Función para formatear fecha y hora
+        function formatDateTime(timestamp) {
+            if (!timestamp) return 'N/A';
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleString('es-MX');
+            } catch (error) {
+                return timestamp;
+            }
+        }
+        
+        // Función para obtener clase CSS para badges
+        function getBadgeClass(action) {
+            switch(action) {
+                case 'login': return 'badge-login';
+                case 'dashboard_view': return 'badge-view';
+                case 'logout': return 'badge-logout';
+                case 'login_failed': return 'badge-failed';
+                default: return '';
+            }
+        }
+        
+        // ==================== FUNCIONES DE ESTADÍSTICAS ====================
+        
+        // Función para actualizar estadísticas
+        function updateStats() {
+            if (!allLogs || allLogs.length === 0) {
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Total de Logs</div>
+                        <div class="stat-value">0</div>
+                        <div>No hay registros</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Estado</div>
+                        <div class="stat-value" style="font-size: 32px;">⏳</div>
+                        <div>Esperando actividad...</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const statsGrid = document.getElementById('statsGrid');
+            
+            const totalLogs = allLogs.length;
+            const uniqueUsers = [...new Set(allLogs.map(log => log.user))].length;
+            
+            // Logs de hoy
+            const today = new Date().toISOString().split('T')[0];
+            const todayLogs = allLogs.filter(log => 
+                log.timestamp && log.timestamp.startsWith(today)
+            ).length;
+            
+            // Logs de ayer para comparación
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            const yesterdayLogs = allLogs.filter(log => 
+                log.timestamp && log.timestamp.startsWith(yesterdayStr)
+            ).length;
+            
+            const dashboardViews = allLogs.filter(log => 
+                log.action === 'dashboard_view'
+            ).length;
+            
+            const failedLogins = allLogs.filter(log => 
+                log.action === 'login_failed'
+            ).length;
+            
+            // Cálculo de cambio porcentual
+            const changePercent = yesterdayLogs > 0 ? 
+                Math.round(((todayLogs - yesterdayLogs) / yesterdayLogs) * 100) : 0;
+            
+            // Última actividad
+            const lastLog = allLogs[0];
+            const lastActivity = lastLog ? 
+                formatTimeAgo(new Date(lastLog.timestamp)) : 'Ninguna';
+            
+            // Logs pendientes
+            const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length;
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total de Logs</div>
+                    <div class="stat-value">${totalLogs}</div>
+                    <div>Registros históricos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Usuarios Únicos</div>
+                    <div class="stat-value">${uniqueUsers}</div>
+                    <div>Personas diferentes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Actividad Hoy</div>
+                    <div class="stat-value">${todayLogs}</div>
+                    <div>
+                        ${changePercent !== 0 ? `
+                            <span class="stat-change ${changePercent > 0 ? 'positive' : 'negative'}">
+                                ${changePercent > 0 ? '+' : ''}${changePercent}% vs ayer
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Vistas Dashboards</div>
+                    <div class="stat-value">${dashboardViews}</div>
+                    <div>Accesos a reportes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Logins Fallidos</div>
+                    <div class="stat-value" style="color: #dc3545;">${failedLogins}</div>
+                    <div>Intentos no autorizados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Estado</div>
+                    <div class="stat-value" style="font-size: 24px;">
+                        ${pendingLogs > 0 ? '⚠️' : '✅'}
+                    </div>
+                    <div>
+                        ${pendingLogs > 0 ? 
+                            `${pendingLogs} pendientes` : 
+                            'Sincronizado'}
+                        <br>
+                        ${lastActivity}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Función auxiliar para mostrar estado vacío
+        function updateUIWithEmptyState() {
+            document.getElementById('emptyState').style.display = 'block';
+            updateStats(); // Esto actualizará las estadísticas a 0
+            document.getElementById('logsTableBody').innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: #6c757d;">
+                        <i class="fas fa-database" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                        No hay logs disponibles. Los logs aparecerán aquí cuando los usuarios accedan al sistema.
+                    </td>
+                </tr>
+            `;
+            document.getElementById('pagination').innerHTML = '';
+            hideLoading();
         }
         
         // ==================== FUNCIONES GITHUB ====================
@@ -1174,28 +1351,53 @@
                 showLoading();
                 document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
                 
-                const response = await fetch(LOGS_URL + '?t=' + Date.now());
+                console.log('Cargando logs desde:', LOGS_URL);
+                const response = await fetch(LOGS_URL + '?t=' + Date.now(), {
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
                 
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
+                // Verificar si el archivo existe
+                if (response.status === 404) {
+                    console.log('Archivo logs.json no encontrado, creando estructura inicial...');
+                    allLogs = [];
+                    updateUIWithEmptyState();
+                    showNotification('Archivo de logs no encontrado. Se creará con el primer registro.', 'info');
+                    return;
                 }
                 
-                const logs = await response.json();
+                if (!response.ok && response.status !== 404) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+                
+                // Intentar parsear el JSON
+                let logs = [];
+                try {
+                    const text = await response.text();
+                    if (text.trim()) {
+                        logs = JSON.parse(text);
+                    }
+                } catch (parseError) {
+                    console.warn('Error parseando JSON, usando array vacío:', parseError);
+                    logs = [];
+                }
                 
                 if (!Array.isArray(logs)) {
-                    throw new Error('Formato de logs inválido');
+                    console.warn('Logs no es un array, convirtiendo...');
+                    logs = [];
                 }
                 
                 allLogs = logs.reverse(); // Más recientes primero
                 
+                // Verificar si hay logs
                 if (allLogs.length === 0) {
-                    document.getElementById('emptyState').style.display = 'block';
-                    hideLoading();
-                    showNotification('No hay logs disponibles', 'info');
+                    updateUIWithEmptyState();
+                    showNotification('No hay logs registrados aún', 'info');
                     return;
                 }
                 
-                // Actualizar UI
+                // Actualizar UI con los logs
                 updateStats();
                 populateFilters();
                 renderTable();
@@ -1225,140 +1427,17 @@
                         createCharts();
                         showNotification(`📂 Usando ${allLogs.length} logs locales (respaldo)`, 'warning');
                     } else {
-                        document.getElementById('emptyState').style.display = 'block';
+                        updateUIWithEmptyState();
                         showNotification(`❌ Error: ${error.message}`, 'error');
                     }
                 } catch (localError) {
-                    document.getElementById('emptyState').style.display = 'block';
+                    updateUIWithEmptyState();
                     showNotification(`❌ Error cargando logs: ${error.message}`, 'error');
                 }
             } finally {
                 document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar Logs';
             }
         }
-        
-        // Actualizar estadísticas
-		async function loadLogs() {
-			try {
-				showLoading();
-				document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
-				
-				const response = await fetch(LOGS_URL + '?t=' + Date.now(), {
-					headers: {
-						'Cache-Control': 'no-cache'
-					}
-				});
-				
-				// Verificar si el archivo existe
-				if (response.status === 404) {
-					console.log('Archivo logs.json no encontrado, creando estructura inicial...');
-					allLogs = [];
-					updateUIWithEmptyState();
-					showNotification('Archivo de logs no encontrado. Se creará con el primer registro.', 'info');
-					return;
-				}
-				
-				if (!response.ok && response.status !== 404) {
-					throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
-				}
-				
-				// Intentar parsear el JSON
-				let logs = [];
-				try {
-					const text = await response.text();
-					if (text.trim()) {
-						logs = JSON.parse(text);
-					}
-				} catch (parseError) {
-					console.warn('Error parseando JSON, usando array vacío:', parseError);
-					logs = [];
-				}
-				
-				if (!Array.isArray(logs)) {
-					console.warn('Logs no es un array, convirtiendo...');
-					logs = [];
-				}
-				
-				allLogs = logs.reverse(); // Más recientes primero
-				
-				// Verificar si hay logs
-				if (allLogs.length === 0) {
-					updateUIWithEmptyState();
-					showNotification('No hay logs registrados aún', 'info');
-					return;
-				}
-				
-				// Actualizar UI con los logs
-				updateStats();
-				populateFilters();
-				renderTable();
-				createCharts();
-				
-				hideLoading();
-				
-				showNotification(`✅ ${allLogs.length} logs cargados correctamente`, 'success');
-				
-			} catch (error) {
-				console.error('Error cargando logs:', error);
-				hideLoading();
-				
-				// Intentar cargar logs locales como respaldo
-				try {
-					const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
-					const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
-					
-					allLogs = [...localLogs, ...pendingLogs].sort((a, b) => 
-						new Date(b.timestamp) - new Date(a.timestamp)
-					);
-					
-					if (allLogs.length > 0) {
-						updateStats();
-						populateFilters();
-						renderTable();
-						createCharts();
-						showNotification(`📂 Usando ${allLogs.length} logs locales (respaldo)`, 'warning');
-					} else {
-						updateUIWithEmptyState();
-						showNotification(`❌ Error: ${error.message}`, 'error');
-					}
-				} catch (localError) {
-					updateUIWithEmptyState();
-					showNotification(`❌ Error cargando logs: ${error.message}`, 'error');
-				}
-			} finally {
-				document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar Logs';
-			}
-		}
-
-		// Función auxiliar para mostrar estado vacío
-		function updateUIWithEmptyState() {
-			document.getElementById('emptyState').style.display = 'block';
-			document.getElementById('statsGrid').innerHTML = `
-				<div class="stat-card">
-					<div class="stat-label">Total de Logs</div>
-					<div class="stat-value">0</div>
-					<div>No hay registros</div>
-				</div>
-				<div class="stat-card">
-					<div class="stat-label">Estado</div>
-					<div class="stat-value" style="font-size: 32px;">⏳</div>
-					<div>Esperando actividad...</div>
-				</div>
-			`;
-			document.getElementById('logsTableBody').innerHTML = `
-				<tr>
-					<td colspan="7" style="text-align: center; padding: 40px; color: #6c757d;">
-						<i class="fas fa-database" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-						No hay logs disponibles. Los logs aparecerán aquí cuando los usuarios accedan al sistema.
-					</td>
-				</tr>
-			`;
-			document.getElementById('pagination').innerHTML = '';
-			hideLoading();
-		}
-
-
-
         
         // Llenar filtros con opciones dinámicas
         function populateFilters() {
@@ -1515,6 +1594,8 @@
                 if (chart) chart.destroy();
             });
             charts = {};
+            
+            if (allLogs.length === 0) return;
             
             // Gráfico de distribución por acción
             const actionCounts = {};
@@ -1768,38 +1849,6 @@
             document.getElementById('detailModal').style.display = 'none';
         }
         
-        // Funciones de utilidad
-        function formatDateTime(timestamp) {
-            if (!timestamp) return 'N/A';
-            const date = new Date(timestamp);
-            return date.toLocaleString('es-MX');
-        }
-        
-        function formatTimeAgo(date) {
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
-            
-            if (diffMins < 1) return 'Ahora mismo';
-            if (diffMins < 60) return `Hace ${diffMins} min`;
-            if (diffHours < 24) return `Hace ${diffHours} h`;
-            if (diffDays === 1) return 'Ayer';
-            if (diffDays < 7) return `Hace ${diffDays} días`;
-            return `Hace ${Math.floor(diffDays / 7)} semanas`;
-        }
-        
-        function getBadgeClass(action) {
-            switch(action) {
-                case 'login': return 'badge-login';
-                case 'dashboard_view': return 'badge-view';
-                case 'logout': return 'badge-logout';
-                case 'login_failed': return 'badge-failed';
-                default: return '';
-            }
-        }
-        
         // Funciones de exportación
         function exportLogs() {
             const logsToExport = filteredLogs.length > 0 ? filteredLogs : allLogs;
@@ -1934,8 +1983,52 @@
             }
         }
         
-        // Inicialización
+        // ==================== FUNCIÓN DE DIAGNÓSTICO ====================
+        
+        function diagnoseLogsIssue() {
+            console.log('=== DIAGNÓSTICO DE LOGS ===');
+            console.log('1. URL de logs:', LOGS_URL);
+            console.log('2. Token guardado:', localStorage.getItem('github_pat_token') ? 'SÍ' : 'NO');
+            console.log('3. Logs cargados:', allLogs.length);
+            console.log('4. Logs locales:', JSON.parse(localStorage.getItem('bi_logs_local') || '[]').length);
+            console.log('5. Logs pendientes:', JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length);
+            
+            // Probar acceso a la URL
+            fetch(LOGS_URL)
+                .then(response => {
+                    console.log('6. Estado respuesta:', response.status, response.statusText);
+                    console.log('7. Headers:', [...response.headers.entries()]);
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('8. Contenido (primeros 500 chars):', text.substring(0, 500));
+                    console.log('9. Longitud:', text.length);
+                    try {
+                        const parsed = JSON.parse(text);
+                        console.log('10. Parseado correctamente, items:', parsed.length);
+                    } catch (e) {
+                        console.log('10. Error parseando JSON:', e.message);
+                    }
+                })
+                .catch(error => {
+                    console.log('11. Error fetching:', error.message);
+                });
+            
+            console.log('=== FUNCIONES DISPONIBLES ===');
+            console.log('updateStats:', typeof updateStats);
+            console.log('loadLogs:', typeof loadLogs);
+            console.log('filterTable:', typeof filterTable);
+            console.log('createCharts:', typeof createCharts);
+            console.log('=== FIN DIAGNÓSTICO ===');
+            
+            showNotification('Diagnóstico ejecutado. Revisa la consola (F12).', 'info');
+        }
+        
+        // ==================== INICIALIZACIÓN ====================
+        
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin panel inicializado');
+            
             // Cargar logs al iniciar
             loadLogs();
             
@@ -1944,12 +2037,16 @@
             if (savedToken) {
                 document.getElementById('githubTokenInput').value = savedToken;
                 GITHUB_CONFIG.token = savedToken;
+                updateGitHubStatus('Token configurado', 'success');
+            } else {
+                updateGitHubStatus('Configura tu token GitHub para sincronizar logs', 'info');
             }
             
             // Configurar fecha por defecto (últimos 7 días)
             const weekAgo = new Date();
             weekAgo.setDate(weekAgo.getDate() - 7);
             document.getElementById('filterDateFrom').value = weekAgo.toISOString().split('T')[0];
+            document.getElementById('filterDateTo').value = new Date().toISOString().split('T')[0];
             
             // Cerrar modal al hacer clic fuera
             document.getElementById('detailModal').addEventListener('click', function(e) {
@@ -1969,14 +2066,12 @@
                 if (e.key === 'Escape') {
                     closeDetailModal();
                 }
+                // Ctrl+R para refrescar
+                if (e.ctrlKey && e.key === 'r') {
+                    e.preventDefault();
+                    loadLogs();
+                }
             });
-            
-            // Mostrar estado inicial
-            if (savedToken) {
-                updateGitHubStatus('Token configurado', 'success');
-            } else {
-                updateGitHubStatus('Configura tu token GitHub para sincronizar logs', 'info');
-            }
         });
     </script>
 </body>
