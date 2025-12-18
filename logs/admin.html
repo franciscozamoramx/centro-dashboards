@@ -1238,93 +1238,127 @@
         }
         
         // Actualizar estadísticas
-        function updateStats() {
-            const statsGrid = document.getElementById('statsGrid');
-            
-            const totalLogs = allLogs.length;
-            const uniqueUsers = [...new Set(allLogs.map(log => log.user))].length;
-            
-            // Logs de hoy
-            const today = new Date().toISOString().split('T')[0];
-            const todayLogs = allLogs.filter(log => 
-                log.timestamp && log.timestamp.startsWith(today)
-            ).length;
-            
-            // Logs de ayer para comparación
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-            const yesterdayLogs = allLogs.filter(log => 
-                log.timestamp && log.timestamp.startsWith(yesterdayStr)
-            ).length;
-            
-            const dashboardViews = allLogs.filter(log => 
-                log.action === 'dashboard_view'
-            ).length;
-            
-            const failedLogins = allLogs.filter(log => 
-                log.action === 'login_failed'
-            ).length;
-            
-            // Cálculo de cambio porcentual
-            const changePercent = yesterdayLogs > 0 ? 
-                Math.round(((todayLogs - yesterdayLogs) / yesterdayLogs) * 100) : 0;
-            
-            // Última actividad
-            const lastLog = allLogs[0];
-            const lastActivity = lastLog ? 
-                formatTimeAgo(new Date(lastLog.timestamp)) : 'Ninguna';
-            
-            // Logs pendientes
-            const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length;
-            
-            statsGrid.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-label">Total de Logs</div>
-                    <div class="stat-value">${totalLogs}</div>
-                    <div>Registros históricos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Usuarios Únicos</div>
-                    <div class="stat-value">${uniqueUsers}</div>
-                    <div>Personas diferentes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Actividad Hoy</div>
-                    <div class="stat-value">${todayLogs}</div>
-                    <div>
-                        ${changePercent !== 0 ? `
-                            <span class="stat-change ${changePercent > 0 ? 'positive' : 'negative'}">
-                                ${changePercent > 0 ? '+' : ''}${changePercent}% vs ayer
-                            </span>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Vistas Dashboards</div>
-                    <div class="stat-value">${dashboardViews}</div>
-                    <div>Accesos a reportes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Logins Fallidos</div>
-                    <div class="stat-value" style="color: #dc3545;">${failedLogins}</div>
-                    <div>Intentos no autorizados</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Estado</div>
-                    <div class="stat-value" style="font-size: 24px;">
-                        ${pendingLogs > 0 ? '⚠️' : '✅'}
-                    </div>
-                    <div>
-                        ${pendingLogs > 0 ? 
-                            `${pendingLogs} pendientes` : 
-                            'Sincronizado'}
-                        <br>
-                        ${lastActivity}
-                    </div>
-                </div>
-            `;
-        }
+		async function loadLogs() {
+			try {
+				showLoading();
+				document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+				
+				const response = await fetch(LOGS_URL + '?t=' + Date.now(), {
+					headers: {
+						'Cache-Control': 'no-cache'
+					}
+				});
+				
+				// Verificar si el archivo existe
+				if (response.status === 404) {
+					console.log('Archivo logs.json no encontrado, creando estructura inicial...');
+					allLogs = [];
+					updateUIWithEmptyState();
+					showNotification('Archivo de logs no encontrado. Se creará con el primer registro.', 'info');
+					return;
+				}
+				
+				if (!response.ok && response.status !== 404) {
+					throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+				}
+				
+				// Intentar parsear el JSON
+				let logs = [];
+				try {
+					const text = await response.text();
+					if (text.trim()) {
+						logs = JSON.parse(text);
+					}
+				} catch (parseError) {
+					console.warn('Error parseando JSON, usando array vacío:', parseError);
+					logs = [];
+				}
+				
+				if (!Array.isArray(logs)) {
+					console.warn('Logs no es un array, convirtiendo...');
+					logs = [];
+				}
+				
+				allLogs = logs.reverse(); // Más recientes primero
+				
+				// Verificar si hay logs
+				if (allLogs.length === 0) {
+					updateUIWithEmptyState();
+					showNotification('No hay logs registrados aún', 'info');
+					return;
+				}
+				
+				// Actualizar UI con los logs
+				updateStats();
+				populateFilters();
+				renderTable();
+				createCharts();
+				
+				hideLoading();
+				
+				showNotification(`✅ ${allLogs.length} logs cargados correctamente`, 'success');
+				
+			} catch (error) {
+				console.error('Error cargando logs:', error);
+				hideLoading();
+				
+				// Intentar cargar logs locales como respaldo
+				try {
+					const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
+					const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
+					
+					allLogs = [...localLogs, ...pendingLogs].sort((a, b) => 
+						new Date(b.timestamp) - new Date(a.timestamp)
+					);
+					
+					if (allLogs.length > 0) {
+						updateStats();
+						populateFilters();
+						renderTable();
+						createCharts();
+						showNotification(`📂 Usando ${allLogs.length} logs locales (respaldo)`, 'warning');
+					} else {
+						updateUIWithEmptyState();
+						showNotification(`❌ Error: ${error.message}`, 'error');
+					}
+				} catch (localError) {
+					updateUIWithEmptyState();
+					showNotification(`❌ Error cargando logs: ${error.message}`, 'error');
+				}
+			} finally {
+				document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar Logs';
+			}
+		}
+
+		// Función auxiliar para mostrar estado vacío
+		function updateUIWithEmptyState() {
+			document.getElementById('emptyState').style.display = 'block';
+			document.getElementById('statsGrid').innerHTML = `
+				<div class="stat-card">
+					<div class="stat-label">Total de Logs</div>
+					<div class="stat-value">0</div>
+					<div>No hay registros</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-label">Estado</div>
+					<div class="stat-value" style="font-size: 32px;">⏳</div>
+					<div>Esperando actividad...</div>
+				</div>
+			`;
+			document.getElementById('logsTableBody').innerHTML = `
+				<tr>
+					<td colspan="7" style="text-align: center; padding: 40px; color: #6c757d;">
+						<i class="fas fa-database" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+						No hay logs disponibles. Los logs aparecerán aquí cuando los usuarios accedan al sistema.
+					</td>
+				</tr>
+			`;
+			document.getElementById('pagination').innerHTML = '';
+			hideLoading();
+		}
+
+
+
         
         // Llenar filtros con opciones dinámicas
         function populateFilters() {
