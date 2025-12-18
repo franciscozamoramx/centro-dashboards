@@ -544,5 +544,19 @@
     "language": "es-MX",
     "sessionId": "session_1766080262450_609saahxq",
     "referrer": "direct"
+  },
+  {
+    "id": "1766080284930_56bluo7s2",
+    "timestamp": "2025-12-18T17:51:24.930Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "dashboard_view",
+    "dashboard": "diccionario",
+    "dashboardName": "Diccionario KPI's",
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1766080262450_609saahxq",
+    "referrer": "direct"
   }
 ]
