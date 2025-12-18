@@ -115,5 +115,64 @@
     "device_summary": {
       "desktop": 2
     }
+  },
+  "2025-12-18-18": {
+    "hour": "2025-12-18-18",
+    "generated_at": "2025-12-18T18:23:32.283Z",
+    "total_logs_in_hour": 14,
+    "unique_users": 3,
+    "actions_summary": {
+      "login": 3,
+      "dashboard_view": 7,
+      "logout": 1,
+      "login_failed": 3
+    },
+    "device_summary": {
+      "desktop": 14
+    }
+  },
+  "2025-12-18-19": {
+    "hour": "2025-12-18-19",
+    "generated_at": "2025-12-18T19:14:41.164Z",
+    "total_logs_in_hour": 0,
+    "unique_users": 0,
+    "actions_summary": {},
+    "device_summary": {}
+  },
+  "2025-12-18-20": {
+    "hour": "2025-12-18-20",
+    "generated_at": "2025-12-18T20:16:04.500Z",
+    "total_logs_in_hour": 0,
+    "unique_users": 0,
+    "actions_summary": {},
+    "device_summary": {}
+  },
+  "2025-12-18-21": {
+    "hour": "2025-12-18-21",
+    "generated_at": "2025-12-18T21:13:46.147Z",
+    "total_logs_in_hour": 0,
+    "unique_users": 0,
+    "actions_summary": {},
+    "device_summary": {}
+  },
+  "2025-12-18-22": {
+    "hour": "2025-12-18-22",
+    "generated_at": "2025-12-18T22:14:43.415Z",
+    "total_logs_in_hour": 0,
+    "unique_users": 0,
+    "actions_summary": {},
+    "device_summary": {}
+  },
+  "2025-12-18-23": {
+    "hour": "2025-12-18-23",
+    "generated_at": "2025-12-18T23:15:01.558Z",
+    "total_logs_in_hour": 1,
+    "unique_users": 1,
+    "actions_summary": {
+      "logout": 1
+    },
+    "device_summary": {
+      "desktop": 1
+    }
   }
 }
