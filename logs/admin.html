@@ -889,6 +889,7 @@
     </div>
 
     <script>
+        // ==================== VARIABLES GLOBALES ====================
         // Variables globales
         let allLogs = [];
         let filteredLogs = [];
@@ -896,6 +897,9 @@
         const logsPerPage = 50;
         let charts = {};
         let autoRefreshInterval = null;
+        
+        // 🔧 SOLUCIÓN PERMANENTE AÑADIDA: Exponer variable globalmente desde el inicio
+        window.allLogs = allLogs; // Esta línea resuelve el error "window.allLogs is not defined"
         
         // Configuración GitHub
         const GITHUB_CONFIG = {
@@ -1438,8 +1442,12 @@
                 
                 allLogs = logs.reverse(); // Más recientes primero
                 
+                // 🔧 SOLUCIÓN PERMANENTE AÑADIDA: Actualizar variable global cuando se cargan logs
+                window.allLogs = allLogs; // Esta línea asegura que window.allLogs siempre esté actualizado
+                
                 // Para debugging
                 console.log('Logs cargados:', allLogs.length);
+                console.log('window.allLogs ahora disponible con', window.allLogs.length, 'logs');
                 if (allLogs.length > 0) {
                     console.log('Primer log:', allLogs[0]);
                     console.log('Último log:', allLogs[allLogs.length - 1]);
@@ -1474,6 +1482,9 @@
                     allLogs = [...localLogs, ...pendingLogs].sort((a, b) => 
                         new Date(b.timestamp) - new Date(a.timestamp)
                     );
+                    
+                    // 🔧 SOLUCIÓN PERMANENTE AÑADIDA: Actualizar variable global en caso de error también
+                    window.allLogs = allLogs;
                     
                     if (allLogs.length > 0) {
                         updateStats();
@@ -1974,21 +1985,25 @@
                 const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
                 const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
                 
-                if (localLogs.length === 0 && pendingLogs.length === 0) {
-                    showNotification('No hay logs locales almacenados', 'info');
-                    return;
-                }
-                
                 allLogs = [...localLogs, ...pendingLogs].sort((a, b) => 
                     new Date(b.timestamp) - new Date(a.timestamp)
                 );
                 
-                updateStats();
-                populateFilters();
-                renderTable();
-                createCharts();
+                // 🔧 SOLUCIÓN PERMANENTE AÑADIDA: Actualizar variable global
+                window.allLogs = allLogs;
                 
-                showNotification(`Cargados ${allLogs.length} logs locales`, 'success');
+                if (allLogs.length > 0) {
+                    updateStats();
+                    populateFilters();
+                    renderTable();
+                    createCharts();
+                    
+                    showNotification(`Cargados ${allLogs.length} logs locales`, 'success');
+                    
+                } else {
+                    showNotification('No hay logs locales almacenados', 'info');
+                    return;
+                }
                 
             } catch (error) {
                 showNotification('Error cargando logs locales: ' + error.message, 'error');
@@ -2109,6 +2124,8 @@
             console.log('\n2. ESTADO DE LOGS:');
             console.log('  - allLogs cargados:', allLogs.length);
             console.log('  - filteredLogs:', filteredLogs.length);
+            console.log('  - window.allLogs disponible:', window.allLogs ? 'SÍ ✅' : 'NO ❌');
+            console.log('  - window.allLogs.length:', window.allLogs ? window.allLogs.length : 'No definido');
             console.log('  - Primeros 3 logs:', allLogs.slice(0, 3).map(l => ({
                 timestamp: l.timestamp,
                 user: l.user,
@@ -2186,6 +2203,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Admin panel inicializado');
             console.log('Fecha actual:', new Date().toLocaleString());
+            console.log('window.allLogs definido:', window.allLogs ? 'SÍ ✅' : 'NO ❌');
             
             // Cargar logs al iniciar
             loadLogs();
