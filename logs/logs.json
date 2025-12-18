@@ -376,5 +376,47 @@
     "language": "es-MX",
     "sessionId": "session_1766077123677_3axz9fhmk",
     "referrer": "direct"
+  },
+  {
+    "id": "1766079535137_r8mms8o64",
+    "timestamp": "2025-12-18T17:38:55.137Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "login",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1766079535137_0211duijh",
+    "referrer": "direct"
+  },
+  {
+    "id": "1766079546234_zeccsewnm",
+    "timestamp": "2025-12-18T17:39:06.234Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "dashboard_view",
+    "dashboard": "adt",
+    "dashboardName": "ADT",
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1766079535137_0211duijh",
+    "referrer": "direct"
+  },
+  {
+    "id": "1766079557955_2ffbfc9c4",
+    "timestamp": "2025-12-18T17:39:17.955Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "dashboard_view",
+    "dashboard": "proyectos",
+    "dashboardName": "Proyectos BI",
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1766079535137_0211duijh",
+    "referrer": "direct"
   }
 ]
