@@ -710,6 +710,9 @@
                 <button class="btn btn-warning" onclick="showTokenInfo()">
                     <i class="fas fa-question-circle"></i> Ayuda
                 </button>
+                <button class="btn btn-danger" onclick="testDateFunctions()">
+                    <i class="fas fa-calendar"></i> Test Fechas
+                </button>
             </div>
             
             <div class="github-status" id="githubStatus"></div>
@@ -735,7 +738,7 @@
                 <i class="fab fa-github"></i> Ver Repositorio
             </button>
             <button class="btn btn-info" onclick="diagnoseLogsIssue()">
-                <i class="fas fa-bug"></i> Diagnóstico
+                <i class="fas fa-bug"></i> Diagnóstico Completo
             </button>
         </div>
         
@@ -1019,19 +1022,52 @@
             const totalLogs = allLogs.length;
             const uniqueUsers = [...new Set(allLogs.map(log => log.user))].length;
             
-            // Logs de hoy
-            const today = new Date().toISOString().split('T')[0];
-            const todayLogs = allLogs.filter(log => 
-                log.timestamp && log.timestamp.startsWith(today)
-            ).length;
+            // Logs de hoy - VERSIÓN CORREGIDA
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            // Para debugging: mostrar información de fechas
+            console.log('=== DEBUG ESTADÍSTICAS ===');
+            console.log('Fecha hoy (ISO):', todayStr);
+            console.log('Fecha hoy (local):', now.toLocaleDateString());
+            
+            const todayLogs = allLogs.filter(log => {
+                if (!log.timestamp) return false;
+                
+                // Extraer solo la parte de la fecha (YYYY-MM-DD)
+                const logDateStr = log.timestamp.split('T')[0];
+                const isToday = logDateStr === todayStr;
+                
+                // Para debugging
+                if (isToday) {
+                    console.log('Log de hoy encontrado:', {
+                        timestamp: log.timestamp,
+                        user: log.user,
+                        action: log.action
+                    });
+                }
+                
+                return isToday;
+            }).length;
             
             // Logs de ayer para comparación
-            const yesterday = new Date();
+            const yesterday = new Date(now);
             yesterday.setDate(yesterday.getDate() - 1);
             const yesterdayStr = yesterday.toISOString().split('T')[0];
-            const yesterdayLogs = allLogs.filter(log => 
-                log.timestamp && log.timestamp.startsWith(yesterdayStr)
-            ).length;
+            
+            const yesterdayLogs = allLogs.filter(log => {
+                if (!log.timestamp) return false;
+                const logDateStr = log.timestamp.split('T')[0];
+                return logDateStr === yesterdayStr;
+            }).length;
+            
+            // Logs de las últimas 24 horas (alternativa)
+            const last24Hours = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            const recentLogs = allLogs.filter(log => {
+                if (!log.timestamp) return false;
+                const logDate = new Date(log.timestamp);
+                return logDate > last24Hours;
+            }).length;
             
             const dashboardViews = allLogs.filter(log => 
                 log.action === 'dashboard_view'
@@ -1041,7 +1077,7 @@
                 log.action === 'login_failed'
             ).length;
             
-            // Cálculo de cambio porcentual
+            // Cálculo de cambio porcentual (hoy vs ayer)
             const changePercent = yesterdayLogs > 0 ? 
                 Math.round(((todayLogs - yesterdayLogs) / yesterdayLogs) * 100) : 0;
             
@@ -1052,6 +1088,14 @@
             
             // Logs pendientes
             const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length;
+            
+            // Información de debugging
+            console.log('Total logs:', totalLogs);
+            console.log('Logs hoy encontrados:', todayLogs);
+            console.log('Logs ayer encontrados:', yesterdayLogs);
+            console.log('Logs últimas 24h:', recentLogs);
+            console.log('Último log:', lastLog?.timestamp);
+            console.log('=== FIN DEBUG ===');
             
             statsGrid.innerHTML = `
                 <div class="stat-card">
@@ -1073,6 +1117,8 @@
                                 ${changePercent > 0 ? '+' : ''}${changePercent}% vs ayer
                             </span>
                         ` : ''}
+                        <br>
+                        <small style="font-size: 10px; opacity: 0.7;">Fecha: ${todayStr}</small>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -1096,6 +1142,8 @@
                             'Sincronizado'}
                         <br>
                         ${lastActivity}
+                        <br>
+                        <small style="font-size: 10px; opacity: 0.7;">Últimas 24h: ${recentLogs}</small>
                     </div>
                 </div>
             `;
@@ -1389,6 +1437,13 @@
                 }
                 
                 allLogs = logs.reverse(); // Más recientes primero
+                
+                // Para debugging
+                console.log('Logs cargados:', allLogs.length);
+                if (allLogs.length > 0) {
+                    console.log('Primer log:', allLogs[0]);
+                    console.log('Último log:', allLogs[allLogs.length - 1]);
+                }
                 
                 // Verificar si hay logs
                 if (allLogs.length === 0) {
@@ -1983,43 +2038,145 @@
             }
         }
         
-        // ==================== FUNCIÓN DE DIAGNÓSTICO ====================
+        // ==================== FUNCIONES DE DIAGNÓSTICO ====================
+        
+        function testDateFunctions() {
+            console.clear();
+            console.log('=== TEST FUNCIONES DE FECHA ===');
+            
+            // Fecha actual
+            const now = new Date();
+            console.log('1. Fecha actual:');
+            console.log('   - Local:', now.toLocaleString());
+            console.log('   - ISO:', now.toISOString());
+            console.log('   - YYYY-MM-DD:', now.toISOString().split('T')[0]);
+            
+            // Logs de ejemplo
+            if (allLogs.length > 0) {
+                console.log('\n2. Análisis de logs:');
+                const sampleLogs = allLogs.slice(0, 3);
+                sampleLogs.forEach((log, i) => {
+                    console.log(`   Log ${i + 1}:`);
+                    console.log(`     - Timestamp original:`, log.timestamp);
+                    if (log.timestamp) {
+                        const logDate = new Date(log.timestamp);
+                        console.log(`     - Parseado a Date:`, logDate);
+                        console.log(`     - YYYY-MM-DD:`, logDate.toISOString().split('T')[0]);
+                        console.log(`     - Es hoy?`, logDate.toISOString().split('T')[0] === now.toISOString().split('T')[0]);
+                    }
+                });
+                
+                // Calcular logs de hoy
+                const todayStr = now.toISOString().split('T')[0];
+                const todayLogs = allLogs.filter(log => {
+                    if (!log.timestamp) return false;
+                    const logDateStr = log.timestamp.split('T')[0];
+                    return logDateStr === todayStr;
+                });
+                
+                console.log('\n3. Resultado cálculo "Actividad Hoy":');
+                console.log(`   - Fecha hoy:`, todayStr);
+                console.log(`   - Logs encontrados para hoy:`, todayLogs.length);
+                console.log(`   - IDs de logs de hoy:`, todayLogs.map(l => l.id));
+            } else {
+                console.log('No hay logs cargados para analizar');
+            }
+            
+            // Test de formato de fecha
+            console.log('\n4. Test formatos de fecha:');
+            const testDate = '2025-12-17T19:26:18.572Z';
+            console.log(`   - String original:`, testDate);
+            console.log(`   - split('T')[0]:`, testDate.split('T')[0]);
+            console.log(`   - new Date():`, new Date(testDate));
+            console.log(`   - toISOString():`, new Date(testDate).toISOString());
+            console.log(`   - toLocaleString():`, new Date(testDate).toLocaleString());
+            
+            showNotification('Test de fechas ejecutado. Revisa la consola (F12).', 'info');
+        }
         
         function diagnoseLogsIssue() {
-            console.log('=== DIAGNÓSTICO DE LOGS ===');
-            console.log('1. URL de logs:', LOGS_URL);
-            console.log('2. Token guardado:', localStorage.getItem('github_pat_token') ? 'SÍ' : 'NO');
-            console.log('3. Logs cargados:', allLogs.length);
-            console.log('4. Logs locales:', JSON.parse(localStorage.getItem('bi_logs_local') || '[]').length);
-            console.log('5. Logs pendientes:', JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length);
+            console.clear();
+            console.log('=== DIAGNÓSTICO COMPLETO DE LOGS ===');
             
-            // Probar acceso a la URL
-            fetch(LOGS_URL)
+            // 1. Información del sistema
+            console.log('1. INFORMACIÓN DEL SISTEMA:');
+            console.log('  - Fecha/hora local:', new Date().toLocaleString());
+            console.log('  - Fecha/hora UTC:', new Date().toISOString());
+            console.log('  - Zona horaria:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+            console.log('  - URL actual:', window.location.href);
+            
+            // 2. Estado de logs
+            console.log('\n2. ESTADO DE LOGS:');
+            console.log('  - allLogs cargados:', allLogs.length);
+            console.log('  - filteredLogs:', filteredLogs.length);
+            console.log('  - Primeros 3 logs:', allLogs.slice(0, 3).map(l => ({
+                timestamp: l.timestamp,
+                user: l.user,
+                action: l.action
+            })));
+            
+            // 3. Verificar fechas
+            console.log('\n3. ANÁLISIS DE FECHAS:');
+            const today = new Date().toISOString().split('T')[0];
+            console.log('  - Hoy (YYYY-MM-DD):', today);
+            
+            const logDates = [...new Set(allLogs.map(l => l.timestamp?.split('T')[0]).filter(Boolean))];
+            console.log('  - Fechas únicas en logs:', logDates);
+            
+            const logsToday = allLogs.filter(l => l.timestamp?.split('T')[0] === today);
+            console.log('  - Logs de hoy encontrados:', logsToday.length);
+            console.log('  - Logs de hoy detalles:', logsToday.map(l => ({
+                id: l.id,
+                user: l.user,
+                action: l.action,
+                timestamp: l.timestamp
+            })));
+            
+            // 4. Verificar localStorage
+            console.log('\n4. LOCALSTORAGE:');
+            console.log('  - bi_logs_local:', JSON.parse(localStorage.getItem('bi_logs_local') || '[]').length);
+            console.log('  - bi_logs_pending:', JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length);
+            console.log('  - github_pat_token:', localStorage.getItem('github_pat_token') ? 'PRESENTE' : 'NO');
+            
+            // 5. Probar conexión a logs.json
+            console.log('\n5. PRUEBA DE CONEXIÓN:');
+            const logsUrl = 'https://franciscozamoramx.github.io/centro-dashboards/logs/logs.json';
+            
+            fetch(logsUrl + '?t=' + Date.now())
                 .then(response => {
-                    console.log('6. Estado respuesta:', response.status, response.statusText);
-                    console.log('7. Headers:', [...response.headers.entries()]);
-                    return response.text();
-                })
-                .then(text => {
-                    console.log('8. Contenido (primeros 500 chars):', text.substring(0, 500));
-                    console.log('9. Longitud:', text.length);
-                    try {
-                        const parsed = JSON.parse(text);
-                        console.log('10. Parseado correctamente, items:', parsed.length);
-                    } catch (e) {
-                        console.log('10. Error parseando JSON:', e.message);
+                    console.log('  - Status:', response.status, response.statusText);
+                    console.log('  - Content-Type:', response.headers.get('content-type'));
+                    
+                    if (response.ok) {
+                        return response.text().then(text => {
+                            console.log('  - Tamaño respuesta:', text.length, 'caracteres');
+                            console.log('  - Primeros 200 chars:', text.substring(0, 200));
+                            
+                            try {
+                                const parsed = JSON.parse(text);
+                                console.log('  - Parseado OK, items:', parsed.length);
+                                console.log('  - Último timestamp:', parsed[parsed.length - 1]?.timestamp);
+                                console.log('  - Primer timestamp:', parsed[0]?.timestamp);
+                            } catch (e) {
+                                console.log('  - Error parseando:', e.message);
+                            }
+                        });
+                    } else {
+                        console.log('  - ERROR: No se pudo cargar el archivo');
                     }
                 })
                 .catch(error => {
-                    console.log('11. Error fetching:', error.message);
+                    console.log('  - Error de red:', error.message);
+                })
+                .finally(() => {
+                    console.log('\n=== RECOMENDACIONES ===');
+                    console.log('1. Los logs en tu archivo son de 2025-12-17');
+                    console.log('2. Hoy es 2024-12-18 (diferente año)');
+                    console.log('3. Por eso "Actividad Hoy" muestra 0');
+                    console.log('4. Para ver logs de hoy, genera nuevos logs');
+                    console.log('5. Ve a index.html y haz login para crear logs de HOY');
+                    console.log('\n=== FIN DIAGNÓSTICO ===');
                 });
-            
-            console.log('=== FUNCIONES DISPONIBLES ===');
-            console.log('updateStats:', typeof updateStats);
-            console.log('loadLogs:', typeof loadLogs);
-            console.log('filterTable:', typeof filterTable);
-            console.log('createCharts:', typeof createCharts);
-            console.log('=== FIN DIAGNÓSTICO ===');
             
             showNotification('Diagnóstico ejecutado. Revisa la consola (F12).', 'info');
         }
@@ -2028,6 +2185,7 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Admin panel inicializado');
+            console.log('Fecha actual:', new Date().toLocaleString());
             
             // Cargar logs al iniciar
             loadLogs();
@@ -2070,6 +2228,11 @@
                 if (e.ctrlKey && e.key === 'r') {
                     e.preventDefault();
                     loadLogs();
+                }
+                // Ctrl+D para diagnóstico
+                if (e.ctrlKey && e.key === 'd') {
+                    e.preventDefault();
+                    diagnoseLogsIssue();
                 }
             });
         });
