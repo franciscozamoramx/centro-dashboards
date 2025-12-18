@@ -3,6 +3,7 @@
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Content-Type: application/json');
+header('Access-Control-Max-Age: 86400');
 
 // Configuración de GitHub
 define('GITHUB_OWNER', 'franciscozamoramx');
@@ -10,30 +11,51 @@ define('GITHUB_REPO', 'centro-dashboards');
 define('GITHUB_BRANCH', 'main');
 define('MAX_LOGS', 5000);
 
-// Token de GitHub (debes cambiarlo por tu token)
-define('GITHUB_TOKEN', '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');
+// Token de GitHub - SOLO VARIABLE DE ENTORNO
+define('GITHUB_TOKEN', getenv('GITHUB_TOKEN') ?: '');
+define('API_SECRET', getenv('API_SECRET') ?: '');
 
-// Validar seguridad
+// Validar seguridad mejorada
 function validateRequest() {
-    // Verificar método
+    // Manejo de preflight CORS
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        header('HTTP/1.1 200 OK');
+        header('HTTP/1.1 204 No Content');
         exit();
     }
     
+    // Solo POST permitido
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['error' => 'Método no permitido']);
         return false;
     }
     
-    // Validar origen (opcional)
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowed_origins = [
-        'https://franciscozamoramx.github.io',
-        'http://localhost'
-    ];
+    // Obtener datos
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
     
-    if (!in_array($origin, $allowed_origins) && !empty($origin)) {
+    if (!$data) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos JSON inválidos']);
         return false;
+    }
+    
+    // Verificar secreto de API
+    if (!isset($data['secret']) || $data['secret'] !== API_SECRET) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Acceso no autorizado']);
+        return false;
+    }
+    
+    // Validar origen si está configurado
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (getenv('ALLOWED_ORIGINS')) {
+        $allowed_origins = explode(',', getenv('ALLOWED_ORIGINS'));
+        if (!in_array($origin, $allowed_origins) && !empty($origin)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Origen no permitido']);
+            return false;
+        }
     }
     
     return true;
@@ -41,6 +63,10 @@ function validateRequest() {
 
 // Función para actualizar archivo en GitHub
 function updateGitHubFile($content) {
+    if (empty(GITHUB_TOKEN)) {
+        return ['error' => 'Token de GitHub no configurado'];
+    }
+    
     $fileUrl = 'https://api.github.com/repos/' . GITHUB_OWNER . '/' . GITHUB_REPO . '/contents/logs/logs.json';
     
     // Primero, obtener el SHA del archivo actual
@@ -92,9 +118,16 @@ function updateGitHubFile($content) {
     curl_close($ch);
     
     if ($httpCode === 200 || $httpCode === 201) {
-        return ['success' => true, 'sha' => json_decode($response, true)['commit']['sha']];
+        $responseData = json_decode($response, true);
+        return [
+            'success' => true, 
+            'sha' => $responseData['commit']['sha'] ?? null,
+            'commit_url' => $responseData['commit']['html_url'] ?? null
+        ];
     } else {
-        return ['error' => 'Error actualizando: ' . $httpCode . ' - ' . $response];
+        $errorData = json_decode($response, true);
+        $errorMsg = $errorData['message'] ?? 'Error desconocido';
+        return ['error' => 'Error actualizando: ' . $httpCode . ' - ' . $errorMsg];
     }
 }
 
@@ -110,8 +143,11 @@ function handleLogRequest() {
         return;
     }
     
-    // Validar datos requeridos
-    if (empty($data['user']) || empty($data['action'])) {
+    // Validar datos requeridos (removemos 'secret' de los datos del log)
+    $logData = $data;
+    unset($logData['secret']); // No guardar el secreto en los logs
+    
+    if (empty($logData['user']) || empty($logData['action'])) {
         http_response_code(400);
         echo json_encode(['error' => 'Datos incompletos: user y action son requeridos']);
         return;
@@ -120,17 +156,17 @@ function handleLogRequest() {
     // Crear entrada de log
     $logEntry = [
         'id' => uniqid(),
-        'timestamp' => $data['timestamp'] ?? date('c'),
-        'user' => $data['user'],
-        'action' => $data['action'],
-        'dashboard' => $data['dashboard'] ?? null,
-        'dashboardName' => $data['dashboardName'] ?? null,
-        'deviceType' => $data['deviceType'] ?? 'desktop',
-        'screen' => $data['screen'] ?? null,
+        'timestamp' => $logData['timestamp'] ?? date('c'),
+        'user' => $logData['user'],
+        'action' => $logData['action'],
+        'dashboard' => $logData['dashboard'] ?? null,
+        'dashboardName' => $logData['dashboardName'] ?? null,
+        'deviceType' => $logData['deviceType'] ?? 'desktop',
+        'screen' => $logData['screen'] ?? null,
         'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-        'language' => $data['language'] ?? null,
-        'sessionId' => $data['sessionId'] ?? null,
-        'referrer' => $data['referrer'] ?? null,
+        'language' => $logData['language'] ?? null,
+        'sessionId' => $logData['sessionId'] ?? null,
+        'referrer' => $logData['referrer'] ?? null,
         'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
         'server_time' => date('c')
     ];
@@ -170,7 +206,8 @@ function handleLogRequest() {
             'message' => 'Log guardado en GitHub',
             'id' => $logEntry['id'],
             'total_logs' => count($logs),
-            'commit_sha' => $result['sha']
+            'commit_sha' => $result['sha'],
+            'commit_url' => $result['commit_url'] ?? null
         ]);
     } else {
         http_response_code(500);
