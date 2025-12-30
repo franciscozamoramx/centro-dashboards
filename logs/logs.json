@@ -782,5 +782,19 @@
     "language": "es-MX",
     "sessionId": "session_1767126209506_bl7kd08z8",
     "referrer": "direct"
+  },
+  {
+    "id": "1767128111293_97qm36zxy",
+    "timestamp": "2025-12-30T20:55:11.293Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "dashboard_view",
+    "dashboard": "bigplayers",
+    "dashboardName": "Big Player's",
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767126209506_bl7kd08z8",
+    "referrer": "direct"
   }
 ]
