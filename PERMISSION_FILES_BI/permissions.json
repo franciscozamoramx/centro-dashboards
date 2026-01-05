@@ -20,6 +20,12 @@
         },
         "test_prueba@bigbola.com": {
             "dashboards": ["principal", "inventario"]
+        },
+        "javier.dominguez@bigbola.com": {
+            "dashboards": ["principal", "inventario"]
+        },
+        "emilio.quiros@bigbola.com": {
+            "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "promociones", "rtp", "diccionario"]
         }
     }
 }
