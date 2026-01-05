@@ -1356,5 +1356,61 @@
     "language": "es-MX",
     "sessionId": "session_1767645170502_5y0wktw70",
     "referrer": "direct"
+  },
+  {
+    "id": "1767645237792_zaf5b2lra",
+    "timestamp": "2026-01-05T20:33:57.792Z",
+    "user": "javier.dominguez@bigbola.com",
+    "action": "login",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767645237791_9ftoqzw9y",
+    "referrer": "direct"
+  },
+  {
+    "id": "1767645244142_ywalm27vf",
+    "timestamp": "2026-01-05T20:34:04.142Z",
+    "user": "javier.dominguez@bigbola.com",
+    "action": "logout",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767645237791_9ftoqzw9y",
+    "referrer": "direct"
+  },
+  {
+    "id": "1767645259020_4aid4xure",
+    "timestamp": "2026-01-05T20:34:19.020Z",
+    "user": "javier.dominguez@bigbola.com",
+    "action": "login",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767645259020_k7avml6av",
+    "referrer": "direct"
+  },
+  {
+    "id": "1767645265930_w4czrzau1",
+    "timestamp": "2026-01-05T20:34:25.930Z",
+    "user": "javier.dominguez@bigbola.com",
+    "action": "logout",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767645259020_k7avml6av",
+    "referrer": "direct"
   }
 ]
