@@ -22,7 +22,7 @@
             "dashboards": ["principal", "inventario"]
         },
         "test_prueba@bigbola.com": {
-            "dashboards": ["principal", "inventario, proyectos, diccionario"]
+            "dashboards": ["principal", "inventario", "proyectos", "diccionario"]
         }
     }
 }
