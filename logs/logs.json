@@ -1286,5 +1286,47 @@
     "language": "es-MX",
     "sessionId": "session_1767642063119_gjz91x6ll",
     "referrer": "direct"
+  },
+  {
+    "id": "1767644969651_9b74g4836",
+    "timestamp": "2026-01-05T20:29:29.651Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "login",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767644969651_e4uy55nq3",
+    "referrer": "direct"
+  },
+  {
+    "id": "1767644976294_it6ue8umm",
+    "timestamp": "2026-01-05T20:29:36.294Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "logout",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767644969651_e4uy55nq3",
+    "referrer": "direct"
+  },
+  {
+    "id": "1767644994956_p0ji8mtp6",
+    "timestamp": "2026-01-05T20:29:54.956Z",
+    "user": "test_prueba@bigbola.com",
+    "action": "login_failed",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767644969651_e4uy55nq3",
+    "referrer": "direct"
   }
 ]
