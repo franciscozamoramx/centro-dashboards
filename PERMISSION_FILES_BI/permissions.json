@@ -18,11 +18,8 @@
         "ruben.vargas@bigbola.com": {
             "dashboards": ["principal", "inventario"]
         },
-        "javier.dominguez@bigbola.com": {
-            "dashboards": ["principal", "inventario"]
-        },
         "test_prueba@bigbola.com": {
-            "dashboards": ["principal", "inventario", "proyectos", "diccionario"]
+            "dashboards": ["principal", "inventario"]
         }
     }
 }
