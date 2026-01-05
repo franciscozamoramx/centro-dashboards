@@ -796,5 +796,19 @@
     "language": "es-MX",
     "sessionId": "session_1767126209506_bl7kd08z8",
     "referrer": "direct"
+  },
+  {
+    "id": "1767636687447_me7mb4q37",
+    "timestamp": "2026-01-05T18:11:27.447Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "login",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767636687447_7org2lzra",
+    "referrer": "direct"
   }
 ]
