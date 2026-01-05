@@ -810,5 +810,33 @@
     "language": "es-MX",
     "sessionId": "session_1767636687447_7org2lzra",
     "referrer": "direct"
+  },
+  {
+    "id": "1767639499219_vaiw7yeu0",
+    "timestamp": "2026-01-05T18:58:19.219Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "login",
+    "dashboard": null,
+    "dashboardName": null,
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767639499219_z2dekvzql",
+    "referrer": "direct"
+  },
+  {
+    "id": "1767639506426_63d69h53z",
+    "timestamp": "2026-01-05T18:58:26.426Z",
+    "user": "francisco.zamora@bigbola.com",
+    "action": "dashboard_view",
+    "dashboard": "bigplayers",
+    "dashboardName": "Big Player's",
+    "deviceType": "desktop",
+    "screen": "1536x864",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "language": "es-MX",
+    "sessionId": "session_1767639499219_z2dekvzql",
+    "referrer": "direct"
   }
 ]
