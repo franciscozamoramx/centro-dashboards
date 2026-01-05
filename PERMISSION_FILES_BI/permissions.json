@@ -1,11 +1,11 @@
 {
     "users": {
         "francisco.zamora@bigbola.com": {
-            "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno","inventario", "proyectos", "promociones", "rtp", "diccionario"]
+            "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "proyectos", "promociones", "rtp", "diccionario"]
         },
         "guillermo.luna@bigbola.com": {
-            "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno","inventario", "proyectos", "promociones", "rtp", "diccionario"]
-		},
+            "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "proyectos", "promociones", "rtp", "diccionario"]
+        },
         "rafael.blanco@bigbola.com": {
             "dashboards": ["principal", "adt", "bigplayers", "promociones", "diccionario"]
         },
