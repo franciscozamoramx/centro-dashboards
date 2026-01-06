@@ -13,7 +13,7 @@
             "dashboards": ["principal", "adt", "bigplayers", "desempeno", "rtp", "diccionario"]
         },
         "edgar.delatorre@bigbola.com": {
-            "dashboards": ["principal", "auditoria", "promociones"]
+            "dashboards": ["principal", "auditoria", "promociones", "seguimiento_auditores"]
         },
         "ruben.vargas@bigbola.com": {
             "dashboards": ["principal", "inventario"]
