@@ -7,13 +7,13 @@
             "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "proyectos", "promociones", "rtp", "diccionario"]
         },
         "rafael.blanco@bigbola.com": {
-            "dashboards": ["principal", "adt", "bigplayers", "promociones", "diccionario"]
+            "dashboards": ["principal", "adt", "diccionario"]
         },
         "renato.delapena@bigbola.com": {
-            "dashboards": ["principal", "adt", "bigplayers", "desempeno", "rtp", "diccionario"]
+            "dashboards": ["principal", "adt", "desempeno", "rtp", "diccionario"]
         },
         "edgar.delatorre@bigbola.com": {
-            "dashboards": ["principal", "auditoria", "promociones", "seguimiento_auditores"]
+            "dashboards": ["principal", "auditoria", "seguimiento_auditores"]
         },
         "ruben.vargas@bigbola.com": {
             "dashboards": ["principal", "inventario"]
@@ -25,7 +25,7 @@
             "dashboards": ["principal", "inventario"]
         },
         "emilio.quiros@bigbola.com": {
-            "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "promociones", "rtp", "diccionario"]
+            "dashboards": ["principal", "adt", "auditoria", "desempeno", "promociones", "rtp", "diccionario"]
         }
     }
 }
