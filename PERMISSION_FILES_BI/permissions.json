@@ -25,7 +25,7 @@
             "dashboards": ["principal", "inventario"]
         },
         "emilio.quiros@bigbola.com": {
-            "dashboards": ["principal", "adt", "auditoria", "desempeno", "promociones", "rtp", "diccionario"]
+            "dashboards": ["principal", "adt", "auditoria", "desempeno", "rtp", "diccionario"]
         }
     }
 }
