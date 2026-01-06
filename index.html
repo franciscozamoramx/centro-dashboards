@@ -201,7 +201,7 @@
             "proyectos": "https://app.powerbi.com/reportEmbed?reportId=c2e5834e-4e3d-418c-a9dc-43e33d79a62e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "rtp": "https://app.powerbi.com/reportEmbed?reportId=01ac285e-618f-43de-be89-d62b1a46374c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "diccionario": "https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-			"seguimiento_auditores": "https://app.powerbi.com/reportEmbed?reportId=f298656f-f4fb-4110-9580-321f04c0cfd6&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"
+            "seguimiento_auditores": "https://app.powerbi.com/reportEmbed?reportId=f298656f-f4fb-4110-9580-321f04c0cfd6&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"
         };
 
         // Mapeo de nombres de dashboards
@@ -218,7 +218,7 @@
             "diccionario": "Diccionario KPI's",
             "incidencias_calor": "Incidencias Calor",
             "incidencias_pie": "Incidencias Pie",
-			"seguimiento_auditores": "Seguimiento de Auditores"
+            "seguimiento_auditores": "Seguimiento de Auditores"
         };
 
         // Mapeo de íconos para dashboards
@@ -241,15 +241,14 @@
         const LOGGING_ENABLED = true;
         let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-        // Configuración de GitHub
-        const GITHUB_CONFIG = {
-            owner: 'franciscozamoramx',
-            repo: 'centro-dashboards',
-            branch: 'main'
-        };
+        // URL de tu Cloudflare Worker
+        const CLOUDFLARE_WORKER_URL = 'https://bi-log-handler.francisco-zamora.workers.dev';
+        
+        // Clave secreta para autenticación
+        const LOG_SECRET = 'Centro-BI-Dashboards-Secret-2024-9876!';
 
-        // Clase para manejar logging en GitHub
-        class GitHubLogger {
+        // Clase para manejar logging en Cloudflare
+        class CloudflareLogger {
             constructor() {
                 this.pendingLogs = [];
                 this.isOnline = navigator.onLine;
@@ -294,14 +293,13 @@
                 // 1. Guardar en localStorage
                 this.saveToLocalStorage(logEntry);
                 
-                // 2. Intentar enviar a GitHub
-                const token = localStorage.getItem('github_pat_token');
-                if (token && this.isOnline) {
+                // 2. Intentar enviar a Cloudflare Worker
+                if (this.isOnline) {
                     try {
-                        await this.sendToGitHub(logEntry, token);
-                        console.log('✅ Log enviado a GitHub:', action);
+                        await this.sendToCloudflare(logEntry);
+                        console.log('✅ Log enviado a Cloudflare:', action);
                     } catch (error) {
-                        console.warn('⚠️ Error enviando a GitHub, guardando como pendiente:', error);
+                        console.warn('⚠️ Error enviando a Cloudflare, guardando como pendiente:', error);
                         this.saveAsPending(logEntry);
                     }
                 } else {
@@ -310,6 +308,48 @@
                 }
                 
                 return logEntry;
+            }
+            
+            // Enviar log a Cloudflare Worker
+            async sendToCloudflare(logEntry) {
+                try {
+                    // Añadir secreto de seguridad
+                    const payload = {
+                        ...logEntry,
+                        secret: LOG_SECRET
+                    };
+                    
+                    const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Error del worker:', response.status, errorText);
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('✅ Log enviado exitosamente:', {
+                            action: logEntry.action,
+                            id: result.logId,
+                            user: logEntry.user
+                        });
+                        return true;
+                    } else {
+                        throw new Error(result.error || 'Error del servidor');
+                    }
+                    
+                } catch (error) {
+                    console.warn('⚠️ Error enviando log a Cloudflare:', error.message);
+                    throw error;
+                }
             }
             
             // Guardar en localStorage
@@ -353,54 +393,9 @@
                 }
             }
             
-			// En index.html, dentro de la clase GitHubLogger
-			// En index.html, dentro de la clase GitHubLogger
-			async sendToGitHub(logEntry, token) {
-				try {
-					// Añadir secreto de seguridad - DEBE COINCIDIR CON VERCEL
-					logEntry.secret = 'Centro-BI-Dashboards-Secret-2024-9876!';
-					
-					// Usar el endpoint PHP en Vercel
-					const response = await fetch('https://centro-dashboards.vercel.app/update-log.php', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify(logEntry)
-					});
-					
-					if (!response.ok) {
-						const errorText = await response.text();
-						console.error('Error del servidor:', response.status, errorText);
-						throw new Error(`Error: ${response.status}`);
-					}
-					
-					const result = await response.json();
-					
-					if (result.success) {
-						console.log('✅ Log enviado exitosamente:', {
-							action: logEntry.action,
-							id: result.id,
-							commit: result.commit_url ? 'Ver commit' : 'No commit URL'
-						});
-						return true;
-					} else {
-						throw new Error(result.error || 'Error desconocido del servidor');
-					}
-					
-				} catch (error) {
-					console.warn('⚠️ Error enviando log a GitHub:', error.message);
-					throw error;
-				}
-			}
-
-
-
-						
             // Enviar logs pendientes
             async flushPendingLogs() {
-                const token = localStorage.getItem('github_pat_token');
-                if (!token || !this.isOnline) return;
+                if (!this.isOnline) return;
                 
                 try {
                     const pendingKey = 'bi_logs_pending';
@@ -410,69 +405,45 @@
                     
                     console.log(`🔄 Enviando ${pending.length} logs pendientes...`);
                     
-                    // Leer logs actuales
-                    const fileUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/logs/logs.json`;
-                    const response = await fetch(fileUrl, {
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Accept': 'application/vnd.github.v3+json'
+                    // Enviar cada log pendiente
+                    const successfulLogs = [];
+                    
+                    for (const log of pending) {
+                        try {
+                            // Preparar payload
+                            const payload = {
+                                ...log,
+                                secret: LOG_SECRET,
+                                isPending: true,
+                                originalTimestamp: log.timestamp
+                            };
+                            
+                            // Enviar a Cloudflare
+                            const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            
+                            if (response.ok) {
+                                successfulLogs.push(log.id);
+                            }
+                            
+                            // Pequeña pausa entre envíos
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            
+                        } catch (error) {
+                            console.warn('Error enviando log pendiente:', error);
                         }
-                    });
-                    
-                    if (!response.ok && response.status !== 404) return;
-                    
-                    let currentContent = '[]';
-                    let sha = null;
-                    
-                    if (response.ok) {
-                        const fileData = await response.json();
-                        currentContent = atob(fileData.content);
-                        sha = fileData.sha;
                     }
                     
-                    // Parsear logs existentes
-                    let logs = JSON.parse(currentContent || '[]');
-                    
-                    // Agregar todos los pendientes
-                    const logsToAdd = pending.map(p => ({
-                        id: p.id,
-                        timestamp: p.timestamp,
-                        user: p.user,
-                        action: p.action,
-                        dashboard: p.dashboard,
-                        dashboardName: p.dashboardName,
-                        deviceType: p.deviceType,
-                        screen: p.screen,
-                        userAgent: p.userAgent,
-                        language: p.language,
-                        sessionId: p.sessionId,
-                        referrer: p.referrer
-                    }));
-                    
-                    logs.push(...logsToAdd);
-                    
-                    // Limitar y guardar
-                    const trimmedLogs = logs.slice(-5000);
-                    
-                    const updateResponse = await fetch(fileUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/vnd.github.v3+json'
-                        },
-                        body: JSON.stringify({
-                            message: `🔄 Sincronizar ${logsToAdd.length} logs pendientes`,
-                            content: btoa(JSON.stringify(trimmedLogs, null, 2)),
-                            sha: sha,
-                            branch: GITHUB_CONFIG.branch
-                        })
-                    });
-                    
-                    if (updateResponse.ok) {
-                        // Limpiar pendientes
-                        localStorage.removeItem(pendingKey);
-                        console.log(`✅ ${logsToAdd.length} logs sincronizados`);
+                    // Eliminar logs exitosos
+                    if (successfulLogs.length > 0) {
+                        const remaining = pending.filter(log => !successfulLogs.includes(log.id));
+                        localStorage.setItem(pendingKey, JSON.stringify(remaining));
+                        console.log(`✅ ${successfulLogs.length} logs sincronizados`);
                     }
                     
                 } catch (error) {
@@ -532,7 +503,7 @@
         }
 
         // Instancia global del logger
-        const gitHubLogger = new GitHubLogger();
+        const cloudflareLogger = new CloudflareLogger();
 
         // Permisos por defecto
         const defaultPermissions = {
@@ -671,13 +642,13 @@
             window.addEventListener('message', function(event) {
                 if (event.data && event.data.type === 'log_dashboard_view') {
                     // Registrar acceso desde la ventana del dashboard
-                    gitHubLogger.log('dashboard_view', event.data.dashboardKey, event.data.user);
+                    cloudflareLogger.log('dashboard_view', event.data.dashboardKey, event.data.user);
                     console.log('📊 Log recibido desde dashboard:', event.data.dashboardKey);
                 }
                 
                 if (event.data && event.data.type === 'logout') {
                     // Registrar logout desde la ventana del dashboard
-                    gitHubLogger.log('logout', null, event.data.user);
+                    cloudflareLogger.log('logout', null, event.data.user);
                     console.log('🚪 Logout recibido desde dashboard');
                 }
             });
@@ -765,7 +736,7 @@
                 currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
                 // Registrar inicio de sesión
-                gitHubLogger.log('login', null, currentUser);
+                cloudflareLogger.log('login', null, currentUser);
                 
                 // Mostrar información breve
                 document.getElementById('userEmail').textContent = email;
@@ -787,7 +758,7 @@
                 
             } else {
                 // Registrar intento fallido de login
-                gitHubLogger.log('login_failed', null, email);
+                cloudflareLogger.log('login_failed', null, email);
                 
                 showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
             }
@@ -1161,7 +1132,7 @@
                 mobileIframe.style.opacity = '0.3';
                 
                 // Registrar acceso
-                gitHubLogger.log('dashboard_view', dashboardKey, currentUser);
+                cloudflareLogger.log('dashboard_view', dashboardKey, currentUser);
                 
                 // Cargar el dashboard
                 mobileIframe.src = dashboardUrl;
@@ -1203,7 +1174,7 @@
             
             mobileExitBtn.addEventListener('click', function() {
                 if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                    gitHubLogger.log('logout', null, currentUser);
+                    cloudflareLogger.log('logout', null, currentUser);
                     setTimeout(() => {
                         window.location.reload();
                     }, 500);
