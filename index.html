@@ -187,13 +187,16 @@
             <p>Dashboards disponibles: <span id="dashboardsCount"></span></p>
         </div>
         
-        <!-- Botones de debugging (solo para desarrollo) -->
+        <!-- Botones de debugging -->
         <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px;">
             <button class="btn" onclick="testLoggingSystem()" style="background: #28a745; font-size: 14px; padding: 8px 15px;">
-                <i class="fas fa-bug"></i> Test Logging
+                <i class="fas fa-vial"></i> Test JSON Bin
             </button>
             <button class="btn" onclick="exportLocalLogs()" style="background: #17a2b8; font-size: 14px; padding: 8px 15px;">
                 <i class="fas fa-download"></i> Exportar Logs
+            </button>
+            <button class="btn" onclick="clearLocalLogs()" style="background: #dc3545; font-size: 14px; padding: 8px 15px;">
+                <i class="fas fa-trash"></i> Limpiar Logs
             </button>
         </div>
     </div>
@@ -244,25 +247,33 @@
             "seguimiento_auditores": "fas fa-user-check"
         };
 
-        // ==================== CONFIGURACIÓN DE LOGGING CON GOOGLE SHEETS ====================
-        const LOGGING_ENABLED = true;
+        // ==================== CONFIGURACIÓN JSON BIN ====================
+        // ¡TUS DATOS DE JSON BIN AQUÍ!
+        const JSONBIN_CONFIG = {
+            binId: '695eb0fa43b1c97be9202083',  // Tu Bin ID
+            apiKey: '$2a$10$Q2mmI4NtUHoBmT/Rw.nYl.qIe8aalH.eNDYex15.RQEKqqID/Th8K', // Tu API Key
+            appName: 'Centro BI Big Bola'
+        };
+
         let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-        // URL de tu Google Apps Script - ACTUALIZADA CON TU NUEVA URL
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzt-MuORBFOHhfassIPTzJuWsioHI3UhnmvZGk1JXNoaxa45EmojbcAaTaJ76zcbtgf/exec";
-
-        // Clase mejorada para manejar logging con Google Sheets
-        class GoogleSheetsLogger {
+        // Clase para JSON Bin Logger
+        class JSONBinLogger {
             constructor() {
                 this.pendingLogs = [];
                 this.isOnline = navigator.onLine;
+                this.logs = [];
                 this.init();
             }
             
             init() {
-                console.log('📝 Inicializando sistema de logging...');
+                console.log('📝 Inicializando JSON Bin Logger');
                 
-                // Detectar cambios de conexión
+                // Cargar logs locales
+                this.loadLocalLogs();
+                this.loadPendingLogs();
+                
+                // Detectar conexión
                 window.addEventListener('online', () => {
                     console.log('🌐 Conexión restaurada');
                     this.isOnline = true;
@@ -274,39 +285,119 @@
                     this.isOnline = false;
                 });
                 
-                // Intentar enviar pendientes cada 30 segundos
+                // Sincronizar cada 30 segundos
                 setInterval(() => this.flushPendingLogs(), 30000);
                 
-                // Test inicial
-                this.testConnection();
+                console.log('✅ JSON Bin Logger inicializado');
+            }
+            
+            // Cargar logs locales
+            loadLocalLogs() {
+                try {
+                    const saved = localStorage.getItem('centrobi_logs');
+                    if (saved) {
+                        this.logs = JSON.parse(saved);
+                        console.log(`📂 Cargados ${this.logs.length} logs locales`);
+                    }
+                } catch (error) {
+                    console.error('Error cargando logs locales:', error);
+                    this.logs = [];
+                }
+            }
+            
+            // Guardar logs locales
+            saveLocalLogs() {
+                try {
+                    localStorage.setItem('centrobi_logs', JSON.stringify(this.logs));
+                } catch (error) {
+                    console.error('Error guardando logs locales:', error);
+                }
+            }
+            
+            // Guardar logs pendientes en localStorage
+            savePendingLogs() {
+                try {
+                    if (this.pendingLogs.length > 100) {
+                        this.pendingLogs = this.pendingLogs.slice(-100);
+                    }
+                    localStorage.setItem('centrobi_pending_logs', JSON.stringify(this.pendingLogs));
+                } catch (error) {
+                    console.error('Error guardando pendientes:', error);
+                }
+            }
+            
+            // Cargar logs pendientes
+            loadPendingLogs() {
+                try {
+                    const saved = localStorage.getItem('centrobi_pending_logs');
+                    if (saved) {
+                        this.pendingLogs = JSON.parse(saved);
+                        console.log(`📦 Cargados ${this.pendingLogs.length} logs pendientes`);
+                    }
+                } catch (error) {
+                    console.error('Error cargando pendientes:', error);
+                    this.pendingLogs = [];
+                }
             }
             
             // Test de conexión
             async testConnection() {
+                console.log('🔗 Probando conexión con JSON Bin...');
+                
+                if (!JSONBIN_CONFIG.binId || !JSONBIN_CONFIG.apiKey) {
+                    console.warn('⚠️ JSON Bin no configurado');
+                    return {
+                        status: 'ERROR',
+                        message: 'Falta configurar Bin ID o API Key'
+                    };
+                }
+                
                 try {
-                    const response = await fetch(GOOGLE_SCRIPT_URL + '?test=' + Date.now());
-                    const data = await response.json();
-                    console.log('✅ Conexión con Google Sheets establecida:', data);
-                    return data;
+                    const url = `https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`;
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Master-Key': JSONBIN_CONFIG.apiKey
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ Conexión exitosa con JSON Bin:', data);
+                        return {
+                            status: 'SUCCESS',
+                            message: 'Conectado a JSON Bin',
+                            record: data.record,
+                            metadata: data.metadata
+                        };
+                    } else {
+                        console.warn('⚠️ Error en respuesta:', response.status);
+                        return {
+                            status: 'ERROR',
+                            message: `Error ${response.status}: ${response.statusText}`
+                        };
+                    }
+                    
                 } catch (error) {
-                    console.warn('⚠️ No se pudo conectar con Google Sheets:', error);
-                    return null;
+                    console.error('❌ Error de conexión:', error);
+                    return {
+                        status: 'ERROR',
+                        message: error.message
+                    };
                 }
             }
             
-            // Registrar un evento - VERSIÓN MEJORADA
+            // Registrar un evento
             async log(action, dashboard = null, user = null) {
                 const logEntry = {
+                    id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     timestamp: new Date().toISOString(),
                     user: user || currentUser || 'anonymous',
                     action: action,
                     dashboard: dashboard,
-                    dashboardName: dashboard ? dashboardNames[dashboard] : null,
-                    deviceType: isMobileDevice() ? 'mobile' : 'desktop',
-                    screen: `${window.screen.width}x${window.screen.height}`,
-                    userAgent: navigator.userAgent,
+                    dashboardName: dashboard ? (dashboardNames[dashboard] || dashboard) : null,
                     sessionId: currentSessionId,
-                    secret: 'Centro-BI-Dashboards-Secret-2024-9876!',
+                    device: isMobileDevice() ? 'mobile' : 'desktop',
+                    screen: `${window.screen.width}x${window.screen.height}`,
                     source: 'centro_bi_bigbola'
                 };
                 
@@ -317,187 +408,163 @@
                     session: currentSessionId
                 });
                 
-                // 1. Guardar en localStorage como respaldo
-                this.saveToLocalStorage(logEntry);
+                // 1. Agregar a logs locales
+                this.logs.push(logEntry);
+                if (this.logs.length > 1000) {
+                    this.logs = this.logs.slice(-1000);
+                }
+                this.saveLocalLogs();
                 
-                // 2. Intentar enviar al servidor si hay conexión
-                if (this.isOnline && LOGGING_ENABLED) {
-                    const sent = await this.trySendToServer(logEntry);
+                // 2. Intentar enviar a JSON Bin si hay conexión
+                if (this.isOnline && JSONBIN_CONFIG.binId && JSONBIN_CONFIG.apiKey) {
+                    const sent = await this.sendToJSONBin(logEntry);
                     if (!sent) {
-                        // Si falla, guardar como pendiente
-                        console.warn('⚠️ No se pudo enviar, guardando como pendiente');
-                        this.saveAsPending(logEntry);
+                        console.log('📦 No se pudo enviar, guardando como pendiente');
+                        this.pendingLogs.push(logEntry);
+                        this.savePendingLogs();
                     } else {
-                        console.log('✅ Log enviado exitosamente');
+                        console.log('✅ Log enviado a JSON Bin');
                     }
                 } else {
-                    // Sin conexión, guardar como pendiente
-                    console.log('📦 Sin conexión, guardando como pendiente');
-                    this.saveAsPending(logEntry);
+                    console.log('📦 Sin conexión o JSON Bin no configurado, guardando como pendiente');
+                    this.pendingLogs.push(logEntry);
+                    this.savePendingLogs();
                 }
                 
                 return logEntry;
             }
             
-            // Intentar enviar al servidor - VERSIÓN ROBUSTA
-            async trySendToServer(logEntry) {
+            // Enviar un log a JSON Bin
+            async sendToJSONBin(logEntry) {
+                if (!JSONBIN_CONFIG.binId || !JSONBIN_CONFIG.apiKey) {
+                    console.warn('JSON Bin no configurado');
+                    return false;
+                }
+                
                 try {
-                    console.log('📤 Enviando log a Google Sheets...');
-                    
-                    // Método 1: Enviar como JSON normal
-                    let response = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
+                    // Primero obtener el bin actual
+                    const getUrl = `https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`;
+                    const getResponse = await fetch(getUrl, {
                         headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(logEntry)
+                            'X-Master-Key': JSONBIN_CONFIG.apiKey
+                        }
                     });
                     
-                    // Si falla con JSON, intentar con FormData
-                    if (!response.ok) {
-                        console.log('⚠️ Falló JSON, intentando FormData...');
-                        
-                        const formData = new FormData();
-                        formData.append('data', JSON.stringify(logEntry));
-                        
-                        response = await fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            body: formData
-                        });
+                    if (!getResponse.ok) {
+                        console.warn('Error obteniendo bin:', getResponse.status);
+                        return false;
                     }
                     
-                    if (response.ok) {
-                        try {
-                            const result = await response.json();
-                            console.log('✅ Respuesta del servidor:', result);
-                            return true;
-                        } catch (jsonError) {
-                            console.log('✅ Log enviado (respuesta no JSON)');
-                            return true;
-                        }
+                    const binData = await getResponse.json();
+                    let currentData = binData.record;
+                    
+                    // Si no hay datos, crear estructura inicial
+                    if (!currentData) {
+                        currentData = {
+                            app: JSONBIN_CONFIG.appName,
+                            created: new Date().toISOString(),
+                            logs: []
+                        };
+                    }
+                    
+                    // Asegurar que logs sea un array
+                    if (!Array.isArray(currentData.logs)) {
+                        currentData.logs = [];
+                    }
+                    
+                    // Agregar el nuevo log
+                    currentData.logs.push(logEntry);
+                    currentData.lastUpdate = new Date().toISOString();
+                    currentData.totalLogs = currentData.logs.length;
+                    
+                    // Guardar de vuelta en JSON Bin
+                    const putUrl = `https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`;
+                    const putResponse = await fetch(putUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': JSONBIN_CONFIG.apiKey,
+                            'X-Bin-Name': 'Centro BI Logs'
+                        },
+                        body: JSON.stringify(currentData)
+                    });
+                    
+                    if (putResponse.ok) {
+                        console.log('✅ Log enviado a JSON Bin');
+                        return true;
                     } else {
-                        console.warn('❌ Error del servidor:', response.status, response.statusText);
+                        const errorText = await putResponse.text();
+                        console.warn('Error guardando en JSON Bin:', putResponse.status, errorText);
                         return false;
                     }
                     
                 } catch (error) {
-                    console.error('❌ Error enviando log:', error.message);
+                    console.error('❌ Error enviando a JSON Bin:', error);
                     return false;
                 }
             }
             
-            // Guardar en localStorage
-            saveToLocalStorage(logEntry) {
-                try {
-                    const key = 'bi_logs_local';
-                    let logs = JSON.parse(localStorage.getItem(key) || '[]');
-                    logs.push(logEntry);
-                    
-                    // Mantener solo últimos 200 logs
-                    if (logs.length > 200) {
-                        logs = logs.slice(-200);
-                    }
-                    
-                    localStorage.setItem(key, JSON.stringify(logs));
-                    console.log('💾 Log guardado localmente. Total:', logs.length);
-                } catch (error) {
-                    console.error('Error guardando localmente:', error);
-                }
-            }
-            
-            // Guardar como pendiente
-            saveAsPending(logEntry) {
-                try {
-                    const key = 'bi_logs_pending';
-                    let pending = JSON.parse(localStorage.getItem(key) || '[]');
-                    
-                    pending.push({
-                        ...logEntry,
-                        retries: 0,
-                        lastTry: null,
-                        addedAt: new Date().toISOString()
-                    });
-                    
-                    // Mantener solo últimos 100 pendientes
-                    if (pending.length > 100) {
-                        pending = pending.slice(-100);
-                    }
-                    
-                    localStorage.setItem(key, JSON.stringify(pending));
-                    console.log('📦 Log guardado como pendiente. Total pendientes:', pending.length);
-                } catch (error) {
-                    console.error('Error guardando pendiente:', error);
-                }
-            }
-            
-            // Enviar logs pendientes
+            // Sincronizar logs pendientes
             async flushPendingLogs() {
-                if (!this.isOnline || !LOGGING_ENABLED) return;
+                if (!this.isOnline || this.pendingLogs.length === 0) return;
                 
-                try {
-                    const pendingKey = 'bi_logs_pending';
-                    let pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
-                    
-                    if (pending.length === 0) return;
-                    
-                    console.log(`🔄 Sincronizando ${pending.length} logs pendientes...`);
-                    
-                    const successfulLogs = [];
-                    const failedLogs = [];
-                    
-                    for (const log of pending) {
-                        try {
-                            const sent = await this.trySendToServer(log);
-                            
-                            if (sent) {
-                                successfulLogs.push(log.timestamp);
-                            } else {
-                                failedLogs.push(log.timestamp);
-                            }
-                            
-                            // Pequeña pausa para no saturar
-                            await new Promise(resolve => setTimeout(resolve, 300));
-                            
-                        } catch (error) {
-                            console.warn('Error enviando log pendiente:', error);
-                            failedLogs.push(log.timestamp);
+                console.log(`🔄 Sincronizando ${this.pendingLogs.length} logs pendientes...`);
+                
+                const failedLogs = [];
+                let successCount = 0;
+                
+                for (const log of this.pendingLogs) {
+                    try {
+                        const sent = await this.sendToJSONBin(log);
+                        if (sent) {
+                            successCount++;
+                        } else {
+                            failedLogs.push(log);
                         }
+                        await new Promise(resolve => setTimeout(resolve, 100)); // Pequeña pausa
+                    } catch (error) {
+                        console.warn('Error sincronizando log:', error);
+                        failedLogs.push(log);
                     }
-                    
-                    // Actualizar lista de pendientes
-                    const remaining = pending.filter(log => failedLogs.includes(log.timestamp));
-                    localStorage.setItem(pendingKey, JSON.stringify(remaining));
-                    
-                    console.log(`✅ ${successfulLogs.length} logs sincronizados`);
-                    console.log(`❌ ${failedLogs.length} logs fallaron`);
-                    
-                } catch (error) {
-                    console.error('Error en sincronización:', error);
                 }
+                
+                // Actualizar lista de pendientes
+                this.pendingLogs = failedLogs;
+                this.savePendingLogs();
+                
+                console.log(`✅ ${successCount} logs sincronizados`);
+                console.log(`❌ ${failedLogs.length} logs fallaron`);
+                
+                return { success: successCount, failed: failedLogs.length };
             }
             
-            // Exportar logs locales (para debugging)
+            // Exportar logs locales
             exportLocalLogs() {
                 try {
-                    const localKey = 'bi_logs_local';
-                    const pendingKey = 'bi_logs_pending';
-                    
-                    const localLogs = JSON.parse(localStorage.getItem(localKey) || '[]');
-                    const pendingLogs = JSON.parse(localStorage.getItem(pendingKey) || '[]');
-                    
-                    const allLogs = [...localLogs, ...pendingLogs];
+                    const allLogs = [...this.logs, ...this.pendingLogs];
                     
                     if (allLogs.length === 0) {
-                        alert('No hay logs locales para exportar');
+                        alert('No hay logs para exportar');
                         return;
                     }
                     
                     // Crear CSV
-                    let csv = 'Timestamp,Usuario,Acción,Dashboard,SessionID,Estado\n';
+                    let csv = 'ID,Fecha,Hora,Usuario,Acción,Dashboard,Sesión,Dispositivo,Estado\n';
                     
                     allLogs.forEach(log => {
-                        const estado = pendingLogs.some(p => p.timestamp === log.timestamp) ? 'PENDIENTE' : 'ENVIADO';
-                        csv += `"${log.timestamp}","${log.user}","${log.action}","${log.dashboard || ''}","${log.sessionId}","${estado}"\n`;
+                        const date = new Date(log.timestamp);
+                        const isPending = this.pendingLogs.some(p => p.id === log.id);
+                        
+                        csv += `"${log.id}",`;
+                        csv += `"${date.toLocaleDateString('es-MX')}",`;
+                        csv += `"${date.toLocaleTimeString('es-MX')}",`;
+                        csv += `"${log.user}",`;
+                        csv += `"${log.action}",`;
+                        csv += `"${log.dashboardName || log.dashboard || ''}",`;
+                        csv += `"${log.sessionId}",`;
+                        csv += `"${log.device}",`;
+                        csv += `"${isPending ? 'PENDIENTE' : 'LOCAL'}"`;
+                        csv += '\n';
                     });
                     
                     // Descargar
@@ -505,53 +572,54 @@
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `bi-logs-${new Date().toISOString().split('T')[0]}.csv`;
+                    link.download = `centro-bi-logs-${new Date().toISOString().split('T')[0]}.csv`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     URL.revokeObjectURL(url);
                     
                     console.log(`📥 Exportados ${allLogs.length} logs`);
-                    alert(`Exportados ${allLogs.length} logs`);
+                    alert(`✅ Exportados ${allLogs.length} logs`);
                     
                 } catch (error) {
                     console.error('Error exportando logs:', error);
-                    alert('Error al exportar logs: ' + error.message);
+                    alert('❌ Error al exportar logs: ' + error.message);
                 }
             }
             
-            // Ver estado actual
-            getStatus() {
-                const localKey = 'bi_logs_local';
-                const pendingKey = 'bi_logs_pending';
-                
-                const localLogs = JSON.parse(localStorage.getItem(localKey) || '[]');
-                const pendingLogs = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+            // Obtener estadísticas
+            getStats() {
+                const today = new Date().toDateString();
+                const todayLogs = this.logs.filter(log => 
+                    new Date(log.timestamp).toDateString() === today
+                );
                 
                 return {
-                    local: localLogs.length,
-                    pending: pendingLogs.length,
+                    total: this.logs.length,
+                    today: todayLogs.length,
+                    pending: this.pendingLogs.length,
                     online: this.isOnline,
-                    session: currentSessionId,
-                    total: localLogs.length + pendingLogs.length
+                    jsonBinConfigured: !!(JSONBIN_CONFIG.binId && JSONBIN_CONFIG.apiKey),
+                    users: new Set(this.logs.map(log => log.user)).size,
+                    session: currentSessionId
                 };
             }
             
-            // Limpiar todos los logs locales
+            // Limpiar logs locales
             clearLocalLogs() {
-                try {
-                    localStorage.removeItem('bi_logs_local');
-                    localStorage.removeItem('bi_logs_pending');
-                    console.log('🧹 Todos los logs locales eliminados');
-                    alert('Logs locales eliminados');
-                } catch (error) {
-                    console.error('Error limpiando logs:', error);
+                if (confirm('¿Estás seguro de que quieres eliminar todos los logs locales?')) {
+                    this.logs = [];
+                    this.pendingLogs = [];
+                    localStorage.removeItem('centrobi_logs');
+                    localStorage.removeItem('centrobi_pending_logs');
+                    console.log('🧹 Logs locales eliminados');
+                    alert('✅ Logs locales eliminados');
                 }
             }
         }
 
         // Instancia global del logger
-        const logger = new GoogleSheetsLogger();
+        const logger = new JSONBinLogger();
 
         // Permisos por defecto
         const defaultPermissions = {
@@ -700,6 +768,9 @@
                     console.log('🚪 Logout recibido desde dashboard');
                 }
             });
+
+            // Agregar botón flotante para panel de control
+            setTimeout(addFloatingControlButton, 1000);
         });
 
         // Función para cargar los permisos desde el JSON
@@ -1772,41 +1843,45 @@
         // ==================== FUNCIONES DE DEBUGGING ====================
         
         function testLoggingSystem() {
-            console.log('=== TEST DEL SISTEMA DE LOGGING ===');
+            console.log('=== TEST DEL SISTEMA DE LOGGING JSON BIN ===');
             
-            // Ver estado actual
-            const status = logger.getStatus();
+            // 1. Ver estado actual
+            const status = logger.getStats();
             console.log('📊 Estado actual:', status);
             
-            // Test de conexión directa
-            console.log('🔗 Probando conexión con Google Sheets...');
-            fetch(GOOGLE_SCRIPT_URL + '?test=' + Date.now())
-                .then(response => {
-                    console.log('📡 Estado de la respuesta:', response.status, response.statusText);
-                    return response.text();
-                })
-                .then(text => {
-                    console.log('📄 Respuesta del servidor:', text);
-                    try {
-                        const data = JSON.parse(text);
-                        alert('✅ Conexión OK: ' + data.status + '\nTotal logs: ' + data.totalLogs);
-                    } catch {
-                        alert('✅ Conexión establecida\nRespuesta: ' + text.substring(0, 100));
-                    }
+            let alertMessage = '=== TEST JSON BIN LOGGING ===\\n\\n';
+            alertMessage += `JSON Bin configurado: ${status.jsonBinConfigured ? '✅' : '❌'}\\n`;
+            alertMessage += `Conexión: ${status.online ? '✅ Online' : '❌ Offline'}\\n`;
+            alertMessage += `Logs locales: ${status.total}\\n`;
+            alertMessage += `Logs hoy: ${status.today}\\n`;
+            alertMessage += `Logs pendientes: ${status.pending}\\n`;
+            alertMessage += `Usuarios únicos: ${status.users}\\n\\n`;
+            
+            // 2. Test de conexión
+            logger.testConnection()
+                .then(result => {
+                    console.log('Resultado test:', result);
+                    
+                    alertMessage += `Test conexión: ${result.status}\\n`;
+                    alertMessage += `Mensaje: ${result.message}\\n\\n`;
+                    
+                    // 3. Enviar log de prueba
+                    logger.log('test_conexion', 'principal', 'test@bigbola.com')
+                        .then(log => {
+                            alertMessage += `✅ Log de prueba creado\\n`;
+                            alertMessage += `ID: ${log.id}\\n`;
+                            alertMessage += `Hora: ${new Date().toLocaleTimeString()}`;
+                            
+                            alert(alertMessage);
+                        })
+                        .catch(err => {
+                            alertMessage += `❌ Error en log: ${err.message}`;
+                            alert(alertMessage);
+                        });
                 })
                 .catch(error => {
-                    console.error('❌ Error de conexión:', error);
-                    alert('❌ Error de conexión:\n' + error.message);
-                });
-            
-            // Enviar log de prueba
-            console.log('🧪 Enviando log de prueba...');
-            logger.log('debug_test', 'principal', 'test@bigbola.com')
-                .then(log => {
-                    console.log('✅ Log de prueba creado:', log);
-                })
-                .catch(err => {
-                    console.error('❌ Error en log de prueba:', err);
+                    alertMessage += `❌ Error en test: ${error.message}`;
+                    alert(alertMessage);
                 });
         }
         
@@ -1814,20 +1889,149 @@
             logger.exportLocalLogs();
         }
         
-        // Para limpiar logs locales (opcional, solo para desarrollo)
         function clearLocalLogs() {
-            if (confirm('¿Estás seguro de que quieres eliminar todos los logs locales?')) {
-                logger.clearLocalLogs();
+            logger.clearLocalLogs();
+        }
+        
+        // Función para agregar botón flotante de control
+        function addFloatingControlButton() {
+            const button = document.createElement('button');
+            button.innerHTML = '⚙️';
+            button.title = 'Panel de Control JSON Bin';
+            button.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                cursor: pointer;
+                z-index: 1000;
+                font-size: 20px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            `;
+            
+            button.addEventListener('mouseenter', () => {
+                button.style.transform = 'scale(1.1)';
+                button.style.boxShadow = '0 6px 20px rgba(0,0,0,0.4)';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.transform = 'scale(1)';
+                button.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+            });
+            
+            button.onclick = showJSONBinAdminPanel;
+            
+            document.body.appendChild(button);
+        }
+        
+        // Panel de administración JSON Bin
+        function showJSONBinAdminPanel() {
+            const stats = logger.getStats();
+            
+            const panelHTML = `
+                <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                            width: 90%; max-width: 500px; background: white; border-radius: 10px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 2000; padding: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: #152c6e; margin: 0;">⚙️ Panel de Control JSON Bin</h3>
+                        <button onclick="closeAdminPanel()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin-top: 0; color: #495057;">📊 Estadísticas</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <strong>Logs totales:</strong><br>
+                                <span style="font-size: 24px; color: #152c6e;">${stats.total}</span>
+                            </div>
+                            <div>
+                                <strong>Logs hoy:</strong><br>
+                                <span style="font-size: 24px; color: #28a745;">${stats.today}</span>
+                            </div>
+                            <div>
+                                <strong>Pendientes:</strong><br>
+                                <span style="font-size: 24px; color: ${stats.pending > 0 ? '#ffc107' : '#6c757d'};">${stats.pending}</span>
+                            </div>
+                            <div>
+                                <strong>Conexión:</strong><br>
+                                <span style="font-size: 24px; color: ${stats.online ? '#28a745' : '#dc3545'};">${stats.online ? '✅' : '❌'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="testLoggingSystem()" style="background: #17a2b8; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-vial"></i> Test de Conexión
+                        </button>
+                        
+                        <button onclick="logger.exportLocalLogs()" style="background: #28a745; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-download"></i> Exportar Logs
+                        </button>
+                        
+                        <button onclick="logger.clearLocalLogs()" style="background: #dc3545; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-trash"></i> Limpiar Logs
+                        </button>
+                        
+                        <button onclick="syncNow()" style="background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-sync"></i> Sincronizar Ahora
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
+                        <strong>Configuración JSON Bin:</strong><br>
+                        Bin ID: ${JSONBIN_CONFIG.binId ? '✅ Configurado' : '❌ Faltante'}<br>
+                        API Key: ${JSONBIN_CONFIG.apiKey ? '✅ Configurada' : '❌ Faltante'}<br>
+                        Session ID: ${stats.session}
+                    </div>
+                </div>
+                <div id="adminOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999;"></div>
+            `;
+            
+            const panel = document.createElement('div');
+            panel.id = 'jsonBinAdminPanel';
+            panel.innerHTML = panelHTML;
+            document.body.appendChild(panel);
+            
+            // Agregar evento al overlay
+            document.getElementById('adminOverlay').addEventListener('click', closeAdminPanel);
+        }
+        
+        function closeAdminPanel() {
+            const panel = document.getElementById('jsonBinAdminPanel');
+            if (panel) {
+                panel.remove();
             }
         }
         
-        // Mostrar estado en consola cada minuto (solo desarrollo)
+        function syncNow() {
+            logger.flushPendingLogs().then((result) => {
+                if (result) {
+                    alert(\`✅ Sincronización completada\\nExitosos: \${result.success}\\nFallidos: \${result.failed}\`);
+                } else {
+                    alert('✅ Sincronización completada');
+                }
+                closeAdminPanel();
+                // Refrescar panel después de 1 segundo
+                setTimeout(showJSONBinAdminPanel, 1000);
+            });
+        }
+        
+        // Mostrar estado en consola cada 5 minutos
         setInterval(() => {
-            const status = logger.getStatus();
-            if (status.total > 0) {
+            const status = logger.getStats();
+            if (status.total > 0 || status.pending > 0) {
                 console.log('📈 Estado logs:', status);
             }
-        }, 60000);
+        }, 300000);
     </script>
 </body>
 </html>
