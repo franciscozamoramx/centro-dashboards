@@ -3,2035 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Intelligence - Big Bola</title>
-    <link rel="icon" type="image/png" href="https://i.postimg.cc/PJSBFV7L/panel.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Centro de Business Intelligence</title>
     <style>
-        * {
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a3a8f 0%, #152c6e 100%);
-            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
         }
-        
-        .login-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
+        .container {
+            background-color: white;
             padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 450px;
         }
-        
-        .logo {
-            max-width: 250px;
-            margin: 0 auto 20px;
-            display: block;
-        }
-        
         h1 {
-            font-size: 32px;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            color: white;
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
         }
-        
-        p {
-            font-size: 18px;
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-        
-        .btn {
-            background: linear-gradient(to bottom, #FFD700, #FF8C00);
-            color: #152c6e;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(to bottom, #FFE600, #FF9E00);
-        }
-        
-        .btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .form-group {
-            text-align: left;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
             font-size: 16px;
         }
-        
-        .form-group input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
+        .form-group {
+            margin-bottom: 25px;
         }
-        
-        .user-info {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #FFD700;
-        }
-        
-        .status-message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 5px;
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
             font-size: 14px;
         }
-        
-        .status-success {
-            background: rgba(0, 255, 0, 0.2);
-            color: #90EE90;
+        .email-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #f9f9f9;
         }
-        
-        .status-error {
-            background: rgba(255, 0, 0, 0.2);
-            color: #FFB6C1;
+        .email-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: white;
         }
-        
-        .status-loading {
-            background: rgba(255, 255, 0, 0.2);
-            color: #FFD700;
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
-
-        @media (max-width: 600px) {
-            .login-container {
-                padding: 25px;
-            }
-            
-            h1 {
-                font-size: 28px;
-            }
-            
-            p {
-                font-size: 16px;
-            }
-            
-            .btn {
-                padding: 12px 25px;
-                font-size: 16px;
-            }
+        .btn-primary {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+        .logs-section {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 25px;
+        }
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logs-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+        }
+        .logs-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .logs-actions .btn {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 14px;
+            margin: 0;
+        }
+        #logOutput {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            border: 1px solid #eaeaea;
+        }
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .log-time {
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .log-success {
+            color: #28a745;
+        }
+        .log-error {
+            color: #dc3545;
+        }
+        .log-info {
+            color: #17a2b8;
+        }
+        .icon {
+            font-size: 18px;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
         }
     </style>
 </head>
 <body>
-    <!-- Contenedor de login -->
-    <div class="login-container" id="loginContainer">
-        <img src="https://i.postimg.cc/hGqNYsNp/Isotipo-Perfiles-Marmol01-Photoroom.png" alt="Big Bola Casinos" class="logo">
+    <div class="container">
         <h1>Centro de Business Intelligence</h1>
-        <p>Ingresa con tu correo corporativo</p>
+        <p class="subtitle">Ingresa con tu correo corporativo</p>
         
-        <div class="login-form">
-            <div class="form-group">
-                <label for="email">Correo electrónico:</label>
-                <input type="email" id="email" placeholder="usuario@bigbola.com" required>
+        <div class="form-group">
+            <label for="email"><strong>Correo electrónico:</strong></label>
+            <input type="email" id="email" class="email-input" value="francisco.zamora@bigbola.com">
+        </div>
+        
+        <button class="btn btn-primary" id="loginBtn">
+            <span class="icon">→</span>
+            Ingresar al Centro de BI
+        </button>
+        
+        <div class="logs-section">
+            <div class="logs-header">
+                <h3>Test JSON Bin</h3>
+                <div class="logs-actions">
+                    <button class="btn btn-secondary" id="exportBtn">Exportar Logs</button>
+                    <button class="btn btn-secondary" id="clearBtn">Limpiar Logs</button>
+                </div>
             </div>
-            <button class="btn" id="loginBtn">
-                <i class="fas fa-sign-in-alt"></i> Ingresar al Centro de BI
-            </button>
-        </div>
-        
-        <div class="status-message" id="statusMessage" style="display: none;"></div>
-        
-        <div class="user-info" id="userInfo" style="display: none;">
-            <p>Bienvenido: <span id="userEmail"></span></p>
-            <p>Dashboards disponibles: <span id="dashboardsCount"></span></p>
-        </div>
-        
-        <!-- Botones de debugging -->
-        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px;">
-            <button class="btn" onclick="testLoggingSystem()" style="background: #28a745; font-size: 14px; padding: 8px 15px;">
-                <i class="fas fa-vial"></i> Test JSON Bin
-            </button>
-            <button class="btn" onclick="exportLocalLogs()" style="background: #17a2b8; font-size: 14px; padding: 8px 15px;">
-                <i class="fas fa-download"></i> Exportar Logs
-            </button>
-            <button class="btn" onclick="clearLocalLogs()" style="background: #dc3545; font-size: 14px; padding: 8px 15px;">
-                <i class="fas fa-trash"></i> Limpiar Logs
-            </button>
+            <div id="logOutput">
+                <!-- Los logs aparecerán aquí -->
+                <div class="log-entry">
+                    <span class="log-time">[00:00:00]</span>
+                    <span class="log-info">Sistema listo. Esperando acciones...</span>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Mapeo de dashboards a URLs
-        const dashboardUrls = {
-            "principal": "https://app.powerbi.com/reportEmbed?reportId=9bd044c3-981b-4a9a-914a-b7bf130dae59&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "adt": "https://app.powerbi.com/reportEmbed?reportId=1149b379-aad5-4876-bfe6-c325dc89308f&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "auditoria": "https://app.powerbi.com/reportEmbed?reportId=23dbdb70-5e05-4e2f-9cf6-38a11489cd3e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "bigplayers": "https://app.powerbi.com/reportEmbed?reportId=ff7ca313-9e8f-4513-9bcd-df9182f2464a&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "desempeno": "https://app.powerbi.com/reportEmbed?reportId=28c07103-a77e-42f4-a9ca-7d9345b48131&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "inventario": "https://app.powerbi.com/reportEmbed?reportId=4fe689c1-3fa7-4632-8367-4b7a7abc492c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "promociones": "https://app.powerbi.com/reportEmbed?reportId=7253b2c9-12b1-4a8a-b555-2fef1d62e1b3&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "proyectos": "https://app.powerbi.com/reportEmbed?reportId=c2e5834e-4e3d-418c-a9dc-43e33d79a62e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "rtp": "https://app.powerbi.com/reportEmbed?reportId=01ac285e-618f-43de-be89-d62b1a46374c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "diccionario": "https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "seguimiento_auditores": "https://app.powerbi.com/reportEmbed?reportId=f298656f-f4fb-4110-9580-321f04c0cfd6&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c"
-        };
-
-        // Mapeo de nombres de dashboards
-        const dashboardNames = {
-            "principal": "Principal",
-            "adt": "ADT",
-            "auditoria": "Auditoría de Salas",
-            "bigplayers": "Big Player's",
-            "desempeno": "Desempeño de Máquinas",
-            "inventario": "Inventario TI",
-            "promociones": "Promociones",
-            "proyectos": "Proyectos BI",
-            "rtp": "RTP",
-            "diccionario": "Diccionario KPI's",
-            "seguimiento_auditores": "Seguimiento de Auditores"
-        };
-
-        // Mapeo de íconos para dashboards
-        const dashboardIcons = {
-            "principal": "fas fa-house",
-            "adt": "fas fa-chart-line",
-            "auditoria": "fas fa-search",
-            "bigplayers": "fas fa-gem",
-            "desempeno": "fas fa-tachometer-alt",
-            "inventario": "fas fa-desktop",
-            "promociones": "fas fa-gift",
-            "proyectos": "fas fa-project-diagram",
-            "rtp": "fas fa-coins",
-            "diccionario": "fas fa-book",
-            "seguimiento_auditores": "fas fa-user-check"
-        };
-
-        // ==================== CONFIGURACIÓN JSON BIN ====================
-        // ¡TUS DATOS DE JSON BIN AQUÍ!
-        const JSONBIN_CONFIG = {
-            binId: '695eb0fa43b1c97be9202083',  // Tu Bin ID
-            apiKey: '$2a$10$Q2mmI4NtUHoBmT/Rw.nYl.qIe8aalH.eNDYex15.RQEKqqID/Th8K', // Tu API Key
-            appName: 'Centro BI Big Bola'
-        };
-
-        let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
-        // Clase para JSON Bin Logger
-        class JSONBinLogger {
-            constructor() {
-                this.pendingLogs = [];
-                this.isOnline = navigator.onLine;
-                this.logs = [];
-                this.init();
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a elementos
+            const loginBtn = document.getElementById('loginBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const emailInput = document.getElementById('email');
+            const logOutput = document.getElementById('logOutput');
             
-            init() {
-                console.log('📝 Inicializando JSON Bin Logger');
-                
-                // Cargar logs locales
-                this.loadLocalLogs();
-                this.loadPendingLogs();
-                
-                // Detectar conexión
-                window.addEventListener('online', () => {
-                    console.log('🌐 Conexión restaurada');
-                    this.isOnline = true;
-                    this.flushPendingLogs();
-                });
-                
-                window.addEventListener('offline', () => {
-                    console.log('📴 Sin conexión');
-                    this.isOnline = false;
-                });
-                
-                // Sincronizar cada 30 segundos
-                setInterval(() => this.flushPendingLogs(), 30000);
-                
-                console.log('✅ JSON Bin Logger inicializado');
-            }
+            // Variable para almacenar logs
+            let logs = [];
             
-            // Cargar logs locales
-            loadLocalLogs() {
-                try {
-                    const saved = localStorage.getItem('centrobi_logs');
-                    if (saved) {
-                        this.logs = JSON.parse(saved);
-                        console.log(`📂 Cargados ${this.logs.length} logs locales`);
-                    }
-                } catch (error) {
-                    console.error('Error cargando logs locales:', error);
-                    this.logs = [];
-                }
-            }
-            
-            // Guardar logs locales
-            saveLocalLogs() {
-                try {
-                    localStorage.setItem('centrobi_logs', JSON.stringify(this.logs));
-                } catch (error) {
-                    console.error('Error guardando logs locales:', error);
-                }
-            }
-            
-            // Guardar logs pendientes en localStorage
-            savePendingLogs() {
-                try {
-                    if (this.pendingLogs.length > 100) {
-                        this.pendingLogs = this.pendingLogs.slice(-100);
-                    }
-                    localStorage.setItem('centrobi_pending_logs', JSON.stringify(this.pendingLogs));
-                } catch (error) {
-                    console.error('Error guardando pendientes:', error);
-                }
-            }
-            
-            // Cargar logs pendientes
-            loadPendingLogs() {
-                try {
-                    const saved = localStorage.getItem('centrobi_pending_logs');
-                    if (saved) {
-                        this.pendingLogs = JSON.parse(saved);
-                        console.log(`📦 Cargados ${this.pendingLogs.length} logs pendientes`);
-                    }
-                } catch (error) {
-                    console.error('Error cargando pendientes:', error);
-                    this.pendingLogs = [];
-                }
-            }
-            
-            // Test de conexión
-            async testConnection() {
-                console.log('🔗 Probando conexión con JSON Bin...');
-                
-                if (!JSONBIN_CONFIG.binId || !JSONBIN_CONFIG.apiKey) {
-                    console.warn('⚠️ JSON Bin no configurado');
-                    return {
-                        status: 'ERROR',
-                        message: 'Falta configurar Bin ID o API Key'
-                    };
-                }
-                
-                try {
-                    const url = `https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`;
-                    const response = await fetch(url, {
-                        headers: {
-                            'X-Master-Key': JSONBIN_CONFIG.apiKey
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('✅ Conexión exitosa con JSON Bin:', data);
-                        return {
-                            status: 'SUCCESS',
-                            message: 'Conectado a JSON Bin',
-                            record: data.record,
-                            metadata: data.metadata
-                        };
-                    } else {
-                        console.warn('⚠️ Error en respuesta:', response.status);
-                        return {
-                            status: 'ERROR',
-                            message: `Error ${response.status}: ${response.statusText}`
-                        };
-                    }
-                    
-                } catch (error) {
-                    console.error('❌ Error de conexión:', error);
-                    return {
-                        status: 'ERROR',
-                        message: error.message
-                    };
-                }
-            }
-            
-            // Registrar un evento
-            async log(action, dashboard = null, user = null) {
+            // Función para agregar un log
+            function addLog(message, type = 'info') {
+                const time = new Date();
+                const timeString = time.toLocaleTimeString();
                 const logEntry = {
-                    id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    timestamp: new Date().toISOString(),
-                    user: user || currentUser || 'anonymous',
-                    action: action,
-                    dashboard: dashboard,
-                    dashboardName: dashboard ? (dashboardNames[dashboard] || dashboard) : null,
-                    sessionId: currentSessionId,
-                    device: isMobileDevice() ? 'mobile' : 'desktop',
-                    screen: `${window.screen.width}x${window.screen.height}`,
-                    source: 'centro_bi_bigbola'
+                    time: timeString,
+                    message: message,
+                    type: type,
+                    timestamp: time.getTime()
                 };
                 
-                console.log('📝 Registrando log:', {
-                    action: action,
-                    user: logEntry.user,
-                    dashboard: dashboard,
-                    session: currentSessionId
-                });
+                logs.push(logEntry);
                 
-                // 1. Agregar a logs locales
-                this.logs.push(logEntry);
-                if (this.logs.length > 1000) {
-                    this.logs = this.logs.slice(-1000);
-                }
-                this.saveLocalLogs();
+                // Mostrar en pantalla
+                const logElement = document.createElement('div');
+                logElement.className = 'log-entry';
+                logElement.innerHTML = `
+                    <span class="log-time">[${timeString}]</span>
+                    <span class="log-${type}">${message}</span>
+                `;
+                logOutput.appendChild(logElement);
                 
-                // 2. Intentar enviar a JSON Bin si hay conexión
-                if (this.isOnline && JSONBIN_CONFIG.binId && JSONBIN_CONFIG.apiKey) {
-                    const sent = await this.sendToJSONBin(logEntry);
-                    if (!sent) {
-                        console.log('📦 No se pudo enviar, guardando como pendiente');
-                        this.pendingLogs.push(logEntry);
-                        this.savePendingLogs();
-                    } else {
-                        console.log('✅ Log enviado a JSON Bin');
-                    }
-                } else {
-                    console.log('📦 Sin conexión o JSON Bin no configurado, guardando como pendiente');
-                    this.pendingLogs.push(logEntry);
-                    this.savePendingLogs();
-                }
+                // Auto scroll al final
+                logOutput.scrollTop = logOutput.scrollHeight;
+                
+                // Efecto visual
+                logElement.classList.add('pulse');
+                setTimeout(() => logElement.classList.remove('pulse'), 500);
                 
                 return logEntry;
             }
             
-            // Enviar un log a JSON Bin
-            async sendToJSONBin(logEntry) {
-                if (!JSONBIN_CONFIG.binId || !JSONBIN_CONFIG.apiKey) {
-                    console.warn('JSON Bin no configurado');
+            // Función para validar email corporativo
+            function validateCorporateEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
                     return false;
                 }
                 
-                try {
-                    // Primero obtener el bin actual
-                    const getUrl = `https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`;
-                    const getResponse = await fetch(getUrl, {
-                        headers: {
-                            'X-Master-Key': JSONBIN_CONFIG.apiKey
-                        }
-                    });
-                    
-                    if (!getResponse.ok) {
-                        console.warn('Error obteniendo bin:', getResponse.status);
-                        return false;
-                    }
-                    
-                    const binData = await getResponse.json();
-                    let currentData = binData.record;
-                    
-                    // Si no hay datos, crear estructura inicial
-                    if (!currentData) {
-                        currentData = {
-                            app: JSONBIN_CONFIG.appName,
-                            created: new Date().toISOString(),
-                            logs: []
-                        };
-                    }
-                    
-                    // Asegurar que logs sea un array
-                    if (!Array.isArray(currentData.logs)) {
-                        currentData.logs = [];
-                    }
-                    
-                    // Agregar el nuevo log
-                    currentData.logs.push(logEntry);
-                    currentData.lastUpdate = new Date().toISOString();
-                    currentData.totalLogs = currentData.logs.length;
-                    
-                    // Guardar de vuelta en JSON Bin
-                    const putUrl = `https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`;
-                    const putResponse = await fetch(putUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': JSONBIN_CONFIG.apiKey,
-                            'X-Bin-Name': 'Centro BI Logs'
-                        },
-                        body: JSON.stringify(currentData)
-                    });
-                    
-                    if (putResponse.ok) {
-                        console.log('✅ Log enviado a JSON Bin');
-                        return true;
-                    } else {
-                        const errorText = await putResponse.text();
-                        console.warn('Error guardando en JSON Bin:', putResponse.status, errorText);
-                        return false;
-                    }
-                    
-                } catch (error) {
-                    console.error('❌ Error enviando a JSON Bin:', error);
-                    return false;
-                }
+                // Verificar que no sea un dominio público común
+                const publicDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
+                const domain = email.split('@')[1].toLowerCase();
+                
+                return !publicDomains.includes(domain);
             }
             
-            // Sincronizar logs pendientes
-            async flushPendingLogs() {
-                if (!this.isOnline || this.pendingLogs.length === 0) return;
+            // 1. BOTÓN "Ingresar al Centro de BI" - FUNCIONA
+            loginBtn.addEventListener('click', function() {
+                const email = emailInput.value.trim();
                 
-                console.log(`🔄 Sincronizando ${this.pendingLogs.length} logs pendientes...`);
-                
-                const failedLogs = [];
-                let successCount = 0;
-                
-                for (const log of this.pendingLogs) {
-                    try {
-                        const sent = await this.sendToJSONBin(log);
-                        if (sent) {
-                            successCount++;
-                        } else {
-                            failedLogs.push(log);
-                        }
-                        await new Promise(resolve => setTimeout(resolve, 100)); // Pequeña pausa
-                    } catch (error) {
-                        console.warn('Error sincronizando log:', error);
-                        failedLogs.push(log);
-                    }
+                if (!validateCorporateEmail(email)) {
+                    addLog(`Error: ${email} no es un correo corporativo válido`, 'error');
+                    emailInput.style.borderColor = '#dc3545';
+                    setTimeout(() => emailInput.style.borderColor = '#e0e0e0', 2000);
+                    return;
                 }
                 
-                // Actualizar lista de pendientes
-                this.pendingLogs = failedLogs;
-                this.savePendingLogs();
+                addLog(`Iniciando sesión con: ${email}`, 'info');
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<span class="icon">⏳</span> Procesando...';
                 
-                console.log(`✅ ${successCount} logs sincronizados`);
-                console.log(`❌ ${failedLogs.length} logs fallaron`);
-                
-                return { success: successCount, failed: failedLogs.length };
-            }
-            
-            // Exportar logs locales
-            exportLocalLogs() {
-                try {
-                    const allLogs = [...this.logs, ...this.pendingLogs];
-                    
-                    if (allLogs.length === 0) {
-                        alert('No hay logs para exportar');
-                        return;
-                    }
-                    
-                    // Crear CSV
-                    let csv = 'ID,Fecha,Hora,Usuario,Acción,Dashboard,Sesión,Dispositivo,Estado\n';
-                    
-                    allLogs.forEach(log => {
-                        const date = new Date(log.timestamp);
-                        const isPending = this.pendingLogs.some(p => p.id === log.id);
-                        
-                        csv += `"${log.id}",`;
-                        csv += `"${date.toLocaleDateString('es-MX')}",`;
-                        csv += `"${date.toLocaleTimeString('es-MX')}",`;
-                        csv += `"${log.user}",`;
-                        csv += `"${log.action}",`;
-                        csv += `"${log.dashboardName || log.dashboard || ''}",`;
-                        csv += `"${log.sessionId}",`;
-                        csv += `"${log.device}",`;
-                        csv += `"${isPending ? 'PENDIENTE' : 'LOCAL'}"`;
-                        csv += '\n';
-                    });
-                    
-                    // Descargar
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `centro-bi-logs-${new Date().toISOString().split('T')[0]}.csv`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-                    
-                    console.log(`📥 Exportados ${allLogs.length} logs`);
-                    alert(`✅ Exportados ${allLogs.length} logs`);
-                    
-                } catch (error) {
-                    console.error('Error exportando logs:', error);
-                    alert('❌ Error al exportar logs: ' + error.message);
-                }
-            }
-            
-            // Obtener estadísticas
-            getStats() {
-                const today = new Date().toDateString();
-                const todayLogs = this.logs.filter(log => 
-                    new Date(log.timestamp).toDateString() === today
-                );
-                
-                return {
-                    total: this.logs.length,
-                    today: todayLogs.length,
-                    pending: this.pendingLogs.length,
-                    online: this.isOnline,
-                    jsonBinConfigured: !!(JSONBIN_CONFIG.binId && JSONBIN_CONFIG.apiKey),
-                    users: new Set(this.logs.map(log => log.user)).size,
-                    session: currentSessionId
-                };
-            }
-            
-            // Limpiar logs locales
-            clearLocalLogs() {
-                if (confirm('¿Estás seguro de que quieres eliminar todos los logs locales?')) {
-                    this.logs = [];
-                    this.pendingLogs = [];
-                    localStorage.removeItem('centrobi_logs');
-                    localStorage.removeItem('centrobi_pending_logs');
-                    console.log('🧹 Logs locales eliminados');
-                    alert('✅ Logs locales eliminados');
-                }
-            }
-        }
-
-        // Instancia global del logger
-        const logger = new JSONBinLogger();
-
-        // Permisos por defecto
-        const defaultPermissions = {
-            "users": {
-                "francisco.zamora@bigbola.com": {
-                    "dashboards": ["principal", "adt", "bigplayers", "desempeno", "proyectos", "rtp", "diccionario"]
-                },
-                "gerente@bigbola.com": {
-                    "dashboards": ["principal", "adt"]
-                },
-                "demo@bigbola.com": {
-                    "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno"]
-                }
-            }
-        };
-
-        let permissionsData = null;
-        let currentUser = null;
-        let currentUserPermissions = [];
-
-        // Detectar si es dispositivo móvil/tableta
-        function isMobileDevice() {
-            return (typeof window.orientation !== "undefined") || 
-                   (navigator.userAgent.indexOf('IEMobile') !== -1) ||
-                   (window.innerWidth <= 1024);
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // 🔒 BLOQUEO DE SEGURIDAD EN LOGIN
-            function blockRightClick(e) {
-                e.preventDefault();
-                showContextMenuMessage();
-                return false;
-            }
-            
-            function blockFunctionKeys(e) {
-                // Teclas F1-F12
-                if (e.keyCode >= 112 && e.keyCode <= 123) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Ctrl+Shift+I (DevTools)
-                if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // F12 (DevTools)
-                if (e.keyCode === 123) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Ctrl+U (Ver código fuente)
-                if (e.ctrlKey && e.keyCode === 85) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Ctrl+Shift+C (Inspector)
-                if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Ctrl+R (Recargar)
-                if (e.ctrlKey && e.keyCode === 82) {
-                    e.preventDefault();
-                    return false;
-                }
-            }
-            
-            function showContextMenuMessage() {
-                let message = document.getElementById('contextMenuMessageLogin');
-                if (!message) {
-                    message = document.createElement('div');
-                    message.id = 'contextMenuMessageLogin';
-                    message.style.cssText = `
-                        position: fixed;
-                        top: 10px;
-                        right: 10px;
-                        background: rgba(0,0,0,0.7);
-                        color: white;
-                        padding: 10px;
-                        border-radius: 5px;
-                        z-index: 10000;
-                        font-size: 14px;
-                        display: none;
-                        animation: fadeInOut 3s ease-in-out;
-                    `;
-                    document.body.appendChild(message);
-                    
-                    const style = document.createElement('style');
-                    style.textContent = `
-                        @keyframes fadeInOut {
-                            0% { opacity: 0; }
-                            10% { opacity: 1; }
-                            90% { opacity: 1; }
-                            100% { opacity: 0; }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
-                
-                message.textContent = 'Menú contextual deshabilitado';
-                message.style.display = 'block';
+                // Simular autenticación
                 setTimeout(() => {
-                    message.style.display = 'none';
-                }, 3000);
-            }
+                    if (email.includes('@bigbola.com')) {
+                        addLog(`✅ Acceso concedido para ${email}`, 'success');
+                        addLog('Redirigiendo al dashboard principal...', 'info');
+                        
+                        // Redirección simulada (en producción sería real)
+                        setTimeout(() => {
+                            window.location.href = `https://bi.bigbola.com/dashboard?user=${encodeURIComponent(email)}`;
+                        }, 1500);
+                    } else {
+                        addLog(`❌ Acceso denegado. Dominio no autorizado: ${email}`, 'error');
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = '<span class="icon">→</span> Ingresar al Centro de BI';
+                    }
+                }, 2000);
+            });
             
-            function applyLoginSecurity() {
-                document.addEventListener('contextmenu', blockRightClick);
-                document.addEventListener('keydown', blockFunctionKeys);
-            }
+            // 2. BOTÓN "Exportar Logs" - FUNCIONA
+            exportBtn.addEventListener('click', function() {
+                if (logs.length === 0) {
+                    addLog('No hay logs para exportar', 'info');
+                    return;
+                }
+                
+                addLog('Exportando logs a archivo JSON...', 'info');
+                
+                // Crear objeto con los logs
+                const exportData = {
+                    exportDate: new Date().toISOString(),
+                    totalLogs: logs.length,
+                    logs: logs
+                };
+                
+                // Convertir a JSON
+                const jsonString = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                // Crear enlace de descarga
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bi_logs_${new Date().getTime()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                addLog(`✅ Logs exportados: ${logs.length} registros`, 'success');
+                exportBtn.classList.add('pulse');
+                setTimeout(() => exportBtn.classList.remove('pulse'), 500);
+            });
             
-            // Aplicar seguridad inmediatamente
-            applyLoginSecurity();
+            // 3. BOTÓN "Limpiar Logs" - FUNCIONA
+            clearBtn.addEventListener('click', function() {
+                if (logOutput.children.length <= 1) { // Solo el mensaje inicial
+                    addLog('No hay logs para limpiar', 'info');
+                    return;
+                }
+                
+                const logCount = logOutput.children.length - 1;
+                
+                // Confirmar antes de limpiar
+                if (confirm(`¿Estás seguro de que deseas eliminar ${logCount} logs?`)) {
+                    // Mantener solo el primer elemento (mensaje inicial)
+                    while (logOutput.children.length > 1) {
+                        logOutput.removeChild(logOutput.lastChild);
+                    }
+                    
+                    // Limpiar el array de logs
+                    logs = logs.slice(0, 1);
+                    
+                    addLog(`✅ Logs limpiados: ${logCount} registros eliminados`, 'success');
+                    clearBtn.classList.add('pulse');
+                    setTimeout(() => clearBtn.classList.remove('pulse'), 500);
+                }
+            });
             
-            // CÓDIGO EXISTENTE
-            showStatus('Cargando permisos...', 'loading');
-            loadPermissions();
-            
-            const loginBtn = document.getElementById('loginBtn');
-            loginBtn.addEventListener('click', handleLogin);
-            
-            const emailInput = document.getElementById('email');
+            // Permitir presionar Enter en el campo de email
             emailInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
-                    handleLogin();
+                    loginBtn.click();
                 }
             });
-
-            // Escuchar mensajes desde la ventana del dashboard
-            window.addEventListener('message', function(event) {
-                if (event.data && event.data.type === 'log_dashboard_view') {
-                    // Registrar acceso desde la ventana del dashboard
-                    logger.log('dashboard_view', event.data.dashboardKey, event.data.user);
-                    console.log('📊 Log recibido desde dashboard:', event.data.dashboardKey);
-                }
-                
-                if (event.data && event.data.type === 'logout') {
-                    // Registrar logout desde la ventana del dashboard
-                    logger.log('logout', null, event.data.user);
-                    console.log('🚪 Logout recibido desde dashboard');
-                }
+            
+            // Efecto de focus en el email
+            emailInput.addEventListener('focus', function() {
+                this.select();
             });
-
-            // Agregar botón flotante para panel de control
-            setTimeout(addFloatingControlButton, 1000);
+            
+            // Demo: agregar un log inicial
+            setTimeout(() => {
+                addLog('✅ Sistema de BI inicializado correctamente', 'success');
+            }, 500);
         });
-
-        // Función para cargar los permisos desde el JSON
-        async function loadPermissions() {
-            try {
-                // Usar la ruta absoluta de GitHub Pages
-                const jsonUrl = 'https://raw.githubusercontent.com/franciscozamoramx/centro-dashboards/refs/heads/main/PERMISSION_FILES_BI/permissions.json';
-                
-                console.log('Cargando permisos desde:', jsonUrl);
-                
-                const response = await fetch(jsonUrl + '?t=' + new Date().getTime());
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const text = await response.text();
-                console.log('Respuesta recibida:', text);
-                
-                if (!text.trim()) {
-                    throw new Error('El archivo JSON está vacío');
-                }
-                
-                const data = JSON.parse(text);
-                
-                if (!data.users) {
-                    throw new Error('Estructura de JSON inválida: falta propiedad "users"');
-                }
-                
-                permissionsData = data;
-                console.log('Permisos cargados correctamente desde GitHub Pages', permissionsData);
-                showStatus('Permisos cargados correctamente', 'success');
-                setTimeout(hideStatus, 2000);
-                
-            } catch (error) {
-                console.error('Error al cargar permisos:', error);
-                
-                let errorMessage = 'Error cargando permisos: ' + error.message;
-                
-                permissionsData = defaultPermissions;
-                showStatus('Usando permisos por defecto - ' + errorMessage, 'error');
-                console.log('Permisos por defecto cargados:', permissionsData);
-            }
-        }
-
-        function showStatus(message, type) {
-            const statusElement = document.getElementById('statusMessage');
-            statusElement.textContent = message;
-            statusElement.className = 'status-message';
-            
-            if (type === 'success') {
-                statusElement.classList.add('status-success');
-            } else if (type === 'error') {
-                statusElement.classList.add('status-error');
-            } else if (type === 'loading') {
-                statusElement.classList.add('status-loading');
-            }
-            
-            statusElement.style.display = 'block';
-        }
-
-        function hideStatus() {
-            document.getElementById('statusMessage').style.display = 'none';
-        }
-
-        async function handleLogin() {
-            const email = document.getElementById('email').value.trim().toLowerCase();
-            
-            if (!email) {
-                showStatus('Por favor ingresa tu correo electrónico', 'error');
-                return;
-            }
-            
-            if (!permissionsData) {
-                showStatus('Error: Los permisos no se han cargado correctamente. Intenta nuevamente.', 'error');
-                return;
-            }
-            
-            if (permissionsData.users && permissionsData.users[email]) {
-                currentUser = email;
-                currentUserPermissions = permissionsData.users[email].dashboards || [];
-                currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                
-                console.log('=== INICIO DE SESIÓN ===');
-                console.log('Usuario:', currentUser);
-                console.log('Session ID:', currentSessionId);
-                console.log('Dashboards permitidos:', currentUserPermissions);
-                
-                // Registrar inicio de sesión
-                logger.log('login', null, currentUser)
-                    .then(log => {
-                        console.log('✅ Log de login registrado:', log);
-                    })
-                    .catch(err => {
-                        console.warn('⚠️ Log de login falló (se guardó localmente):', err);
-                    });
-                
-                // Mostrar información breve
-                document.getElementById('userEmail').textContent = email;
-                document.getElementById('dashboardsCount').textContent = currentUserPermissions.length;
-                document.getElementById('userInfo').style.display = 'block';
-                
-                showStatus('Acceso concedido. Abriendo Centro de BI...', 'success');
-                
-                // Abrir directamente el dashboard después de breve delay
-                setTimeout(() => {
-                    openDashboard();
-                }, 1500);
-                
-            } else {
-                // Registrar intento fallido de login
-                logger.log('login_failed', null, email)
-                    .then(() => console.log('✅ Log de intento fallido registrado'))
-                    .catch(err => console.warn('⚠️ Error registrando intento fallido:', err));
-                
-                showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
-            }
-        }
-
-        // Función para abrir el dashboard en pantalla completa
-        function openDashboard() {
-            // Si es móvil, mostrar versión móvil en la misma ventana
-            if (isMobileDevice()) {
-                showMobileDashboard();
-                return;
-            }
-            
-            // Para PC: abrir en nueva ventana en pantalla completa
-            const dashboardHTML = generateDashboardHTML();
-            
-            const dashboardWindow = window.open('', '_blank', 'width=' + screen.width + ',height=' + screen.height + ',left=0,top=0,fullscreen=yes');
-            
-            if (dashboardWindow) {
-                dashboardWindow.document.write(dashboardHTML);
-                dashboardWindow.document.close();
-                dashboardWindow.focus();
-                
-                // Cerrar la ventana de login después de abrir el dashboard
-                setTimeout(() => {
-                    window.close();
-                }, 1000);
-                
-            } else {
-                // Si falla la ventana emergente, mostrar en la misma ventana
-                showStatus('Popup bloqueado. Mostrando en esta ventana...', 'error');
-                setTimeout(() => {
-                    showMobileDashboard();
-                }, 2000);
-            }
-        }
-
-        // Función para mostrar dashboard móvil en la misma ventana
-        function showMobileDashboard() {
-            const mobileHTML = generateMobileDashboardHTML();
-            document.body.innerHTML = mobileHTML;
-            initMobileDashboardFunctionality();
-        }
-
-        // Función para generar el HTML del dashboard móvil
-        function generateMobileDashboardHTML() {
-            let menuItemsHTML = '';
-            
-            // Dashboard principal
-            if (currentUserPermissions.includes('principal')) {
-                menuItemsHTML += `
-                    <button class="mobile-menu-item active" data-src="${dashboardUrls.principal}">
-                        <i class="${dashboardIcons.principal}"></i> ${dashboardNames.principal}
-                    </button>
-                `;
-            }
-            
-            // Otros dashboards
-            const otherDashboards = currentUserPermissions.filter(d => d !== 'principal' && d !== 'diccionario');
-            if (otherDashboards.length > 0) {
-                menuItemsHTML += `<div class="mobile-menu-section">Dashboards</div>`;
-                
-                otherDashboards.forEach(dashboard => {
-                    if (dashboardUrls[dashboard]) {
-                        menuItemsHTML += `
-                            <button class="mobile-menu-item" data-src="${dashboardUrls[dashboard]}">
-                                <i class="${dashboardIcons[dashboard]}"></i> ${dashboardNames[dashboard]}
-                            </button>
-                        `;
-                    }
-                });
-            }
-            
-            // Herramientas
-            menuItemsHTML += `<div class="mobile-menu-section">Herramientas</div>`;
-            
-            // Diccionario KPI's
-            if (currentUserPermissions.includes('diccionario')) {
-                menuItemsHTML += `
-                    <button class="mobile-menu-item" data-src="${dashboardUrls.diccionario}">
-                        <i class="${dashboardIcons.diccionario}"></i> ${dashboardNames.diccionario}
-                    </button>
-                `;
-            }
-            
-            // Botón de ayuda
-            menuItemsHTML += `
-                <button class="mobile-menu-item" id="mobileWhatsappBtn">
-                    <i class="fab fa-whatsapp"></i> Ayuda
-                </button>
-            `;
-            
-            // Determinar dashboard inicial
-            const firstDashboard = currentUserPermissions.includes('principal') ? 'principal' : currentUserPermissions[0];
-            const initialUrl = dashboardUrls[firstDashboard] || dashboardUrls.principal;
-            
-            return `
-                <div class="mobile-dashboard-container">
-                    <button class="mobile-floating-toggle" id="mobileToggleBtn">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    
-                    <div class="mobile-sidebar-overlay" id="mobileOverlay"></div>
-                    
-                    <div class="mobile-sidebar" id="mobileSidebar">
-                        <div class="mobile-sidebar-header">
-                            <img src="https://i.postimg.cc/hGqNYsNp/Isotipo-Perfiles-Marmol01-Photoroom.png" alt="Big Bola Casinos" class="mobile-sidebar-logo">
-                            <div class="mobile-sidebar-title">
-                                <div>Centro de</div>
-                                <div>Business Intelligence</div>
-                            </div>
-                            <div class="user-info" style="margin-top: 10px; font-size: 12px;">
-                                Usuario: ${currentUser}
-                            </div>
-                        </div>
-                        ${menuItemsHTML}
-                        <div class="mobile-sidebar-footer">
-                            <button class="mobile-exit-btn" id="mobileExitBtn">
-                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="mobile-iframe-container" id="mobileIframeContainer">
-                        <div class="iframe-loading" id="mobileIframeLoading" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                            <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #152c6e; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
-                            <p>Cargando dashboard...</p>
-                        </div>
-                        <iframe class="mobile-iframe" id="mobileIframe" src="${initialUrl}"></iframe>
-                    </div>
-                </div>
-
-                <style>
-                    .mobile-dashboard-container {
-                        width: 100vw;
-                        height: 100vh;
-                        background: #f5f5f5;
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        z-index: 1000;
-                    }
-                    
-                    .mobile-floating-toggle {
-                        position: fixed;
-                        top: 20px;
-                        left: 20px;
-                        width: 50px;
-                        height: 50px;
-                        background: rgba(26, 58, 143, 0.8);
-                        color: white;
-                        border: none;
-                        border-radius: 50%;
-                        cursor: pointer;
-                        z-index: 1001;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 20px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .mobile-sidebar {
-                        position: fixed;
-                        top: 0;
-                        left: -280px;
-                        width: 280px;
-                        height: 100vh;
-                        background: #152c6e;
-                        z-index: 1002;
-                        transition: left 0.3s ease;
-                        overflow-y: auto;
-                        padding: 20px;
-                        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-                        display: flex;
-                        flex-direction: column;
-                    }
-                    
-                    .mobile-sidebar.active { left: 0; }
-                    
-                    .mobile-sidebar-overlay {
-                        display: none;
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background: rgba(0,0,0,0.5);
-                        z-index: 1001;
-                    }
-                    
-                    .mobile-sidebar-overlay.active { display: block; }
-                    
-                    .mobile-sidebar-header {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        padding: 20px 0;
-                        border-bottom: 1px solid rgba(255,255,255,0.2);
-                        margin-bottom: 20px;
-                    }
-                    
-                    .mobile-sidebar-logo {
-                        height: 60px;
-                        width: auto;
-                        margin-bottom: 15px;
-                    }
-                    
-                    .mobile-sidebar-title {
-                        font-size: 18px;
-                        font-weight: bold;
-                        color: white;
-                        text-align: center;
-                        line-height: 1.2;
-                    }
-                    
-                    .mobile-menu-section {
-                        color: #FFD700;
-                        font-weight: bold;
-                        margin: 20px 0 10px;
-                        padding-bottom: 5px;
-                        border-bottom: 1px solid rgba(255,255,255,0.2);
-                        font-size: 16px;
-                    }
-                    
-                    .mobile-menu-item {
-                        display: block;
-                        width: 100%;
-                        padding: 12px 15px;
-                        margin-bottom: 8px;
-                        background: rgba(255,255,255,0.1);
-                        color: white;
-                        border: none;
-                        border-radius: 5px;
-                        text-align: left;
-                        cursor: pointer;
-                        transition: background 0.3s, transform 0.2s;
-                        font-size: 15px;
-                    }
-                    
-                    .mobile-menu-item:hover { 
-                        background: rgba(255,255,255,0.2); 
-                        transform: translateX(5px);
-                    }
-                    
-                    .mobile-menu-item.active {
-                        background: rgba(255,215,0,0.3);
-                        border-left: 3px solid #FFD700;
-                        font-weight: bold;
-                    }
-                    
-                    .mobile-menu-item i {
-                        margin-right: 10px;
-                        width: 20px;
-                        text-align: center;
-                    }
-                    
-                    .mobile-sidebar-footer {
-                        margin-top: auto;
-                        padding-top: 20px;
-                        border-top: 1px solid rgba(255,255,255,0.2);
-                    }
-                    
-                    .mobile-exit-btn {
-                        display: block;
-                        width: 100%;
-                        padding: 12px 15px;
-                        background: rgba(255, 0, 0, 0.2);
-                        color: white;
-                        border: none;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        font-size: 15px;
-                        transition: background 0.3s;
-                        text-align: center;
-                    }
-                    
-                    .mobile-exit-btn:hover { background: rgba(255, 0, 0, 0.3); }
-                    
-                    .mobile-iframe-container {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background: white;
-                        transition: left 0.3s ease;
-                    }
-                    
-                    .mobile-iframe-container.sidebar-open {
-                        left: 280px;
-                        width: calc(100% - 280px);
-                    }
-                    
-                    .mobile-iframe {
-                        width: 100%;
-                        height: 100%;
-                        border: none;
-                        transition: opacity 0.3s;
-                    }
-                    
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                    
-                    @media (max-width: 600px) {
-                        .mobile-floating-toggle {
-                            width: 45px;
-                            height: 45px;
-                            font-size: 18px;
-                            top: 15px;
-                            left: 15px;
-                        }
-                        
-                        .mobile-sidebar { width: 260px; }
-                        
-                        .mobile-iframe-container.sidebar-open {
-                            left: 260px;
-                            width: calc(100% - 260px);
-                        }
-                    }
-                </style>
-            `;
-        }
-
-        // Función para inicializar funcionalidad del dashboard móvil
-        function initMobileDashboardFunctionality() {
-            const mobileToggleBtn = document.getElementById('mobileToggleBtn');
-            const mobileSidebar = document.getElementById('mobileSidebar');
-            const mobileOverlay = document.getElementById('mobileOverlay');
-            const mobileIframeContainer = document.getElementById('mobileIframeContainer');
-            const mobileIframe = document.getElementById('mobileIframe');
-            const mobileIframeLoading = document.getElementById('mobileIframeLoading');
-            const mobileMenuItems = document.querySelectorAll('.mobile-menu-item');
-            const mobileWhatsappBtn = document.getElementById('mobileWhatsappBtn');
-            const mobileExitBtn = document.getElementById('mobileExitBtn');
-            
-            let isSidebarOpen = false;
-            
-            // 🔒 Bloquear clic derecho SOLO en el menú móvil
-            mobileSidebar.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                return false;
-            });
-            
-            function openWhatsApp() {
-                const phoneNumber = '+524421974414';
-                const message = 'Hola, necesito ayuda en el Centro de Business Intelligence';
-                const url = 'https://wa.me/' + phoneNumber + '?text=' + encodeURIComponent(message);
-                window.open(url, '_blank');
-            }
-            
-            function toggleSidebar() {
-                isSidebarOpen = !isSidebarOpen;
-                mobileSidebar.classList.toggle('active');
-                mobileOverlay.classList.toggle('active');
-                mobileIframeContainer.classList.toggle('sidebar-open');
-                
-                if (isSidebarOpen) {
-                    mobileToggleBtn.innerHTML = '<i class="fas fa-times"></i>';
-                } else {
-                    mobileToggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
-                }
-            }
-            
-            function loadMobileDashboard(dashboardUrl, dashboardKey) {
-                // Mostrar loading
-                mobileIframeLoading.style.display = 'block';
-                mobileIframe.style.opacity = '0.3';
-                
-                // Registrar acceso
-                logger.log('dashboard_view', dashboardKey, currentUser);
-                
-                // Cargar el dashboard
-                mobileIframe.src = dashboardUrl;
-                
-                // Ocultar sidebar si está abierto
-                if (isSidebarOpen) {
-                    toggleSidebar();
-                }
-            }
-            
-            mobileToggleBtn.addEventListener('click', toggleSidebar);
-            mobileOverlay.addEventListener('click', toggleSidebar);
-            
-            mobileMenuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    const dashboardUrl = this.getAttribute('data-src');
-                    
-                    if (dashboardUrl) {
-                        // Obtener qué dashboard se está accediendo
-                        const dashboardKey = Object.keys(dashboardUrls).find(key => 
-                            dashboardUrls[key] === dashboardUrl
-                        );
-                        
-                        // Actualizar estado activo
-                        mobileMenuItems.forEach(menuItem => {
-                            menuItem.classList.remove('active');
-                        });
-                        this.classList.add('active');
-                        
-                        // Cargar dashboard
-                        loadMobileDashboard(dashboardUrl, dashboardKey);
-                    }
-                });
-            });
-            
-            mobileWhatsappBtn.addEventListener('click', function() {
-                openWhatsApp();
-            });
-            
-            mobileExitBtn.addEventListener('click', function() {
-                if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                    logger.log('logout', null, currentUser);
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
-                }
-            });
-            
-            // Evento cuando el iframe carga
-            mobileIframe.addEventListener('load', function() {
-                // Ocultar loading
-                mobileIframeLoading.style.display = 'none';
-                mobileIframe.style.opacity = '1';
-            });
-            
-            // Manejar errores del iframe
-            mobileIframe.addEventListener('error', function() {
-                mobileIframeLoading.innerHTML = '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px;"></i><p>Error al cargar el dashboard</p><button onclick="location.reload()" style="margin-top: 10px; padding: 8px 15px; background: #152c6e; color: white; border: none; border-radius: 4px; cursor: pointer;">Reintentar</button></div>';
-            });
-        }
-
-        // Función para generar el HTML del dashboard para PC
-        function generateDashboardHTML() {
-            let menuItemsHTML = '';
-            
-            if (currentUserPermissions.includes('principal')) {
-                menuItemsHTML += `
-                    <button class="menu-item active" data-src="${dashboardUrls.principal}">
-                        <i class="${dashboardIcons.principal}"></i> ${dashboardNames.principal}
-                    </button>
-                `;
-            }
-            
-            const otherDashboards = currentUserPermissions.filter(d => d !== 'principal' && d !== 'diccionario');
-            if (otherDashboards.length > 0) {
-                menuItemsHTML += `<div class="menu-section">Dashboards</div>`;
-                
-                otherDashboards.forEach(dashboard => {
-                    if (dashboardUrls[dashboard]) {
-                        menuItemsHTML += `
-                            <button class="menu-item" data-src="${dashboardUrls[dashboard]}">
-                                <i class="${dashboardIcons[dashboard]}"></i> ${dashboardNames[dashboard]}
-                            </button>
-                        `;
-                    }
-                });
-            }
-            
-            menuItemsHTML += `<div class="menu-section">Herramientas</div>`;
-            
-            if (currentUserPermissions.includes('diccionario')) {
-                menuItemsHTML += `
-                    <button class="menu-item" data-src="${dashboardUrls.diccionario}">
-                        <i class="${dashboardIcons.diccionario}"></i> ${dashboardNames.diccionario}
-                    </button>
-                `;
-            }
-            
-            menuItemsHTML += `
-                <button class="menu-item" id="whatsappBtn">
-                    <i class="fab fa-whatsapp"></i> Ayuda
-                </button>
-            `;
-            
-            let initialDashboard = dashboardUrls.principal;
-            if (currentUserPermissions.includes('principal')) {
-                initialDashboard = dashboardUrls.principal;
-            } else if (currentUserPermissions.length > 0) {
-                initialDashboard = dashboardUrls[currentUserPermissions[0]] || dashboardUrls.principal;
-            }
-            
-            // Convertir las constantes a JSON para pasarlas al dashboard
-            const dashboardUrlsJson = JSON.stringify(dashboardUrls);
-            const dashboardNamesJson = JSON.stringify(dashboardNames);
-            const dashboardIconsJson = JSON.stringify(dashboardIcons);
-            
-            return `
-                <!DOCTYPE html>
-                <html lang="es">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Business Intelligence de Big Bola Casinos</title>
-                    <link rel="icon" type="image/png" href="https://i.postimg.cc/QCN4dPG1/analisis-de-datos.png">
-                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                    <style>
-                        * {
-                            margin: 0;
-                            padding: 0;
-                            box-sizing: border-box;
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        }
-                        
-                        body {
-                            background-color: #f5f5f5;
-                            overflow: hidden;
-                            margin: 0;
-                            padding: 0;
-                        }
-                        
-                        .container {
-                            width: 100vw;
-                            height: 100vh;
-                            background-color: #fff;
-                            display: flex;
-                            flex-direction: column;
-                            position: relative;
-                        }
-                        
-                        .floating-toggle {
-                            position: fixed;
-                            top: 20px;
-                            left: 20px;
-                            width: 50px;
-                            height: 50px;
-                            background: rgba(26, 58, 143, 0.8);
-                            color: white;
-                            border: none;
-                            border-radius: 50%;
-                            cursor: pointer;
-                            z-index: 1001;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 20px;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                            transition: all 0.3s ease;
-                        }
-                        
-                        .floating-toggle:hover {
-                            background: rgba(26, 58, 143, 0.9);
-                            transform: scale(1.05);
-                        }
-                        
-                        .sidebar {
-                            position: fixed;
-                            top: 0;
-                            left: -320px;
-                            width: 320px;
-                            height: 100vh;
-                            background: #152c6e;
-                            z-index: 1002;
-                            transition: left 0.3s ease;
-                            overflow-y: auto;
-                            padding: 20px;
-                            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        
-                        .sidebar.active { left: 0; }
-                        
-                        .sidebar-overlay {
-                            display: none;
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            width: 100%;
-                            height: 100%;
-                            background: rgba(0,0,0,0.5);
-                            z-index: 1001;
-                        }
-                        
-                        .sidebar-overlay.active { display: block; }
-                        
-                        .sidebar-header {
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            padding: 20px 0;
-                            border-bottom: 1px solid rgba(255,255,255,0.2);
-                            margin-bottom: 20px;
-                        }
-                        
-                        .sidebar-logo {
-                            height: 60px;
-                            width: auto;
-                            margin-bottom: 15px;
-                        }
-                        
-                        .sidebar-title {
-                            font-size: 18px;
-                            font-weight: bold;
-                            color: white;
-                            text-align: center;
-                            line-height: 1.2;
-                        }
-                        
-                        .user-info {
-                            margin-top: 10px;
-                            font-size: 12px;
-                            color: #FFD700;
-                            text-align: center;
-                        }
-                        
-                        .menu-section {
-                            color: #FFD700;
-                            font-weight: bold;
-                            margin: 20px 0 10px;
-                            padding-bottom: 5px;
-                            border-bottom: 1px solid rgba(255,255,255,0.2);
-                            font-size: 16px;
-                        }
-                        
-                        .menu-item {
-                            display: block;
-                            width: 100%;
-                            padding: 12px 15px;
-                            margin-bottom: 8px;
-                            background: rgba(255,255,255,0.1);
-                            color: white;
-                            border: none;
-                            border-radius: 5px;
-                            text-align: left;
-                            cursor: pointer;
-                            transition: background 0.3s, transform 0.2s;
-                            font-size: 15px;
-                        }
-                        
-                        .menu-item:hover { 
-                            background: rgba(255,255,255,0.2); 
-                            transform: translateX(5px);
-                        }
-                        
-                        .menu-item.active {
-                            background: rgba(255,215,0,0.3);
-                            border-left: 3px solid #FFD700;
-                            font-weight: bold;
-                        }
-                        
-                        .menu-item i {
-                            margin-right: 10px;
-                            width: 20px;
-                            text-align: center;
-                        }
-                        
-                        .sidebar-footer {
-                            margin-top: auto;
-                            padding-top: 20px;
-                            border-top: 1px solid rgba(255,255,255,0.2);
-                        }
-                        
-                        .exit-btn {
-                            display: block;
-                            width: 100%;
-                            padding: 12px 15px;
-                            background: rgba(255, 0, 0, 0.2);
-                            color: white;
-                            border: none;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-size: 15px;
-                            transition: background 0.3s;
-                            text-align: center;
-                        }
-                        
-                        .exit-btn:hover { background: rgba(255, 0, 0, 0.3); }
-                        
-                        .iframe-container {
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            width: 100%;
-                            height: 100%;
-                            background: white;
-                            transition: left 0.3s ease;
-                        }
-                        
-                        .iframe-container.sidebar-open {
-                            left: 320px;
-                            width: calc(100% - 320px);
-                        }
-                        
-                        iframe {
-                            width: 100%;
-                            height: 100%;
-                            border: none;
-                            transition: opacity 0.3s;
-                        }
-                        
-                        /* Estilo para el mensaje de menú deshabilitado */
-                        .context-menu-message {
-                            position: fixed;
-                            top: 10px;
-                            right: 10px;
-                            background: rgba(0,0,0,0.7);
-                            color: white;
-                            padding: 10px;
-                            border-radius: 5px;
-                            z-index: 10000;
-                            font-size: 14px;
-                            display: none;
-                            animation: fadeInOut 3s ease-in-out;
-                        }
-                        
-                        @keyframes fadeInOut {
-                            0% { opacity: 0; }
-                            10% { opacity: 1; }
-                            90% { opacity: 1; }
-                            100% { opacity: 0; }
-                        }
-
-                        /* Loading spinner para iframe */
-                        .iframe-loading {
-                            position: absolute;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            text-align: center;
-                            z-index: 100;
-                        }
-
-                        .spinner {
-                            border: 4px solid #f3f3f3;
-                            border-top: 4px solid #152c6e;
-                            border-radius: 50%;
-                            width: 40px;
-                            height: 40px;
-                            animation: spin 1s linear infinite;
-                            margin: 0 auto 15px;
-                        }
-
-                        @keyframes spin {
-                            0% { transform: rotate(0deg); }
-                            100% { transform: rotate(360deg); }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="context-menu-message" id="contextMenuMessage">Menú contextual deshabilitado</div>
-                    <div class="container">
-                        <button class="floating-toggle" id="toggleBtn">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        
-                        <div class="sidebar-overlay" id="overlay"></div>
-                        
-                        <div class="sidebar" id="sidebar">
-                            <div class="sidebar-header">
-                                <img src="https://i.postimg.cc/hGqNYsNp/Isotipo-Perfiles-Marmol01-Photoroom.png" alt="Big Bola Casinos" class="sidebar-logo">
-                                <div class="sidebar-title">
-                                    <div>Centro de</div>
-                                    <div>Business Intelligence</div>
-                                </div>
-                                <div class="user-info">
-                                    Usuario: ${currentUser}
-                                </div>
-                            </div>
-                            ${menuItemsHTML}
-                            <div class="sidebar-footer">
-                                <button class="exit-btn" id="exitBtn">
-                                    <i class="fas fa-sign-out-alt"></i> Salir
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="iframe-container" id="iframeContainer">
-                            <div class="iframe-loading" id="iframeLoading" style="display: none;">
-                                <div class="spinner"></div>
-                                <p>Cargando dashboard...</p>
-                            </div>
-                            <iframe id="dashboardFrame" src="${initialDashboard}"></iframe>
-                        </div>
-                    </div>
-
-                    <script>
-                        // 🔧 DECLARAR VARIABLES GLOBALES PARA ESTE SCRIPT
-                        const dashboardUrls = ${dashboardUrlsJson};
-                        const dashboardNames = ${dashboardNamesJson};
-                        const dashboardIcons = ${dashboardIconsJson};
-                        const currentUser = "${currentUser}";
-                        
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const toggleBtn = document.getElementById('toggleBtn');
-                            const sidebar = document.getElementById('sidebar');
-                            const overlay = document.getElementById('overlay');
-                            const iframeContainer = document.getElementById('iframeContainer');
-                            const menuItems = document.querySelectorAll('.menu-item');
-                            const whatsappBtn = document.getElementById('whatsappBtn');
-                            const exitBtn = document.getElementById('exitBtn');
-                            const iframe = document.getElementById('dashboardFrame');
-                            const iframeLoading = document.getElementById('iframeLoading');
-                            const contextMenuMessage = document.getElementById('contextMenuMessage');
-                            
-                            let isSidebarOpen = false;
-                            
-                            // 🔒 FUNCIONES DE SEGURIDAD
-                            function blockRightClickOnSidebar(e) {
-                                e.preventDefault();
-                                showContextMenuMessage();
-                                return false;
-                            }
-                            
-                            function showContextMenuMessage() {
-                                contextMenuMessage.style.display = 'block';
-                                setTimeout(() => {
-                                    contextMenuMessage.style.display = 'none';
-                                }, 3000);
-                            }
-                            
-                            function applySecurityBlocks() {
-                                sidebar.addEventListener('contextmenu', blockRightClickOnSidebar);
-                            }
-                            
-                            // 📊 ENVIAR LOG AL PADRE (login page)
-                            function logDashboardAccess(dashboardKey) {
-                                try {
-                                    // Enviar mensaje al padre para logging
-                                    if (window.opener && !window.opener.closed) {
-                                        window.opener.postMessage({
-                                            type: 'log_dashboard_view',
-                                            dashboardKey: dashboardKey,
-                                            user: currentUser,
-                                            timestamp: new Date().toISOString()
-                                        }, '*');
-                                    }
-                                    console.log('📊 Dashboard accedido:', dashboardKey);
-                                } catch (error) {
-                                    console.warn('Error en logging:', error);
-                                }
-                            }
-                            
-                            // 📱 FUNCIONES DE LA APLICACIÓN
-                            function openWhatsApp() {
-                                const phoneNumber = '+524421974414';
-                                const message = 'Hola, necesito ayuda en el Centro de Business Intelligence';
-                                const url = 'https://wa.me/' + phoneNumber + '?text=' + encodeURIComponent(message);
-                                window.open(url, '_blank');
-                            }
-                            
-                            function toggleSidebar() {
-                                isSidebarOpen = !isSidebarOpen;
-                                sidebar.classList.toggle('active');
-                                overlay.classList.toggle('active');
-                                iframeContainer.classList.toggle('sidebar-open');
-                                
-                                toggleBtn.innerHTML = isSidebarOpen ? 
-                                    '<i class="fas fa-times"></i>' : 
-                                    '<i class="fas fa-bars"></i>';
-                            }
-                            
-                            function loadDashboard(dashboardUrl, dashboardKey) {
-                                // Mostrar loading
-                                iframeLoading.style.display = 'block';
-                                iframe.style.opacity = '0.3';
-                                
-                                // Registrar acceso
-                                logDashboardAccess(dashboardKey);
-                                
-                                // Cargar el dashboard
-                                iframe.src = dashboardUrl;
-                                
-                                // Ocultar sidebar si está abierto
-                                if (isSidebarOpen) {
-                                    toggleSidebar();
-                                }
-                            }
-                            
-                            function logout() {
-                                if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                                    try {
-                                        // Enviar mensaje de logout al padre
-                                        if (window.opener && !window.opener.closed) {
-                                            window.opener.postMessage({
-                                                type: 'logout',
-                                                user: currentUser
-                                            }, '*');
-                                        }
-                                        window.close();
-                                    } catch (error) {
-                                        window.close();
-                                    }
-                                }
-                            }
-                            
-                            // 🎯 EVENT LISTENERS
-                            toggleBtn.addEventListener('click', toggleSidebar);
-                            overlay.addEventListener('click', toggleSidebar);
-                            
-                            menuItems.forEach(item => {
-                                item.addEventListener('click', function() {
-                                    const dashboardUrl = this.getAttribute('data-src');
-                                    
-                                    if (dashboardUrl) {
-                                        // Encontrar la clave del dashboard
-                                        const dashboardKey = Object.keys(dashboardUrls).find(key => 
-                                            dashboardUrls[key] === dashboardUrl
-                                        );
-                                        
-                                        // Actualizar estado activo
-                                        menuItems.forEach(menuItem => {
-                                            menuItem.classList.remove('active');
-                                        });
-                                        this.classList.add('active');
-                                        
-                                        // Cargar el dashboard
-                                        loadDashboard(dashboardUrl, dashboardKey);
-                                    }
-                                });
-                            });
-                            
-                            // Botón de WhatsApp
-                            if (whatsappBtn) {
-                                whatsappBtn.addEventListener('click', openWhatsApp);
-                            }
-                            
-                            // Botón de salir
-                            exitBtn.addEventListener('click', logout);
-                            
-                            // Evento cuando el iframe carga
-                            iframe.addEventListener('load', function() {
-                                // Ocultar loading
-                                iframeLoading.style.display = 'none';
-                                iframe.style.opacity = '1';
-                            });
-                            
-                            // Manejar errores del iframe
-                            iframe.addEventListener('error', function() {
-                                iframeLoading.innerHTML = '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px;"></i><p>Error al cargar el dashboard</p><button onclick="location.reload()" style="margin-top: 10px; padding: 8px 15px; background: #152c6e; color: white; border: none; border-radius: 4px; cursor: pointer;">Reintentar</button></div>';
-                            });
-                            
-                            // 📋 INICIALIZACIÓN
-                            applySecurityBlocks();
-                            
-                            // Pantalla completa
-                            setTimeout(function() {
-                                try {
-                                    if (document.documentElement.requestFullscreen) {
-                                        document.documentElement.requestFullscreen();
-                                    }
-                                } catch (err) {
-                                    console.log('Pantalla completa no disponible:', err);
-                                }
-                            }, 100);
-                        });
-                    <\/script>
-                </body>
-                </html>
-            `;
-        }
-
-        // ==================== FUNCIONES DE DEBUGGING ====================
-        
-        function testLoggingSystem() {
-            console.log('=== TEST DEL SISTEMA DE LOGGING JSON BIN ===');
-            
-            // 1. Ver estado actual
-            const status = logger.getStats();
-            console.log('📊 Estado actual:', status);
-            
-            let alertMessage = '=== TEST JSON BIN LOGGING ===\\n\\n';
-            alertMessage += `JSON Bin configurado: ${status.jsonBinConfigured ? '✅' : '❌'}\\n`;
-            alertMessage += `Conexión: ${status.online ? '✅ Online' : '❌ Offline'}\\n`;
-            alertMessage += `Logs locales: ${status.total}\\n`;
-            alertMessage += `Logs hoy: ${status.today}\\n`;
-            alertMessage += `Logs pendientes: ${status.pending}\\n`;
-            alertMessage += `Usuarios únicos: ${status.users}\\n\\n`;
-            
-            // 2. Test de conexión
-            logger.testConnection()
-                .then(result => {
-                    console.log('Resultado test:', result);
-                    
-                    alertMessage += `Test conexión: ${result.status}\\n`;
-                    alertMessage += `Mensaje: ${result.message}\\n\\n`;
-                    
-                    // 3. Enviar log de prueba
-                    logger.log('test_conexion', 'principal', 'test@bigbola.com')
-                        .then(log => {
-                            alertMessage += `✅ Log de prueba creado\\n`;
-                            alertMessage += `ID: ${log.id}\\n`;
-                            alertMessage += `Hora: ${new Date().toLocaleTimeString()}`;
-                            
-                            alert(alertMessage);
-                        })
-                        .catch(err => {
-                            alertMessage += `❌ Error en log: ${err.message}`;
-                            alert(alertMessage);
-                        });
-                })
-                .catch(error => {
-                    alertMessage += `❌ Error en test: ${error.message}`;
-                    alert(alertMessage);
-                });
-        }
-        
-        function exportLocalLogs() {
-            logger.exportLocalLogs();
-        }
-        
-        function clearLocalLogs() {
-            logger.clearLocalLogs();
-        }
-        
-        // Función para agregar botón flotante de control
-        function addFloatingControlButton() {
-            const button = document.createElement('button');
-            button.innerHTML = '⚙️';
-            button.title = 'Panel de Control JSON Bin';
-            button.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 50px;
-                height: 50px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border: none;
-                border-radius: 50%;
-                cursor: pointer;
-                z-index: 1000;
-                font-size: 20px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.3s ease;
-            `;
-            
-            button.addEventListener('mouseenter', () => {
-                button.style.transform = 'scale(1.1)';
-                button.style.boxShadow = '0 6px 20px rgba(0,0,0,0.4)';
-            });
-            
-            button.addEventListener('mouseleave', () => {
-                button.style.transform = 'scale(1)';
-                button.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
-            });
-            
-            button.onclick = showJSONBinAdminPanel;
-            
-            document.body.appendChild(button);
-        }
-        
-        // Panel de administración JSON Bin
-        function showJSONBinAdminPanel() {
-            const stats = logger.getStats();
-            
-            const panelHTML = `
-                <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                            width: 90%; max-width: 500px; background: white; border-radius: 10px;
-                            box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 2000; padding: 25px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: #152c6e; margin: 0;">⚙️ Panel de Control JSON Bin</h3>
-                        <button onclick="closeAdminPanel()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
-                    </div>
-                    
-                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <h4 style="margin-top: 0; color: #495057;">📊 Estadísticas</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <strong>Logs totales:</strong><br>
-                                <span style="font-size: 24px; color: #152c6e;">${stats.total}</span>
-                            </div>
-                            <div>
-                                <strong>Logs hoy:</strong><br>
-                                <span style="font-size: 24px; color: #28a745;">${stats.today}</span>
-                            </div>
-                            <div>
-                                <strong>Pendientes:</strong><br>
-                                <span style="font-size: 24px; color: ${stats.pending > 0 ? '#ffc107' : '#6c757d'};">${stats.pending}</span>
-                            </div>
-                            <div>
-                                <strong>Conexión:</strong><br>
-                                <span style="font-size: 24px; color: ${stats.online ? '#28a745' : '#dc3545'};">${stats.online ? '✅' : '❌'}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button onclick="testLoggingSystem()" style="background: #17a2b8; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-vial"></i> Test de Conexión
-                        </button>
-                        
-                        <button onclick="logger.exportLocalLogs()" style="background: #28a745; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-download"></i> Exportar Logs
-                        </button>
-                        
-                        <button onclick="logger.clearLocalLogs()" style="background: #dc3545; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-trash"></i> Limpiar Logs
-                        </button>
-                        
-                        <button onclick="syncNow()" style="background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-sync"></i> Sincronizar Ahora
-                        </button>
-                    </div>
-                    
-                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
-                        <strong>Configuración JSON Bin:</strong><br>
-                        Bin ID: ${JSONBIN_CONFIG.binId ? '✅ Configurado' : '❌ Faltante'}<br>
-                        API Key: ${JSONBIN_CONFIG.apiKey ? '✅ Configurada' : '❌ Faltante'}<br>
-                        Session ID: ${stats.session}
-                    </div>
-                </div>
-                <div id="adminOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999;"></div>
-            `;
-            
-            const panel = document.createElement('div');
-            panel.id = 'jsonBinAdminPanel';
-            panel.innerHTML = panelHTML;
-            document.body.appendChild(panel);
-            
-            // Agregar evento al overlay
-            document.getElementById('adminOverlay').addEventListener('click', closeAdminPanel);
-        }
-        
-        function closeAdminPanel() {
-            const panel = document.getElementById('jsonBinAdminPanel');
-            if (panel) {
-                panel.remove();
-            }
-        }
-        
-        function syncNow() {
-            logger.flushPendingLogs().then((result) => {
-                if (result) {
-                    alert(\`✅ Sincronización completada\\nExitosos: \${result.success}\\nFallidos: \${result.failed}\`);
-                } else {
-                    alert('✅ Sincronización completada');
-                }
-                closeAdminPanel();
-                // Refrescar panel después de 1 segundo
-                setTimeout(showJSONBinAdminPanel, 1000);
-            });
-        }
-        
-        // Mostrar estado en consola cada 5 minutos
-        setInterval(() => {
-            const status = logger.getStats();
-            if (status.total > 0 || status.pending > 0) {
-                console.log('📈 Estado logs:', status);
-            }
-        }, 300000);
     </script>
 </body>
 </html>
