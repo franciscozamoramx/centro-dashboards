@@ -186,6 +186,16 @@
             <p>Bienvenido: <span id="userEmail"></span></p>
             <p>Dashboards disponibles: <span id="dashboardsCount"></span></p>
         </div>
+        
+        <!-- Botones de debugging (solo para desarrollo) -->
+        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px;">
+            <button class="btn" onclick="testLoggingSystem()" style="background: #28a745; font-size: 14px; padding: 8px 15px;">
+                <i class="fas fa-bug"></i> Test Logging
+            </button>
+            <button class="btn" onclick="exportLocalLogs()" style="background: #17a2b8; font-size: 14px; padding: 8px 15px;">
+                <i class="fas fa-download"></i> Exportar Logs
+            </button>
+        </div>
     </div>
 
     <script>
@@ -216,8 +226,6 @@
             "proyectos": "Proyectos BI",
             "rtp": "RTP",
             "diccionario": "Diccionario KPI's",
-            "incidencias_calor": "Incidencias Calor",
-            "incidencias_pie": "Incidencias Pie",
             "seguimiento_auditores": "Seguimiento de Auditores"
         };
 
@@ -233,18 +241,17 @@
             "proyectos": "fas fa-project-diagram",
             "rtp": "fas fa-coins",
             "diccionario": "fas fa-book",
-            "incidencias_calor": "fas fa-temperature-high",
-            "incidencias_pie": "fas fa-user-check"
+            "seguimiento_auditores": "fas fa-user-check"
         };
 
         // ==================== CONFIGURACIÓN DE LOGGING CON GOOGLE SHEETS ====================
         const LOGGING_ENABLED = true;
         let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-        // URL de tu Google Apps Script (REEMPLAZA CON TU URL)
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzX6bH05LLI0GsT5dDWaSLz7RPVNN21t5D0tD_k6D_FfgaPdffpeDunCQ91D8jx6X1z/exec';
+        // URL de tu Google Apps Script - ACTUALIZADA CON TU NUEVA URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMaFSlCsLuJoxmN-mrGhzqMe7YCRJYvRkQCqMytsaxDC-LzYUUHtkLwBBwFQ4dO_qP/exec';
 
-        // Clase para manejar logging con Google Sheets
+        // Clase mejorada para manejar logging con Google Sheets
         class GoogleSheetsLogger {
             constructor() {
                 this.pendingLogs = [];
@@ -253,24 +260,41 @@
             }
             
             init() {
-                // Cargar logs pendientes
-                this.loadPendingLogs();
+                console.log('📝 Inicializando sistema de logging...');
                 
                 // Detectar cambios de conexión
                 window.addEventListener('online', () => {
+                    console.log('🌐 Conexión restaurada');
                     this.isOnline = true;
                     this.flushPendingLogs();
                 });
                 
                 window.addEventListener('offline', () => {
+                    console.log('📴 Sin conexión');
                     this.isOnline = false;
                 });
                 
                 // Intentar enviar pendientes cada 30 segundos
                 setInterval(() => this.flushPendingLogs(), 30000);
+                
+                // Test inicial
+                this.testConnection();
             }
             
-            // Registrar un evento
+            // Test de conexión
+            async testConnection() {
+                try {
+                    const response = await fetch(GOOGLE_SCRIPT_URL + '?test=' + Date.now());
+                    const data = await response.json();
+                    console.log('✅ Conexión con Google Sheets establecida:', data);
+                    return data;
+                } catch (error) {
+                    console.warn('⚠️ No se pudo conectar con Google Sheets:', error);
+                    return null;
+                }
+            }
+            
+            // Registrar un evento - VERSIÓN MEJORADA
             async log(action, dashboard = null, user = null) {
                 const logEntry = {
                     timestamp: new Date().toISOString(),
@@ -280,36 +304,48 @@
                     dashboardName: dashboard ? dashboardNames[dashboard] : null,
                     deviceType: isMobileDevice() ? 'mobile' : 'desktop',
                     screen: `${window.screen.width}x${window.screen.height}`,
-                    userAgent: navigator.userAgent.substring(0, 150),
+                    userAgent: navigator.userAgent,
                     sessionId: currentSessionId,
-                    secret: 'Centro-BI-Dashboards-Secret-2024-9876!'
+                    secret: 'Centro-BI-Dashboards-Secret-2024-9876!',
+                    source: 'centro_bi_bigbola'
                 };
                 
-                // Guardar en localStorage primero
+                console.log('📝 Registrando log:', {
+                    action: action,
+                    user: logEntry.user,
+                    dashboard: dashboard,
+                    session: currentSessionId
+                });
+                
+                // 1. Guardar en localStorage como respaldo
                 this.saveToLocalStorage(logEntry);
                 
-                // Intentar enviar inmediatamente si hay conexión
+                // 2. Intentar enviar al servidor si hay conexión
                 if (this.isOnline && LOGGING_ENABLED) {
-                    try {
-                        await this.sendToGoogleSheets(logEntry);
-                        console.log('✅ Log registrado:', action);
-                    } catch (error) {
-                        console.warn('⚠️ Error enviando log, guardando como pendiente:', error);
+                    const sent = await this.trySendToServer(logEntry);
+                    if (!sent) {
+                        // Si falla, guardar como pendiente
+                        console.warn('⚠️ No se pudo enviar, guardando como pendiente');
                         this.saveAsPending(logEntry);
+                    } else {
+                        console.log('✅ Log enviado exitosamente');
                     }
                 } else {
-                    // Guardar como pendiente para enviar después
+                    // Sin conexión, guardar como pendiente
+                    console.log('📦 Sin conexión, guardando como pendiente');
                     this.saveAsPending(logEntry);
                 }
                 
                 return logEntry;
             }
             
-            // Enviar log a Google Sheets
-            async sendToGoogleSheets(logEntry) {
+            // Intentar enviar al servidor - VERSIÓN ROBUSTA
+            async trySendToServer(logEntry) {
                 try {
-                    // Enviar como JSON
-                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    console.log('📤 Enviando log a Google Sheets...');
+                    
+                    // Método 1: Enviar como JSON normal
+                    let response = await fetch(GOOGLE_SCRIPT_URL, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -317,14 +353,36 @@
                         body: JSON.stringify(logEntry)
                     });
                     
-                    // No podemos leer la respuesta en modo no-cors, pero confiamos en que se envió
-                    console.log('📤 Log enviado a Google Sheets:', logEntry.action);
+                    // Si falla con JSON, intentar con FormData
+                    if (!response.ok) {
+                        console.log('⚠️ Falló JSON, intentando FormData...');
+                        
+                        const formData = new FormData();
+                        formData.append('data', JSON.stringify(logEntry));
+                        
+                        response = await fetch(GOOGLE_SCRIPT_URL, {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
                     
-                    return { success: true };
+                    if (response.ok) {
+                        try {
+                            const result = await response.json();
+                            console.log('✅ Respuesta del servidor:', result);
+                            return true;
+                        } catch (jsonError) {
+                            console.log('✅ Log enviado (respuesta no JSON)');
+                            return true;
+                        }
+                    } else {
+                        console.warn('❌ Error del servidor:', response.status, response.statusText);
+                        return false;
+                    }
                     
                 } catch (error) {
-                    console.error('❌ Error enviando log:', error);
-                    throw error;
+                    console.error('❌ Error enviando log:', error.message);
+                    return false;
                 }
             }
             
@@ -335,11 +393,13 @@
                     let logs = JSON.parse(localStorage.getItem(key) || '[]');
                     logs.push(logEntry);
                     
-                    if (logs.length > 500) {
-                        logs = logs.slice(-500);
+                    // Mantener solo últimos 200 logs
+                    if (logs.length > 200) {
+                        logs = logs.slice(-200);
                     }
                     
                     localStorage.setItem(key, JSON.stringify(logs));
+                    console.log('💾 Log guardado localmente. Total:', logs.length);
                 } catch (error) {
                     console.error('Error guardando localmente:', error);
                 }
@@ -354,14 +414,17 @@
                     pending.push({
                         ...logEntry,
                         retries: 0,
-                        lastTry: null
+                        lastTry: null,
+                        addedAt: new Date().toISOString()
                     });
                     
-                    if (pending.length > 200) {
-                        pending = pending.slice(-200);
+                    // Mantener solo últimos 100 pendientes
+                    if (pending.length > 100) {
+                        pending = pending.slice(-100);
                     }
                     
                     localStorage.setItem(key, JSON.stringify(pending));
+                    console.log('📦 Log guardado como pendiente. Total pendientes:', pending.length);
                 } catch (error) {
                     console.error('Error guardando pendiente:', error);
                 }
@@ -377,46 +440,43 @@
                     
                     if (pending.length === 0) return;
                     
-                    console.log(`🔄 Enviando ${pending.length} logs pendientes...`);
+                    console.log(`🔄 Sincronizando ${pending.length} logs pendientes...`);
                     
                     const successfulLogs = [];
+                    const failedLogs = [];
                     
                     for (const log of pending) {
                         try {
-                            await this.sendToGoogleSheets(log);
-                            successfulLogs.push(log.timestamp);
+                            const sent = await this.trySendToServer(log);
+                            
+                            if (sent) {
+                                successfulLogs.push(log.timestamp);
+                            } else {
+                                failedLogs.push(log.timestamp);
+                            }
+                            
+                            // Pequeña pausa para no saturar
+                            await new Promise(resolve => setTimeout(resolve, 300));
+                            
                         } catch (error) {
                             console.warn('Error enviando log pendiente:', error);
+                            failedLogs.push(log.timestamp);
                         }
-                        
-                        // Pequeña pausa entre envíos
-                        await new Promise(resolve => setTimeout(resolve, 500));
                     }
                     
-                    // Eliminar logs exitosos
-                    if (successfulLogs.length > 0) {
-                        const remaining = pending.filter(log => !successfulLogs.includes(log.timestamp));
-                        localStorage.setItem(pendingKey, JSON.stringify(remaining));
-                        console.log(`✅ ${successfulLogs.length} logs sincronizados`);
-                    }
+                    // Actualizar lista de pendientes
+                    const remaining = pending.filter(log => failedLogs.includes(log.timestamp));
+                    localStorage.setItem(pendingKey, JSON.stringify(remaining));
+                    
+                    console.log(`✅ ${successfulLogs.length} logs sincronizados`);
+                    console.log(`❌ ${failedLogs.length} logs fallaron`);
                     
                 } catch (error) {
-                    console.warn('Error sincronizando pendientes:', error);
+                    console.error('Error en sincronización:', error);
                 }
             }
             
-            // Cargar logs pendientes
-            loadPendingLogs() {
-                try {
-                    const pendingKey = 'bi_logs_pending';
-                    const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
-                    console.log(`📦 ${pending.length} logs pendientes cargados`);
-                } catch (error) {
-                    console.error('Error cargando pendientes:', error);
-                }
-            }
-            
-            // Exportar logs locales
+            // Exportar logs locales (para debugging)
             exportLocalLogs() {
                 try {
                     const localKey = 'bi_logs_local';
@@ -428,30 +488,64 @@
                     const allLogs = [...localLogs, ...pendingLogs];
                     
                     if (allLogs.length === 0) {
-                        return { success: false, message: 'No hay logs locales' };
+                        alert('No hay logs locales para exportar');
+                        return;
                     }
                     
-                    // Crear archivo JSON
-                    const jsonStr = JSON.stringify(allLogs, null, 2);
-                    const blob = new Blob([jsonStr], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
+                    // Crear CSV
+                    let csv = 'Timestamp,Usuario,Acción,Dashboard,SessionID,Estado\n';
                     
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `bi-logs-local-${new Date().toISOString().split('T')[0]}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    allLogs.forEach(log => {
+                        const estado = pendingLogs.some(p => p.timestamp === log.timestamp) ? 'PENDIENTE' : 'ENVIADO';
+                        csv += `"${log.timestamp}","${log.user}","${log.action}","${log.dashboard || ''}","${log.sessionId}","${estado}"\n`;
+                    });
+                    
+                    // Descargar
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `bi-logs-${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                     URL.revokeObjectURL(url);
                     
-                    return { 
-                        success: true, 
-                        message: `Exportados ${allLogs.length} logs`,
-                        count: allLogs.length 
-                    };
+                    console.log(`📥 Exportados ${allLogs.length} logs`);
+                    alert(`Exportados ${allLogs.length} logs`);
                     
                 } catch (error) {
-                    return { success: false, message: error.message };
+                    console.error('Error exportando logs:', error);
+                    alert('Error al exportar logs: ' + error.message);
+                }
+            }
+            
+            // Ver estado actual
+            getStatus() {
+                const localKey = 'bi_logs_local';
+                const pendingKey = 'bi_logs_pending';
+                
+                const localLogs = JSON.parse(localStorage.getItem(localKey) || '[]');
+                const pendingLogs = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                
+                return {
+                    local: localLogs.length,
+                    pending: pendingLogs.length,
+                    online: this.isOnline,
+                    session: currentSessionId,
+                    total: localLogs.length + pendingLogs.length
+                };
+            }
+            
+            // Limpiar todos los logs locales
+            clearLocalLogs() {
+                try {
+                    localStorage.removeItem('bi_logs_local');
+                    localStorage.removeItem('bi_logs_pending');
+                    console.log('🧹 Todos los logs locales eliminados');
+                    alert('Logs locales eliminados');
+                } catch (error) {
+                    console.error('Error limpiando logs:', error);
                 }
             }
         }
@@ -689,8 +783,19 @@
                 currentUserPermissions = permissionsData.users[email].dashboards || [];
                 currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
+                console.log('=== INICIO DE SESIÓN ===');
+                console.log('Usuario:', currentUser);
+                console.log('Session ID:', currentSessionId);
+                console.log('Dashboards permitidos:', currentUserPermissions);
+                
                 // Registrar inicio de sesión
-                logger.log('login', null, currentUser);
+                logger.log('login', null, currentUser)
+                    .then(log => {
+                        console.log('✅ Log de login registrado:', log);
+                    })
+                    .catch(err => {
+                        console.warn('⚠️ Log de login falló (se guardó localmente):', err);
+                    });
                 
                 // Mostrar información breve
                 document.getElementById('userEmail').textContent = email;
@@ -699,27 +804,16 @@
                 
                 showStatus('Acceso concedido. Abriendo Centro de BI...', 'success');
                 
-                console.log('=== LOGIN EXITOSO ===');
-                console.log('Usuario:', currentUser);
-                console.log('Dashboards permitidos:', currentUserPermissions.length);
-                console.log('Lista de dashboards:', currentUserPermissions);
-                console.log('=====================');
-                
-                // Test del sistema de logging
-                setTimeout(() => {
-                    logger.log('test_connection', null, currentUser)
-                        .then(() => console.log('✅ Sistema de logging funcionando'))
-                        .catch(err => console.error('❌ Error en logging:', err));
-                }, 1000);
-                
                 // Abrir directamente el dashboard después de breve delay
                 setTimeout(() => {
                     openDashboard();
-                }, 1000);
+                }, 1500);
                 
             } else {
                 // Registrar intento fallido de login
-                logger.log('login_failed', null, email);
+                logger.log('login_failed', null, email)
+                    .then(() => console.log('✅ Log de intento fallido registrado'))
+                    .catch(err => console.warn('⚠️ Error registrando intento fallido:', err));
                 
                 showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
             }
@@ -1674,6 +1768,66 @@
                 </html>
             `;
         }
+
+        // ==================== FUNCIONES DE DEBUGGING ====================
+        
+        function testLoggingSystem() {
+            console.log('=== TEST DEL SISTEMA DE LOGGING ===');
+            
+            // Ver estado actual
+            const status = logger.getStatus();
+            console.log('📊 Estado actual:', status);
+            
+            // Test de conexión directa
+            console.log('🔗 Probando conexión con Google Sheets...');
+            fetch(GOOGLE_SCRIPT_URL + '?test=' + Date.now())
+                .then(response => {
+                    console.log('📡 Estado de la respuesta:', response.status, response.statusText);
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('📄 Respuesta del servidor:', text);
+                    try {
+                        const data = JSON.parse(text);
+                        alert('✅ Conexión OK: ' + data.status + '\nTotal logs: ' + data.totalLogs);
+                    } catch {
+                        alert('✅ Conexión establecida\nRespuesta: ' + text.substring(0, 100));
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error de conexión:', error);
+                    alert('❌ Error de conexión:\n' + error.message);
+                });
+            
+            // Enviar log de prueba
+            console.log('🧪 Enviando log de prueba...');
+            logger.log('debug_test', 'principal', 'test@bigbola.com')
+                .then(log => {
+                    console.log('✅ Log de prueba creado:', log);
+                })
+                .catch(err => {
+                    console.error('❌ Error en log de prueba:', err);
+                });
+        }
+        
+        function exportLocalLogs() {
+            logger.exportLocalLogs();
+        }
+        
+        // Para limpiar logs locales (opcional, solo para desarrollo)
+        function clearLocalLogs() {
+            if (confirm('¿Estás seguro de que quieres eliminar todos los logs locales?')) {
+                logger.clearLocalLogs();
+            }
+        }
+        
+        // Mostrar estado en consola cada minuto (solo desarrollo)
+        setInterval(() => {
+            const status = logger.getStatus();
+            if (status.total > 0) {
+                console.log('📈 Estado logs:', status);
+            }
+        }, 60000);
     </script>
 </body>
 </html>
