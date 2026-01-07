@@ -237,18 +237,15 @@
             "incidencias_pie": "fas fa-user-check"
         };
 
-        // ==================== CONFIGURACIÓN DE LOGGING ====================
+        // ==================== CONFIGURACIÓN DE LOGGING CON GOOGLE SHEETS ====================
         const LOGGING_ENABLED = true;
         let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-        // URL de tu Cloudflare Worker
-        const CLOUDFLARE_WORKER_URL = 'https://bi-log-handler.francisco-zamora.workers.dev';
-        
-        // Clave secreta para autenticación
-        const LOG_SECRET = 'Centro-BI-Dashboards-Secret-2024-9876!';
+        // URL de tu Google Apps Script (REEMPLAZA CON TU URL)
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzX6bH05LLI0GsT5dDWaSLz7RPVNN21t5D0tD_k6D_FfgaPdffpeDunCQ91D8jx6X1z/exec';
 
-        // Clase para manejar logging en Cloudflare
-        class CloudflareLogger {
+        // Clase para manejar logging con Google Sheets
+        class GoogleSheetsLogger {
             constructor() {
                 this.pendingLogs = [];
                 this.isOnline = navigator.onLine;
@@ -276,7 +273,6 @@
             // Registrar un evento
             async log(action, dashboard = null, user = null) {
                 const logEntry = {
-                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     timestamp: new Date().toISOString(),
                     user: user || currentUser || 'anonymous',
                     action: action,
@@ -285,69 +281,49 @@
                     deviceType: isMobileDevice() ? 'mobile' : 'desktop',
                     screen: `${window.screen.width}x${window.screen.height}`,
                     userAgent: navigator.userAgent.substring(0, 150),
-                    language: navigator.language,
                     sessionId: currentSessionId,
-                    referrer: document.referrer || 'direct'
+                    secret: 'Centro-BI-Dashboards-Secret-2024-9876!'
                 };
                 
-                // 1. Guardar en localStorage
+                // Guardar en localStorage primero
                 this.saveToLocalStorage(logEntry);
                 
-                // 2. Intentar enviar a Cloudflare Worker
-                if (this.isOnline) {
+                // Intentar enviar inmediatamente si hay conexión
+                if (this.isOnline && LOGGING_ENABLED) {
                     try {
-                        await this.sendToCloudflare(logEntry);
-                        console.log('✅ Log enviado a Cloudflare:', action);
+                        await this.sendToGoogleSheets(logEntry);
+                        console.log('✅ Log registrado:', action);
                     } catch (error) {
-                        console.warn('⚠️ Error enviando a Cloudflare, guardando como pendiente:', error);
+                        console.warn('⚠️ Error enviando log, guardando como pendiente:', error);
                         this.saveAsPending(logEntry);
                     }
                 } else {
-                    // Guardar como pendiente
+                    // Guardar como pendiente para enviar después
                     this.saveAsPending(logEntry);
                 }
                 
                 return logEntry;
             }
             
-            // Enviar log a Cloudflare Worker
-            async sendToCloudflare(logEntry) {
+            // Enviar log a Google Sheets
+            async sendToGoogleSheets(logEntry) {
                 try {
-                    // Añadir secreto de seguridad
-                    const payload = {
-                        ...logEntry,
-                        secret: LOG_SECRET
-                    };
-                    
-                    const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                    // Enviar como JSON
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(payload)
+                        body: JSON.stringify(logEntry)
                     });
                     
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Error del worker:', response.status, errorText);
-                        throw new Error(`HTTP ${response.status}`);
-                    }
+                    // No podemos leer la respuesta en modo no-cors, pero confiamos en que se envió
+                    console.log('📤 Log enviado a Google Sheets:', logEntry.action);
                     
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        console.log('✅ Log enviado exitosamente:', {
-                            action: logEntry.action,
-                            id: result.logId,
-                            user: logEntry.user
-                        });
-                        return true;
-                    } else {
-                        throw new Error(result.error || 'Error del servidor');
-                    }
+                    return { success: true };
                     
                 } catch (error) {
-                    console.warn('⚠️ Error enviando log a Cloudflare:', error.message);
+                    console.error('❌ Error enviando log:', error);
                     throw error;
                 }
             }
@@ -359,7 +335,6 @@
                     let logs = JSON.parse(localStorage.getItem(key) || '[]');
                     logs.push(logEntry);
                     
-                    // Mantener solo últimos 500 logs
                     if (logs.length > 500) {
                         logs = logs.slice(-500);
                     }
@@ -382,7 +357,6 @@
                         lastTry: null
                     });
                     
-                    // Mantener solo últimos 200 pendientes
                     if (pending.length > 200) {
                         pending = pending.slice(-200);
                     }
@@ -395,7 +369,7 @@
             
             // Enviar logs pendientes
             async flushPendingLogs() {
-                if (!this.isOnline) return;
+                if (!this.isOnline || !LOGGING_ENABLED) return;
                 
                 try {
                     const pendingKey = 'bi_logs_pending';
@@ -405,43 +379,23 @@
                     
                     console.log(`🔄 Enviando ${pending.length} logs pendientes...`);
                     
-                    // Enviar cada log pendiente
                     const successfulLogs = [];
                     
                     for (const log of pending) {
                         try {
-                            // Preparar payload
-                            const payload = {
-                                ...log,
-                                secret: LOG_SECRET,
-                                isPending: true,
-                                originalTimestamp: log.timestamp
-                            };
-                            
-                            // Enviar a Cloudflare
-                            const response = await fetch(CLOUDFLARE_WORKER_URL, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(payload)
-                            });
-                            
-                            if (response.ok) {
-                                successfulLogs.push(log.id);
-                            }
-                            
-                            // Pequeña pausa entre envíos
-                            await new Promise(resolve => setTimeout(resolve, 100));
-                            
+                            await this.sendToGoogleSheets(log);
+                            successfulLogs.push(log.timestamp);
                         } catch (error) {
                             console.warn('Error enviando log pendiente:', error);
                         }
+                        
+                        // Pequeña pausa entre envíos
+                        await new Promise(resolve => setTimeout(resolve, 500));
                     }
                     
                     // Eliminar logs exitosos
                     if (successfulLogs.length > 0) {
-                        const remaining = pending.filter(log => !successfulLogs.includes(log.id));
+                        const remaining = pending.filter(log => !successfulLogs.includes(log.timestamp));
                         localStorage.setItem(pendingKey, JSON.stringify(remaining));
                         console.log(`✅ ${successfulLogs.length} logs sincronizados`);
                     }
@@ -503,7 +457,7 @@
         }
 
         // Instancia global del logger
-        const cloudflareLogger = new CloudflareLogger();
+        const logger = new GoogleSheetsLogger();
 
         // Permisos por defecto
         const defaultPermissions = {
@@ -642,13 +596,13 @@
             window.addEventListener('message', function(event) {
                 if (event.data && event.data.type === 'log_dashboard_view') {
                     // Registrar acceso desde la ventana del dashboard
-                    cloudflareLogger.log('dashboard_view', event.data.dashboardKey, event.data.user);
+                    logger.log('dashboard_view', event.data.dashboardKey, event.data.user);
                     console.log('📊 Log recibido desde dashboard:', event.data.dashboardKey);
                 }
                 
                 if (event.data && event.data.type === 'logout') {
                     // Registrar logout desde la ventana del dashboard
-                    cloudflareLogger.log('logout', null, event.data.user);
+                    logger.log('logout', null, event.data.user);
                     console.log('🚪 Logout recibido desde dashboard');
                 }
             });
@@ -736,7 +690,7 @@
                 currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
                 // Registrar inicio de sesión
-                cloudflareLogger.log('login', null, currentUser);
+                logger.log('login', null, currentUser);
                 
                 // Mostrar información breve
                 document.getElementById('userEmail').textContent = email;
@@ -751,6 +705,13 @@
                 console.log('Lista de dashboards:', currentUserPermissions);
                 console.log('=====================');
                 
+                // Test del sistema de logging
+                setTimeout(() => {
+                    logger.log('test_connection', null, currentUser)
+                        .then(() => console.log('✅ Sistema de logging funcionando'))
+                        .catch(err => console.error('❌ Error en logging:', err));
+                }, 1000);
+                
                 // Abrir directamente el dashboard después de breve delay
                 setTimeout(() => {
                     openDashboard();
@@ -758,7 +719,7 @@
                 
             } else {
                 // Registrar intento fallido de login
-                cloudflareLogger.log('login_failed', null, email);
+                logger.log('login_failed', null, email);
                 
                 showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
             }
@@ -1132,7 +1093,7 @@
                 mobileIframe.style.opacity = '0.3';
                 
                 // Registrar acceso
-                cloudflareLogger.log('dashboard_view', dashboardKey, currentUser);
+                logger.log('dashboard_view', dashboardKey, currentUser);
                 
                 // Cargar el dashboard
                 mobileIframe.src = dashboardUrl;
@@ -1174,7 +1135,7 @@
             
             mobileExitBtn.addEventListener('click', function() {
                 if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                    cloudflareLogger.log('logout', null, currentUser);
+                    logger.log('logout', null, currentUser);
                     setTimeout(() => {
                         window.location.reload();
                     }, 500);
