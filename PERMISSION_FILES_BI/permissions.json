@@ -7,7 +7,7 @@
             "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "proyectos", "rtp", "logs_bi", "diccionario"]
         },
         "rafael.blanco@bigbola.com": {
-            "dashboards": ["principal", "adt", "diccionario"]
+            "dashboards": ["principal", "adt", "bigplayers", "diccionario"]
         },
         "renato.delapena@bigbola.com": {
             "dashboards": ["principal", "adt", "desempeno", "rtp", "diccionario"]
@@ -16,9 +16,6 @@
             "dashboards": ["principal", "auditoria", "seguimiento_auditores"]
         },
         "ruben.vargas@bigbola.com": {
-            "dashboards": ["principal", "inventario"]
-        },
-        "test_prueba@bigbola.com": {
             "dashboards": ["principal", "inventario"]
         },
         "javier.dominguez@bigbola.com": {
