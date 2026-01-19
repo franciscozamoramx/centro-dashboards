@@ -197,7 +197,7 @@
             "bigplayers": "https://app.powerbi.com/reportEmbed?reportId=8e08098b-ce0e-46af-a8b5-e90b0b216e76&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "desempeno": "https://app.powerbi.com/reportEmbed?reportId=28c07103-a77e-42f4-a9ca-7d9345b48131&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "inventario": "https://app.powerbi.com/reportEmbed?reportId=4fe689c1-3fa7-4632-8367-4b7a7abc492c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
-            "promociones": "https://app.powerbi.com/reportEmbed?reportId=7253b2c9-12b1-4a8a-b555-2fef1d62e1b3&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
+            "promociones": "https://app.powerbi.com/reportEmbed?reportId=373b28bf-5d1b-46a0-b98b-4b3e378520c4&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "proyectos": "https://app.powerbi.com/reportEmbed?reportId=c2e5834e-4e3d-418c-a9dc-43e33d79a62e&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "rtp": "https://app.powerbi.com/reportEmbed?reportId=01ac285e-618f-43de-be89-d62b1a46374c&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
             "diccionario": "https://app.powerbi.com/reportEmbed?reportId=95918a25-c06b-411a-a346-f462b03e557b&autoAuth=true&ctid=b19d1a80-fff1-4a7e-b9ce-93f694e7b65c",
@@ -315,7 +315,7 @@
             }
             
             // Registrar evento
-            async log(action, dashboard = null, user = null) {
+            async log(action, dashboard = null, user = null, extraData = {}) {
                 const logEntry = {
                     id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
                     timestamp: new Date().toISOString(),
@@ -328,7 +328,8 @@
                     screen: `${window.screen.width}x${window.screen.height}`,
                     userAgent: navigator.userAgent,
                     ip: userIP || 'Obteniendo...',
-                    sessionId: currentSessionId
+                    sessionId: currentSessionId,
+                    extraData: extraData
                 };
                 
                 console.log('📝 Registrando:', {
@@ -336,7 +337,8 @@
                     accion: logEntry.action,
                     dashboard: logEntry.dashboardName,
                     dispositivo: logEntry.deviceType,
-                    ip: logEntry.ip
+                    ip: logEntry.ip,
+                    extra: extraData
                 });
                 
                 // 1. Guardar localmente
@@ -371,7 +373,8 @@
                         "Dispositivo": logEntry.deviceType,
                         "IP": logEntry.ip,
                         "UserAgent": logEntry.userAgent.substring(0, 300),
-                        "SesionID": logEntry.sessionId
+                        "SesionID": logEntry.sessionId,
+                        "DetallesExtra": JSON.stringify(logEntry.extraData || {})
                     }
                 };
                 
@@ -492,7 +495,7 @@
                         return;
                     }
                     
-                    const headers = ['FechaHora', 'Usuario', 'Accion', 'Dashboard', 'DashboardNombre', 'Dispositivo', 'IP', 'SesionID'];
+                    const headers = ['FechaHora', 'Usuario', 'Accion', 'Dashboard', 'DashboardNombre', 'Dispositivo', 'IP', 'SesionID', 'DetallesExtra'];
                     let csv = headers.join(';') + '\n';
                     
                     allLogs.forEach(log => {
@@ -504,7 +507,8 @@
                             `"${log.dashboardName || ''}"`,
                             `"${log.deviceType}"`,
                             `"${log.ip || ''}"`,
-                            `"${log.sessionId}"`
+                            `"${log.sessionId}"`,
+                            `"${JSON.stringify(log.extraData || {})}"`
                         ];
                         csv += row.join(';') + '\n';
                     });
@@ -734,8 +738,10 @@
                 
                 if (event.data && event.data.type === 'logout') {
                     // Registrar logout desde la ventana del dashboard
-                    logger.log('logout', null, event.data.user);
-                    console.log('🚪 Logout recibido desde dashboard');
+                    logger.log('logout', null, event.data.user, { 
+                        logoutType: event.data.logoutType || 'button_click'
+                    });
+                    console.log('🚪 Logout recibido desde dashboard:', event.data.logoutType);
                 }
             });
         });
@@ -1185,12 +1191,61 @@
             const mobileExitBtn = document.getElementById('mobileExitBtn');
             
             let isSidebarOpen = false;
+            let mobileLogoutLogged = false;
             
             // 🔒 Bloquear clic derecho SOLO en el menú móvil
             mobileSidebar.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 return false;
             });
+            
+            // 🚪 FUNCIÓN PARA REGISTRAR LOGOUT MÓVIL
+            function logMobileLogout(logoutType = 'button_click') {
+                if (mobileLogoutLogged) return;
+                
+                try {
+                    logger.log('logout', null, currentUser, { logoutType: logoutType });
+                    mobileLogoutLogged = true;
+                    console.log('🚪 Logout móvil registrado:', logoutType);
+                    
+                    // Guardar en localStorage inmediatamente como respaldo
+                    try {
+                        const logoutEvent = {
+                            id: 'logout_' + Date.now(),
+                            timestamp: new Date().toISOString(),
+                            user: currentUser,
+                            action: 'logout',
+                            logoutType: logoutType,
+                            sessionId: currentSessionId
+                        };
+                        
+                        const pendingKey = 'bi_logs_pending';
+                        let pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                        pending.push({ 
+                            ...logoutEvent, 
+                            retries: 0,
+                            fields: {
+                                "FechaHora": logoutEvent.timestamp,
+                                "Usuario": logoutEvent.user,
+                                "Accion": logoutEvent.action,
+                                "Dashboard": '',
+                                "DashboardNombre": '',
+                                "Dispositivo": logger.detectDeviceType(),
+                                "IP": userIP || 'Obteniendo...',
+                                "UserAgent": navigator.userAgent.substring(0, 300),
+                                "SesionID": logoutEvent.sessionId,
+                                "DetallesExtra": JSON.stringify({ logoutType: logoutType })
+                            }
+                        });
+                        
+                        localStorage.setItem(pendingKey, JSON.stringify(pending));
+                    } catch (error) {
+                        console.warn('No se pudo guardar logout en localStorage:', error);
+                    }
+                } catch (error) {
+                    console.warn('Error en logging móvil:', error);
+                }
+            }
             
             function openWhatsApp() {
                 const phoneNumber = '+524421974414';
@@ -1258,12 +1313,28 @@
                 openWhatsApp();
             });
             
+            // Botón de cerrar sesión (modificado)
             mobileExitBtn.addEventListener('click', function() {
                 if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                    logger.log('logout', null, currentUser);
+                    logMobileLogout('button_click');
                     setTimeout(() => {
                         window.location.reload();
                     }, 500);
+                }
+            });
+            
+            // ⭐ CAPTURAR CIERRE DE VENTANA MÓVIL
+            window.addEventListener('beforeunload', function(event) {
+                // Solo registrar logout si no fue por el botón "Cerrar Sesión"
+                if (!mobileLogoutLogged) {
+                    logMobileLogout('window_close');
+                }
+            });
+            
+            // También capturar evento unload como respaldo
+            window.addEventListener('unload', function() {
+                if (!mobileLogoutLogged) {
+                    logMobileLogout('window_close');
                 }
             });
             
@@ -1631,6 +1702,9 @@
                         const dashboardIcons = ${dashboardIconsJson};
                         const currentUser = "${currentUser}";
                         
+                        // Variable para controlar si ya se registró logout
+                        let logoutLogged = false;
+                        
                         document.addEventListener('DOMContentLoaded', function() {
                             const toggleBtn = document.getElementById('toggleBtn');
                             const sidebar = document.getElementById('sidebar');
@@ -1681,6 +1755,26 @@
                                 }
                             }
                             
+                            // 🚪 FUNCIÓN PARA REGISTRAR LOGOUT
+                            function logLogout(logoutType = 'button_click') {
+                                if (logoutLogged) return; // Evitar múltiples registros
+                                
+                                try {
+                                    // Enviar mensaje de logout al padre
+                                    if (window.opener && !window.opener.closed) {
+                                        window.opener.postMessage({
+                                            type: 'logout',
+                                            user: currentUser,
+                                            logoutType: logoutType
+                                        }, '*');
+                                    }
+                                    logoutLogged = true;
+                                    console.log('🚪 Logout registrado:', logoutType);
+                                } catch (error) {
+                                    console.warn('Error en logging de logout:', error);
+                                }
+                            }
+                            
                             // 📱 FUNCIONES DE LA APLICACIÓN
                             function openWhatsApp() {
                                 const phoneNumber = '+524421974414';
@@ -1719,18 +1813,17 @@
                             
                             function logout() {
                                 if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                                    try {
-                                        // Enviar mensaje de logout al padre
-                                        if (window.opener && !window.opener.closed) {
-                                            window.opener.postMessage({
-                                                type: 'logout',
-                                                user: currentUser
-                                            }, '*');
+                                    // Registrar logout por botón
+                                    logLogout('button_click');
+                                    
+                                    // Cerrar después de un breve delay para permitir el logging
+                                    setTimeout(() => {
+                                        try {
+                                            window.close();
+                                        } catch (error) {
+                                            console.warn('No se pudo cerrar ventana:', error);
                                         }
-                                        window.close();
-                                    } catch (error) {
-                                        window.close();
-                                    }
+                                    }, 100);
                                 }
                             }
                             
@@ -1767,6 +1860,36 @@
                             
                             // Botón de salir
                             exitBtn.addEventListener('click', logout);
+                            
+                            // ⭐ CAPTURAR CIERRE DE VENTANA
+                            window.addEventListener('beforeunload', function(event) {
+                                // Solo registrar logout si no fue por el botón "Salir"
+                                if (!logoutLogged) {
+                                    logLogout('window_close');
+                                    
+                                    // Intentar enviar de forma sincrónica
+                                    try {
+                                        if (window.opener && !window.opener.closed) {
+                                            window.opener.postMessage({
+                                                type: 'logout',
+                                                user: currentUser,
+                                                logoutType: 'window_close',
+                                                timestamp: new Date().toISOString(),
+                                                sync: true
+                                            }, '*');
+                                        }
+                                    } catch (error) {
+                                        console.warn('No se pudo registrar logout sincrónico:', error);
+                                    }
+                                }
+                            });
+                            
+                            // También capturar evento unload como respaldo
+                            window.addEventListener('unload', function() {
+                                if (!logoutLogged) {
+                                    logLogout('window_close');
+                                }
+                            });
                             
                             // Evento cuando el iframe carga
                             iframe.addEventListener('load', function() {
