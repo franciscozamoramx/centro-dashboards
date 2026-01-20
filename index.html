@@ -242,11 +242,20 @@
         let currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         let userIP = null;
 
+<<<<<<< Updated upstream
         // CONFIGURACIÓN AIRTABLE - CON TUS DATOS
         const AIRTABLE_CONFIG = {
             baseId: 'appyLYRPaDHgHRMfg', // TU BASE ID
             apiKey: 'patotjwpztoSwMBKc.19277efd2f0944e48d327235c5ecd969e1ece9b46543924225445a24d0992e23', // TU TOKEN
             tableName: 'Table 1' // Nombre de la tabla
+=======
+        // Configuración de GitHub
+        const GITHUB_CONFIG = {
+            owner: 'franciscozamoramx',
+            repo: 'centro-dashboards',
+            branch: 'main',
+            token: localStorage.getItem('github_pat_token') || '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'
+>>>>>>> Stashed changes
         };
 
         class AirtableLogger {
@@ -280,6 +289,7 @@
                 console.log('✅ Logger Airtable inicializado');
             }
             
+<<<<<<< Updated upstream
             // Obtener IP del usuario
             async getUserIP() {
                 try {
@@ -356,9 +366,128 @@
                 } else {
                     this.saveAsPending(logEntry);
                     console.log('📦 Log guardado como pendiente (offline)');
+=======
+            // Registrar un evento - VERSIÓN MEJORADA PARA MÓVIL
+			 // Registrar un evento - VERSIÓN CORREGIDA
+			async log(action, dashboard = null, user = null) {
+				// Detectar dispositivo correctamente
+				const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+				const deviceType = isMobile ? 'mobile' : 'desktop';
+				
+				const logEntry = {
+					id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+					timestamp: new Date().toISOString(),
+					user: user || currentUser || 'anonymous',
+					action: action,
+					dashboard: dashboard,
+					dashboardName: dashboard ? dashboardNames[dashboard] : null,
+					deviceType: deviceType,  // Corregido: siempre detecta correctamente
+					screen: `${window.screen.width}x${window.screen.height}`,
+					userAgent: navigator.userAgent.substring(0, 150),
+					language: navigator.language,
+					sessionId: currentSessionId,
+					referrer: document.referrer || 'direct',
+					ip: 'unknown'  // No podemos obtener IP real desde JavaScript
+				};
+				
+				console.log('📱 Log generado:', {
+					usuario: logEntry.user,
+					acción: logEntry.action,
+					dashboard: logEntry.dashboard,
+					dispositivo: logEntry.deviceType,
+					pantalla: logEntry.screen,
+					móvil: isMobile
+				});
+				
+				// 1. Guardar en localStorage siempre
+				this.saveToLocalStorage(logEntry);
+				
+				// 2. Intentar enviar a GitHub si hay token
+				const token = localStorage.getItem('github_pat_token') || GITHUB_CONFIG.token;
+				
+				if (token && token.startsWith('ghp_')) {
+					try {
+						await this.sendToGitHubImmediately(logEntry);
+						console.log('✅ Log enviado a GitHub correctamente');
+					} catch (error) {
+						console.warn('⚠️ Error enviando a GitHub, guardando como pendiente:', error.message);
+						this.saveAsPending(logEntry);
+					}
+				} else {
+					// Si no hay token, guardar solo como pendiente/local
+					console.warn('⚠️ No hay token GitHub configurado. Log guardado solo localmente.');
+					this.saveAsPending(logEntry);
+				}
+				
+				return logEntry;
+			}
+ 
+ 
+            
+            // Método para enviar inmediatamente a GitHub
+            async sendToGitHubImmediately(logEntry) {
+                const token = GITHUB_CONFIG.token;
+                
+                if (!token || !token.startsWith('ghp_')) {
+                    throw new Error('Token no disponible');
+>>>>>>> Stashed changes
                 }
                 
-                return logEntry;
+                const fileUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/logs/logs.json`;
+                
+                try {
+                    // Obtener archivo actual
+                    const response = await fetch(fileUrl, {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    let currentContent = '[]';
+                    let sha = null;
+                    
+                    if (response.ok) {
+                        const fileData = await response.json();
+                        currentContent = atob(fileData.content);
+                        sha = fileData.sha;
+                    } else if (response.status !== 404) {
+                        throw new Error(`Error leyendo archivo: ${response.status}`);
+                    }
+                    
+                    // Agregar nuevo log
+                    const logs = JSON.parse(currentContent || '[]');
+                    logs.push(logEntry);
+                    
+                    // Limitar a 5000 logs
+                    const trimmedLogs = logs.slice(-5000);
+                    
+                    // Subir actualización
+                    const updateResponse = await fetch(fileUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            message: `📱 Log: ${logEntry.action} - ${logEntry.user}`,
+                            content: btoa(JSON.stringify(trimmedLogs, null, 2)),
+                            sha: sha,
+                            branch: GITHUB_CONFIG.branch
+                        })
+                    });
+                    
+                    if (!updateResponse.ok) {
+                        throw new Error(`Error HTTP: ${updateResponse.status}`);
+                    }
+                    
+                    return true;
+                    
+                } catch (error) {
+                    console.error('Error en sendToGitHubImmediately:', error);
+                    throw error;
+                }
             }
             
             // Enviar a Airtable
@@ -439,9 +568,26 @@
                 }
             }
             
+<<<<<<< Updated upstream
             // Sincronizar pendientes
             async flushPendingLogs() {
                 if (!this.isOnline) return;
+=======
+            // Enviar a GitHub (método antiguo)
+            async sendToGitHub(logEntry, token) {
+                try {
+                    // Usar el nuevo método
+                    return await this.sendToGitHubImmediately(logEntry);
+                } catch (error) {
+                    throw error;
+                }
+            }
+            
+            // Enviar logs pendientes
+            async flushPendingLogs() {
+                const token = GITHUB_CONFIG.token;
+                if (!token || !this.isOnline) return;
+>>>>>>> Stashed changes
                 
                 const pendingKey = 'bi_logs_pending';
                 let pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
@@ -481,6 +627,7 @@
                     console.error('Error cargando pendientes:', error);
                 }
             }
+<<<<<<< Updated upstream
             
             // Exportar logs locales
             exportLocalLogs() {
@@ -590,6 +737,8 @@
                 panel.innerHTML = statsHTML;
                 document.body.appendChild(panel);
             }
+=======
+>>>>>>> Stashed changes
         }
 
         // Instancia global del logger
@@ -615,11 +764,14 @@
         let currentUserPermissions = [];
 
         // Detectar si es dispositivo móvil/tableta
-        function isMobileDevice() {
-            return (typeof window.orientation !== "undefined") || 
-                   (navigator.userAgent.indexOf('IEMobile') !== -1) ||
-                   (window.innerWidth <= 1024);
-        }
+		function isMobileDevice() {
+			const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+			
+			// Detección más precisa
+			return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) ||
+				   (window.innerWidth <= 768);
+		}
+
 
         document.addEventListener('DOMContentLoaded', function() {
             // 🔒 BLOQUEO DE SEGURIDAD EN LOGIN
@@ -828,7 +980,19 @@
                 currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
                 // Registrar inicio de sesión
+<<<<<<< Updated upstream
                 logger.log('login', null, currentUser);
+=======
+                console.log('🚀 Login iniciado:', currentUser, '(móvil:' + isMobileDevice() + ')');
+                
+                // Enviar log inmediatamente
+                try {
+                    await gitHubLogger.log('login', null, currentUser);
+                    console.log('✅ Login registrado en logs');
+                } catch (error) {
+                    console.warn('⚠️ Error registrando login:', error);
+                }
+>>>>>>> Stashed changes
                 
                 // Mostrar información breve
                 document.getElementById('userEmail').textContent = email;
@@ -839,6 +1003,7 @@
                 
                 console.log('=== LOGIN EXITOSO ===');
                 console.log('Usuario:', currentUser);
+                console.log('Dispositivo:', isMobileDevice() ? 'Móvil' : 'Desktop');
                 console.log('Dashboards permitidos:', currentUserPermissions.length);
                 console.log('Lista de dashboards:', currentUserPermissions);
                 console.log('=====================');
@@ -850,7 +1015,15 @@
                 
             } else {
                 // Registrar intento fallido de login
+<<<<<<< Updated upstream
                 logger.log('login_failed', null, email);
+=======
+                try {
+                    await gitHubLogger.log('login_failed', null, email);
+                } catch (error) {
+                    console.warn('Error registrando login fallido:', error);
+                }
+>>>>>>> Stashed changes
                 
                 showStatus('No tienes permisos para acceder al Centro de BI o el correo no está registrado.', 'error');
             }
@@ -1272,8 +1445,13 @@
                 mobileIframeLoading.style.display = 'block';
                 mobileIframe.style.opacity = '0.3';
                 
+<<<<<<< Updated upstream
                 // Registrar acceso
                 logger.log('dashboard_view', dashboardKey, currentUser);
+=======
+                // Registrar acceso al dashboard
+                gitHubLogger.log('dashboard_view', dashboardKey, currentUser);
+>>>>>>> Stashed changes
                 
                 // Cargar el dashboard
                 mobileIframe.src = dashboardUrl;
