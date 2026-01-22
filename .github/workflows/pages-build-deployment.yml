@@ -1,45 +1,58 @@
-# .github/workflows/deploy-gh-pages.yml
-name: 🚀 Deploy to GitHub Pages
+# .github/workflows/gh-pages-deploy.yml
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
-      - name: 📥 Checkout repository
+      - name: ⬇️ Checkout code
         uses: actions/checkout@v4
       
-      - name: 🔧 Setup Node.js
+      - name: ⎔ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'  # Si no tienes lock file, quita esta línea
+          node-version: '18'
+          # NO uses cache porque no hay lock file
       
       - name: 📦 Install dependencies
-        run: npm install  # ⬅️ CAMBIO AQUÍ: npm install en lugar de npm ci
+        run: |
+          echo "Installing dependencies without lock file..."
+          npm install
       
       - name: 🏗️ Build project
         run: npm run build
         env:
           NODE_ENV: production
-          CI: false
       
-      - name: 🎯 Configure GitHub Pages
-        uses: actions/configure-pages@v4
+      - name: 🔍 Verify build output
+        run: |
+          echo "Checking build folder..."
+          ls -la
+          echo "Looking for common build directories..."
+          ls -la dist/ 2>/dev/null || echo "No dist folder"
+          ls -la build/ 2>/dev/null || echo "No build folder"
+          ls -la out/ 2>/dev/null || echo "No out folder"
       
-      - name: 📤 Upload build files
+      - name: 📤 Upload artifact
+        id: upload
         uses: actions/upload-pages-artifact@v3
         with:
-          # ⚠️ IMPORTANTE: Averigua qué carpeta se crea
-          path: ./dist  # Prueba con ./dist, ./build, o ./
+          # PRIMERO prueba con dist, luego ajusta
+          path: ./dist
       
       - name: 🚀 Deploy to GitHub Pages
         id: deployment
