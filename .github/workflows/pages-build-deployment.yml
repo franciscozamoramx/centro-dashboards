@@ -2,22 +2,9 @@
 name: 🚀 Deploy to GitHub Pages
 
 on:
-  # Se activa con cada push a main
   push:
-    branches: [main, master]
-  
-  # También manualmente
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for manual deployment'
-        required: false
-        default: 'Manual trigger'
-
-# Evita que se ejecuten múltiples deployments simultáneos
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -34,10 +21,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'npm'  # Si no tienes lock file, quita esta línea
       
       - name: 📦 Install dependencies
-        run: npm ci
+        run: npm install  # ⬅️ CAMBIO AQUÍ: npm install en lugar de npm ci
       
       - name: 🏗️ Build project
         run: npm run build
@@ -51,8 +38,8 @@ jobs:
       - name: 📤 Upload build files
         uses: actions/upload-pages-artifact@v3
         with:
-          # ⚠️ IMPORTANTE: Cambia esto según tu proyecto
-          path: ./dist  # O ./build, ./out, etc.
+          # ⚠️ IMPORTANTE: Averigua qué carpeta se crea
+          path: ./dist  # Prueba con ./dist, ./build, o ./
       
       - name: 🚀 Deploy to GitHub Pages
         id: deployment
