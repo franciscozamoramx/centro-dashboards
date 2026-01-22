@@ -1,0 +1,28 @@
+{
+    "users": {
+        "francisco.zamora@bigbola.com": {
+            "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "proyectos", "promociones", "rtp", "bolipoints", "logs_bi", "diccionario"]
+        },
+        "guillermo.luna@bigbola.com": {
+            "dashboards": ["principal", "adt", "auditoria", "bigplayers", "desempeno", "inventario", "proyectos", "rtp", "bolipoints", "logs_bi", "diccionario"]
+        },
+        "rafael.blanco@bigbola.com": {
+            "dashboards": ["principal", "adt", "bigplayers", "diccionario"]
+        },
+        "renato.delapena@bigbola.com": {
+            "dashboards": ["principal", "adt", "desempeno", "rtp", "diccionario"]
+        },
+        "edgar.delatorre@bigbola.com": {
+            "dashboards": ["principal", "auditoria", "seguimiento_auditores"]
+        },
+        "ruben.vargas@bigbola.com": {
+            "dashboards": ["principal", "inventario"]
+        },
+        "javier.dominguez@bigbola.com": {
+            "dashboards": ["principal", "inventario"]
+        },
+        "emilio.quiros@bigbola.com": {
+            "dashboards": ["principal", "adt", "auditoria", "desempeno", "rtp", "diccionario"]
+        }
+    }
+}
