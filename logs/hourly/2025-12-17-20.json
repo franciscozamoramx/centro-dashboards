@@ -1,0 +1,12 @@
+{
+  "hour": "2025-12-17-20",
+  "generated_at": "2025-12-17T20:17:56.917Z",
+  "logs_in_hour": 18,
+  "unique_users": 5,
+  "actions_summary": {
+    "login": 3,
+    "dashboard_view": 4,
+    "logout": 3,
+    "login_failed": 8
+  }
+}

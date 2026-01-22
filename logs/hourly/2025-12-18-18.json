@@ -1,0 +1,15 @@
+{
+  "hour": "2025-12-18-18",
+  "generated_at": "2025-12-18T18:23:32.283Z",
+  "total_logs_in_hour": 14,
+  "unique_users": 3,
+  "actions_summary": {
+    "login": 3,
+    "dashboard_view": 7,
+    "logout": 1,
+    "login_failed": 3
+  },
+  "device_summary": {
+    "desktop": 14
+  }
+}

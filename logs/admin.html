@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Logs de Acceso BI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        
+        body { 
+            background: #f5f5f5; 
+            color: #333; 
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1a3a8f 0%, #152c6e 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .status-info {
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: #152c6e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            font-size: 15px;
+        }
+        
+        .btn:hover {
+            background: #1a3a8f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn-success { 
+            background: #28a745; 
+        }
+        .btn-success:hover { 
+            background: #218838; 
+        }
+        
+        .btn-warning { 
+            background: #ffc107; 
+            color: #212529;
+        }
+        .btn-warning:hover { 
+            background: #e0a800; 
+        }
+        
+        .btn-danger { 
+            background: #dc3545; 
+        }
+        .btn-danger:hover { 
+            background: #c82333; 
+        }
+        
+        .btn-info { 
+            background: #17a2b8; 
+        }
+        .btn-info:hover { 
+            background: #138496; 
+        }
+        
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #152c6e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-group input, .filter-group select {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .filter-group input:focus, .filter-group select:focus {
+            border-color: #152c6e;
+            outline: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.3s;
+            border-top: 4px solid #152c6e;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 42px;
+            font-weight: bold;
+            color: #152c6e;
+            margin: 15px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .stat-change {
+            font-size: 14px;
+            margin-top: 8px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        
+        .stat-change.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .stat-change.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 20px;
+            color: #152c6e;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+        
+        thead {
+            background: #152c6e;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th {
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .badge-login { 
+            background: #d4edda; 
+            color: #155724; 
+        }
+        
+        .badge-view { 
+            background: #cce5ff; 
+            color: #004085; 
+        }
+        
+        .badge-logout { 
+            background: #fff3cd; 
+            color: #856404; 
+        }
+        
+        .badge-failed { 
+            background: #f8d7da; 
+            color: #721c24; 
+        }
+        
+        .user-cell {
+            font-weight: 600;
+            color: #152c6e;
+        }
+        
+        .dashboard-cell {
+            color: #28a745;
+            font-weight: 500;
+        }
+        
+        .time-cell {
+            color: #6c757d;
+            font-size: 13px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .page-btn {
+            padding: 10px 16px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            min-width: 45px;
+            text-align: center;
+        }
+        
+        .page-btn:hover {
+            border-color: #152c6e;
+            background: #f8f9fa;
+        }
+        
+        .page-btn.active {
+            background: #152c6e;
+            color: white;
+            border-color: #152c6e;
+        }
+        
+        .page-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .page-info {
+            margin: 0 15px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 400px;
+        }
+        
+        .notification.success {
+            background: #28a745;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+        }
+        
+        .notification.info {
+            background: #17a2b8;
+        }
+        
+        .notification.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #152c6e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 20px;
+            color: #dee2e6;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            background: #152c6e;
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #152c6e;
+            min-width: 150px;
+        }
+        
+        .detail-value {
+            color: #495057;
+            flex: 1;
+            word-break: break-word;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        /* Configuración GitHub */
+        .github-config {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .github-config h3 {
+            color: #152c6e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .github-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .token-input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .token-input-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .token-input-group input {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        
+        .token-input-group input:focus {
+            border-color: #152c6e;
+            outline: none;
+        }
+        
+        .token-help {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .github-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+            font-size: 14px;
+        }
+        
+        .github-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .github-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .github-status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        @media (max-width: 768px) {
+            .charts {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            
+            th, td {
+                padding: 12px 15px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .export-buttons {
+                flex-direction: column;
+            }
+            
+            .github-form {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .stat-value {
+                font-size: 32px;
+            }
+            
+            .chart-container {
+                padding: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1><i class="fas fa-chart-line"></i> Panel de Administración - Logs BI</h1>
+                <p>Registros de acceso al Centro de Business Intelligence</p>
+                <p><i class="fas fa-database"></i> Sistema basado en GitHub Pages | Actualizado en tiempo real</p>
+                <div class="status-info">
+                    <i class="fas fa-circle" style="color: #28a745; font-size: 10px;"></i>
+                    Conectado a: franciscozamoramx.github.io/centro-dashboards
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuración GitHub -->
+        <div class="github-config" id="githubConfig">
+            <h3><i class="fab fa-github"></i> Configuración GitHub</h3>
+            <div class="github-form">
+                <div class="token-input-group">
+                    <label for="githubTokenInput">
+                        <i class="fas fa-key"></i> Token de Acceso Personal:
+                    </label>
+                    <input type="password" id="githubTokenInput" 
+                           placeholder="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">
+                    <div class="token-help">
+                        Settings → Developer Settings → Personal Access Tokens → Tokens (classic)
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-success" onclick="saveGitHubToken()">
+                        <i class="fas fa-save"></i> Guardar Token
+                    </button>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn" onclick="testGitHubConnection()">
+                    <i class="fas fa-plug"></i> Probar Conexión
+                </button>
+                <button class="btn btn-info" onclick="syncPendingLogs()">
+                    <i class="fas fa-sync-alt"></i> Sincronizar Pendientes
+                </button>
+                <button class="btn btn-warning" onclick="showTokenInfo()">
+                    <i class="fas fa-question-circle"></i> Ayuda
+                </button>
+                <button class="btn btn-danger" onclick="testDateFunctions()">
+                    <i class="fas fa-calendar"></i> Test Fechas
+                </button>
+            </div>
+            
+            <div class="github-status" id="githubStatus"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="loadLogs()" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Actualizar Logs
+            </button>
+            <button class="btn btn-success" onclick="exportLogs()">
+                <i class="fas fa-download"></i> Exportar JSON
+            </button>
+            <button class="btn btn-info" onclick="viewLocalLogs()">
+                <i class="fas fa-hdd"></i> Ver Logs Locales
+            </button>
+            <button class="btn btn-warning" onclick="clearLocalCache()">
+                <i class="fas fa-trash-alt"></i> Limpiar Cache
+            </button>
+            <button class="btn btn-danger" onclick="clearAllLogs()">
+                <i class="fas fa-broom"></i> Limpiar Todos los Logs
+            </button>
+            <button class="btn" onclick="openGitHubRepo()">
+                <i class="fab fa-github"></i> Ver Repositorio
+            </button>
+            <button class="btn btn-info" onclick="diagnoseLogsIssue()">
+                <i class="fas fa-bug"></i> Diagnóstico Completo
+            </button>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label><i class="fas fa-user"></i> Usuario:</label>
+                <input type="text" id="filterUser" placeholder="Filtrar por usuario..." onkeyup="filterTable()">
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-chart-bar"></i> Dashboard:</label>
+                <select id="filterDashboard" onchange="filterTable()">
+                    <option value="">Todos los dashboards</option>
+                    <!-- Se llenará dinámicamente -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-play-circle"></i> Acción:</label>
+                <select id="filterAction" onchange="filterTable()">
+                    <option value="">Todas las acciones</option>
+                    <option value="login">Login</option>
+                    <option value="dashboard_view">Ver Dashboard</option>
+                    <option value="logout">Logout</option>
+                    <option value="login_failed">Login Fallido</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-calendar"></i> Fecha desde:</label>
+                <input type="date" id="filterDateFrom" onchange="filterTable()">
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-calendar"></i> Fecha hasta:</label>
+                <input type="date" id="filterDateTo" onchange="filterTable()">
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-desktop"></i> Dispositivo:</label>
+                <select id="filterDevice" onchange="filterTable()">
+                    <option value="">Todos</option>
+                    <option value="desktop">Desktop</option>
+                    <option value="mobile">Mobile</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid">
+            <!-- Las estadísticas se cargarán aquí -->
+            <div class="stat-card">
+                <div class="stat-label">Total de Logs</div>
+                <div class="stat-value">0</div>
+                <div>Cargando...</div>
+            </div>
+        </div>
+        
+        <div class="charts">
+            <div class="chart-container">
+                <h3><i class="fas fa-chart-pie"></i> Distribución por Acción</h3>
+                <canvas id="actionChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3><i class="fas fa-chart-bar"></i> Actividad por Hora</h3>
+                <canvas id="timeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3><i class="fas fa-users"></i> Top 10 Usuarios</h3>
+                <canvas id="usersChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3><i class="fas fa-tachometer-alt"></i> Top 10 Dashboards</h3>
+                <canvas id="dashboardsChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="logsTable">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Dashboard</th>
+                        <th>Dispositivo</th>
+                        <th>IP</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody">
+                    <!-- Los logs se cargarán aquí -->
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #6c757d;">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando logs...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Cargando logs...</p>
+        </div>
+        
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-inbox"></i>
+            <h3>No hay logs disponibles</h3>
+            <p>Los logs aparecerán aquí después de que los usuarios accedan al sistema.</p>
+            <button class="btn" onclick="loadLogs()">
+                <i class="fas fa-sync-alt"></i> Intentar de nuevo
+            </button>
+        </div>
+        
+        <div class="pagination" id="pagination">
+            <!-- Paginación se generará aquí -->
+        </div>
+        
+        <div class="export-buttons">
+            <button class="btn btn-success" onclick="exportToCSV()">
+                <i class="fas fa-file-csv"></i> Exportar CSV
+            </button>
+            <button class="btn btn-info" onclick="exportToExcel()">
+                <i class="fas fa-file-excel"></i> Exportar Excel
+            </button>
+            <button class="btn btn-warning" onclick="generateReport()">
+                <i class="fas fa-file-pdf"></i> Generar Reporte
+            </button>
+            <button class="btn" onclick="viewRealTime()">
+                <i class="fas fa-bolt"></i> Vista en Tiempo Real
+            </button>
+            <button class="btn btn-danger" onclick="exportLocalLogs()">
+                <i class="fas fa-download"></i> Exportar Locales
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal para detalles -->
+    <div class="detail-modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0; font-size: 20px;">
+                    <i class="fas fa-info-circle"></i> Detalles del Log
+                </h2>
+                <button class="close-btn" onclick="closeDetailModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Los detalles se cargarán aquí -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== VARIABLES GLOBALES ====================
+        // Variables globales
+        let allLogs = [];
+        let filteredLogs = [];
+        let currentPage = 1;
+        const logsPerPage = 50;
+        let charts = {};
+        let autoRefreshInterval = null;
+        
+        // ✅✅✅ SOLUCIÓN PERMANENTE - LÍNEA 1: Exponer globalmente desde el inicio
+        window.allLogs = allLogs;
+        
+        // Configuración GitHub
+        const GITHUB_CONFIG = {
+            owner: 'franciscozamoramx',
+            repo: 'centro-dashboards',
+            branch: 'main',
+            token: localStorage.getItem('github_pat_token') || ''
+        };
+        
+        // URLs - IMPORTANTE: Usar ruta relativa desde /logs/
+        const LOGS_URL = '../logs/logs.json'; // ← Cambiado a relativa
+        const GITHUB_REPO_URL = 'https://github.com/franciscozamoramx/centro-dashboards';
+        
+        // Dashboard names para referencia
+        const dashboardNames = {
+            "principal": "Principal",
+            "adt": "ADT",
+            "auditoria": "Auditoría de Salas",
+            "bigplayers": "Big Player's",
+            "desempeno": "Desempeño de Máquinas",
+            "inventario": "Inventario TI",
+            "promociones": "Promociones",
+            "proyectos": "Proyectos BI",
+            "rtp": "RTP",
+            "diccionario": "Diccionario KPI's",
+            "incidencias_calor": "Incidencias Calor",
+            "incidencias_pie": "Incidencias Pie"
+        };
+        
+        // ==================== FUNCIONES DE UTILIDAD ====================
+        
+        // Mostrar notificación
+        function showNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after duration
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, duration);
+        }
+        
+        // Mostrar loading
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'flex';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+        
+        // Ocultar loading
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+        
+        // Función auxiliar para formatear fecha relativa
+        function formatTimeAgo(date) {
+            if (!date) return 'Ninguna';
+            
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Ahora mismo';
+            if (diffMins < 60) return `Hace ${diffMins} min`;
+            if (diffHours < 24) return `Hace ${diffHours} h`;
+            if (diffDays === 1) return 'Ayer';
+            if (diffDays < 7) return `Hace ${diffDays} días`;
+            if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+            return `Hace ${Math.floor(diffDays / 30)} meses`;
+        }
+        
+        // Función para formatear fecha y hora
+        function formatDateTime(timestamp) {
+            if (!timestamp) return 'N/A';
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleString('es-MX');
+            } catch (error) {
+                return timestamp;
+            }
+        }
+        
+        // Función para obtener clase CSS para badges
+        function getBadgeClass(action) {
+            switch(action) {
+                case 'login': return 'badge-login';
+                case 'dashboard_view': return 'badge-view';
+                case 'logout': return 'badge-logout';
+                case 'login_failed': return 'badge-failed';
+                default: return '';
+            }
+        }
+        
+        // ==================== FUNCIONES DE ESTADÍSTICAS ====================
+        
+        // Función para actualizar estadísticas
+        function updateStats() {
+            if (!allLogs || allLogs.length === 0) {
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Total de Logs</div>
+                        <div class="stat-value">0</div>
+                        <div>No hay registros</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Estado</div>
+                        <div class="stat-value" style="font-size: 32px;">⏳</div>
+                        <div>Esperando actividad...</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const statsGrid = document.getElementById('statsGrid');
+            
+            const totalLogs = allLogs.length;
+            const uniqueUsers = [...new Set(allLogs.map(log => log.user))].length;
+            
+            // Logs de hoy - VERSIÓN CORREGIDA
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            // Para debugging: mostrar información de fechas
+            console.log('=== DEBUG ESTADÍSTICAS ===');
+            console.log('Fecha hoy (ISO):', todayStr);
+            console.log('Fecha hoy (local):', now.toLocaleDateString());
+            
+            const todayLogs = allLogs.filter(log => {
+                if (!log.timestamp) return false;
+                
+                // Extraer solo la parte de la fecha (YYYY-MM-DD)
+                const logDateStr = log.timestamp.split('T')[0];
+                const isToday = logDateStr === todayStr;
+                
+                // Para debugging
+                if (isToday) {
+                    console.log('Log de hoy encontrado:', {
+                        timestamp: log.timestamp,
+                        user: log.user,
+                        action: log.action
+                    });
+                }
+                
+                return isToday;
+            }).length;
+            
+            // Logs de ayer para comparación
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            
+            const yesterdayLogs = allLogs.filter(log => {
+                if (!log.timestamp) return false;
+                const logDateStr = log.timestamp.split('T')[0];
+                return logDateStr === yesterdayStr;
+            }).length;
+            
+            // Logs de las últimas 24 horas (alternativa)
+            const last24Hours = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            const recentLogs = allLogs.filter(log => {
+                if (!log.timestamp) return false;
+                const logDate = new Date(log.timestamp);
+                return logDate > last24Hours;
+            }).length;
+            
+            const dashboardViews = allLogs.filter(log => 
+                log.action === 'dashboard_view'
+            ).length;
+            
+            const failedLogins = allLogs.filter(log => 
+                log.action === 'login_failed'
+            ).length;
+            
+            // Cálculo de cambio porcentual (hoy vs ayer)
+            const changePercent = yesterdayLogs > 0 ? 
+                Math.round(((todayLogs - yesterdayLogs) / yesterdayLogs) * 100) : 0;
+            
+            // Última actividad
+            const lastLog = allLogs[0];
+            const lastActivity = lastLog ? 
+                formatTimeAgo(new Date(lastLog.timestamp)) : 'Ninguna';
+            
+            // Logs pendientes
+            const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length;
+            
+            // Información de debugging
+            console.log('Total logs:', totalLogs);
+            console.log('Logs hoy encontrados:', todayLogs);
+            console.log('Logs ayer encontrados:', yesterdayLogs);
+            console.log('Logs últimas 24h:', recentLogs);
+            console.log('Último log:', lastLog?.timestamp);
+            console.log('=== FIN DEBUG ===');
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total de Logs</div>
+                    <div class="stat-value">${totalLogs}</div>
+                    <div>Registros históricos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Usuarios Únicos</div>
+                    <div class="stat-value">${uniqueUsers}</div>
+                    <div>Personas diferentes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Actividad Hoy</div>
+                    <div class="stat-value">${todayLogs}</div>
+                    <div>
+                        ${changePercent !== 0 ? `
+                            <span class="stat-change ${changePercent > 0 ? 'positive' : 'negative'}">
+                                ${changePercent > 0 ? '+' : ''}${changePercent}% vs ayer
+                            </span>
+                        ` : ''}
+                        <br>
+                        <small style="font-size: 10px; opacity: 0.7;">Fecha: ${todayStr}</small>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Vistas Dashboards</div>
+                    <div class="stat-value">${dashboardViews}</div>
+                    <div>Accesos a reportes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Logins Fallidos</div>
+                    <div class="stat-value" style="color: #dc3545;">${failedLogins}</div>
+                    <div>Intentos no autorizados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Estado</div>
+                    <div class="stat-value" style="font-size: 24px;">
+                        ${pendingLogs > 0 ? '⚠️' : '✅'}
+                    </div>
+                    <div>
+                        ${pendingLogs > 0 ? 
+                            `${pendingLogs} pendientes` : 
+                            'Sincronizado'}
+                        <br>
+                        ${lastActivity}
+                        <br>
+                        <small style="font-size: 10px; opacity: 0.7;">Últimas 24h: ${recentLogs}</small>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Función auxiliar para mostrar estado vacío
+        function updateUIWithEmptyState() {
+            document.getElementById('emptyState').style.display = 'block';
+            updateStats(); // Esto actualizará las estadísticas a 0
+            document.getElementById('logsTableBody').innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: #6c757d;">
+                        <i class="fas fa-database" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                        No hay logs disponibles. Los logs aparecerán aquí cuando los usuarios accedan al sistema.
+                    </td>
+                </tr>
+            `;
+            document.getElementById('pagination').innerHTML = '';
+            hideLoading();
+        }
+        
+        // ==================== FUNCIONES GITHUB ====================
+        
+        // Guardar token GitHub
+        function saveGitHubToken() {
+            const token = document.getElementById('githubTokenInput').value.trim();
+            
+            if (!token || !token.startsWith('ghp_')) {
+                showNotification('Token inválido. Debe empezar con "ghp_"', 'error');
+                return;
+            }
+            
+            // Guardar en localStorage
+            localStorage.setItem('github_pat_token', token);
+            GITHUB_CONFIG.token = token;
+            
+            showNotification('Token guardado correctamente en tu navegador', 'success');
+            
+            // Actualizar estado
+            updateGitHubStatus('Token guardado localmente', 'success');
+        }
+        
+        // Probar conexión GitHub
+        async function testGitHubConnection() {
+            const token = localStorage.getItem('github_pat_token') || GITHUB_CONFIG.token;
+            
+            if (!token) {
+                showNotification('Primero guarda un token', 'error');
+                updateGitHubStatus('No hay token configurado', 'error');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('githubStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Probando conexión...';
+            statusDiv.className = 'github-status info';
+            
+            try {
+                // Probar acceso al repositorio
+                const response = await fetch(
+                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/logs`,
+                    {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        Conexión exitosa ✓
+                        <br>
+                        <small>Token válido y con permisos de escritura</small>
+                    `;
+                    statusDiv.className = 'github-status success';
+                    
+                    showNotification('Conexión a GitHub exitosa', 'success');
+                    
+                } else if (response.status === 404) {
+                    // El directorio logs/ no existe, pero la conexión funciona
+                    statusDiv.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        Conexión exitosa (creará directorio logs al primer uso)
+                        <br>
+                        <small>El directorio logs/ será creado automáticamente</small>
+                    `;
+                    statusDiv.className = 'github-status success';
+                    
+                    showNotification('Conexión exitosa - Directorio logs será creado', 'success');
+                    
+                } else {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <i class="fas fa-times-circle"></i>
+                    Error: ${error.message}
+                    <br>
+                    <small>Verifica que el token tenga permisos "repo"</small>
+                `;
+                statusDiv.className = 'github-status error';
+                
+                showNotification(`Error de conexión: ${error.message}`, 'error');
+            }
+        }
+        
+        // Sincronizar logs pendientes
+        async function syncPendingLogs() {
+            const token = localStorage.getItem('github_pat_token') || GITHUB_CONFIG.token;
+            
+            if (!token) {
+                showNotification('Configura primero el token', 'error');
+                return;
+            }
+            
+            showNotification('Sincronizando logs pendientes...', 'info');
+            
+            try {
+                // Leer logs pendientes del localStorage
+                const pendingKey = 'bi_logs_pending';
+                const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                
+                if (pending.length === 0) {
+                    showNotification('No hay logs pendientes para sincronizar', 'info');
+                    return;
+                }
+                
+                console.log(`🔄 Sincronizando ${pending.length} logs pendientes...`);
+                
+                // Leer logs.json actual de GitHub
+                const fileUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/logs/logs.json`;
+                
+                const response = await fetch(fileUrl, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                let currentContent = '[]';
+                let sha = null;
+                
+                if (response.ok) {
+                    const fileData = await response.json();
+                    currentContent = atob(fileData.content);
+                    sha = fileData.sha;
+                } else if (response.status !== 404) {
+                    throw new Error(`Error leyendo archivo: ${response.status}`);
+                }
+                
+                // Parsear logs existentes
+                let logs = JSON.parse(currentContent || '[]');
+                
+                // Agregar pendientes
+                const logsToAdd = pending.map(p => ({
+                    id: p.id,
+                    timestamp: p.timestamp,
+                    user: p.user,
+                    action: p.action,
+                    dashboard: p.dashboard,
+                    dashboardName: p.dashboardName,
+                    deviceType: p.deviceType,
+                    screen: p.screen,
+                    userAgent: p.userAgent,
+                    language: p.language,
+                    sessionId: p.sessionId,
+                    referrer: p.referrer
+                }));
+                
+                logs.push(...logsToAdd);
+                
+                // Limitar a 5000 logs
+                const trimmedLogs = logs.slice(-5000);
+                
+                // Subir a GitHub
+                const updateResponse = await fetch(fileUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        message: `🔄 Sincronizar ${logsToAdd.length} logs pendientes`,
+                        content: btoa(JSON.stringify(trimmedLogs, null, 2)),
+                        sha: sha,
+                        branch: GITHUB_CONFIG.branch
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    // Limpiar pendientes
+                    localStorage.removeItem(pendingKey);
+                    
+                    showNotification(`✅ ${logsToAdd.length} logs sincronizados`, 'success');
+                    updateGitHubStatus(`${logsToAdd.length} logs sincronizados`, 'success');
+                    
+                    // Recargar logs
+                    loadLogs();
+                    
+                } else {
+                    throw new Error(`Error subiendo: ${updateResponse.status}`);
+                }
+                
+            } catch (error) {
+                console.error('Error sincronizando:', error);
+                showNotification(`Error sincronizando: ${error.message}`, 'error');
+                updateGitHubStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Actualizar estado GitHub
+        function updateGitHubStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('githubStatus');
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'times-circle' : 'info-circle';
+            
+            statusDiv.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                ${message}
+            `;
+            statusDiv.className = `github-status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+        
+        // Mostrar información del token
+        function showTokenInfo() {
+            alert(`ℹ️ Cómo obtener token GitHub:
+1. Ve a GitHub → Tu foto → Settings
+2. Baja hasta "Developer settings"
+3. "Personal access tokens" → "Tokens (classic)"
+4. "Generate new token" (classic)
+5. Nombre: "BI-Logger"
+6. Expiración: "No expiration" (recomendado)
+7. Seleccionar scopes: ✅ repo (todo)
+8. Copia el token (empieza con "ghp_")
+9. Pégala en el campo de arriba`);
+        }
+        
+        // Abrir repositorio
+        function openGitHubRepo() {
+            window.open(GITHUB_REPO_URL, '_blank');
+        }
+        
+        // ==================== FUNCIONES PRINCIPALES ====================
+        
+        // Cargar logs desde GitHub
+        async function loadLogs() {
+            try {
+                showLoading();
+                document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+                
+                console.log('📥 Cargando logs desde:', LOGS_URL);
+                const response = await fetch(LOGS_URL + '?t=' + Date.now(), {
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                // Verificar si el archivo existe
+                if (response.status === 404) {
+                    console.log('Archivo logs.json no encontrado, creando estructura inicial...');
+                    allLogs = [];
+                    updateUIWithEmptyState();
+                    showNotification('Archivo de logs no encontrado. Se creará con el primer registro.', 'info');
+                    return;
+                }
+                
+                if (!response.ok && response.status !== 404) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+                
+                // Intentar parsear el JSON
+                let logs = [];
+                try {
+                    const text = await response.text();
+                    if (text.trim()) {
+                        logs = JSON.parse(text);
+                    }
+                } catch (parseError) {
+                    console.warn('Error parseando JSON, usando array vacío:', parseError);
+                    logs = [];
+                }
+                
+                if (!Array.isArray(logs)) {
+                    console.warn('Logs no es un array, convirtiendo...');
+                    logs = [];
+                }
+                
+                allLogs = logs.reverse(); // Más recientes primero
+                
+                // ✅✅✅ SOLUCIÓN PERMANENTE - LÍNEA 2: Actualizar variable global cuando se cargan logs
+                window.allLogs = allLogs;
+                
+                // Para debugging
+                console.log('✅ Logs cargados:', allLogs.length);
+                console.log('✅ window.allLogs ahora disponible con', window.allLogs.length, 'logs');
+                if (allLogs.length > 0) {
+                    console.log('Primer log:', allLogs[0]);
+                    console.log('Último log:', allLogs[allLogs.length - 1]);
+                }
+                
+                // Verificar si hay logs
+                if (allLogs.length === 0) {
+                    updateUIWithEmptyState();
+                    showNotification('No hay logs registrados aún', 'info');
+                    return;
+                }
+                
+                // Actualizar UI con los logs
+                updateStats();
+                populateFilters();
+                renderTable();
+                createCharts();
+                
+                hideLoading();
+                
+                showNotification(`✅ ${allLogs.length} logs cargados correctamente`, 'success');
+                
+            } catch (error) {
+                console.error('Error cargando logs:', error);
+                hideLoading();
+                
+                // Intentar cargar logs locales como respaldo
+                try {
+                    const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
+                    const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
+                    
+                    allLogs = [...localLogs, ...pendingLogs].sort((a, b) => 
+                        new Date(b.timestamp) - new Date(a.timestamp)
+                    );
+                    
+                    // ✅✅✅ SOLUCIÓN PERMANENTE - Actualizar variable global en caso de error también
+                    window.allLogs = allLogs;
+                    
+                    if (allLogs.length > 0) {
+                        updateStats();
+                        populateFilters();
+                        renderTable();
+                        createCharts();
+                        showNotification(`📂 Usando ${allLogs.length} logs locales (respaldo)`, 'warning');
+                    } else {
+                        updateUIWithEmptyState();
+                        showNotification(`❌ Error: ${error.message}`, 'error');
+                    }
+                } catch (localError) {
+                    updateUIWithEmptyState();
+                    showNotification(`❌ Error cargando logs: ${error.message}`, 'error');
+                }
+            } finally {
+                document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar Logs';
+            }
+        }
+        
+        // Llenar filtros con opciones dinámicas
+        function populateFilters() {
+            const dashboardSelect = document.getElementById('filterDashboard');
+            const uniqueDashboards = [...new Set(allLogs
+                .map(log => log.dashboard)
+                .filter(d => d && d !== 'N/A' && d !== 'null')
+            )];
+            
+            // Limpiar opciones excepto la primera
+            while (dashboardSelect.options.length > 1) {
+                dashboardSelect.remove(1);
+            }
+            
+            // Agregar dashboards únicos
+            uniqueDashboards.sort().forEach(dashboard => {
+                const option = document.createElement('option');
+                option.value = dashboard;
+                option.textContent = dashboardNames[dashboard] || dashboard;
+                dashboardSelect.appendChild(option);
+            });
+        }
+        
+        // Filtrar logs
+        function filterLogs() {
+            const userFilter = document.getElementById('filterUser').value.toLowerCase();
+            const dashboardFilter = document.getElementById('filterDashboard').value;
+            const actionFilter = document.getElementById('filterAction').value;
+            const deviceFilter = document.getElementById('filterDevice').value;
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            
+            return allLogs.filter(log => {
+                // Filtro por usuario
+                if (userFilter && !log.user?.toLowerCase().includes(userFilter)) return false;
+                
+                // Filtro por dashboard
+                if (dashboardFilter && log.dashboard !== dashboardFilter) return false;
+                
+                // Filtro por acción
+                if (actionFilter && log.action !== actionFilter) return false;
+                
+                // Filtro por dispositivo
+                if (deviceFilter && log.deviceType !== deviceFilter) return false;
+                
+                // Filtro por fecha
+                if (dateFrom || dateTo) {
+                    const logDate = log.timestamp ? log.timestamp.split('T')[0] : '';
+                    if (dateFrom && logDate < dateFrom) return false;
+                    if (dateTo && logDate > dateTo) return false;
+                }
+                
+                return true;
+            });
+        }
+        
+        // Aplicar filtros y renderizar tabla
+        function filterTable() {
+            filteredLogs = filterLogs();
+            renderTable(1);
+            createCharts();
+        }
+        
+        // Renderizar tabla con paginación
+        function renderTable(page = 1) {
+            filteredLogs = filterLogs();
+            const start = (page - 1) * logsPerPage;
+            const end = start + logsPerPage;
+            const pageLogs = filteredLogs.slice(start, end);
+            
+            const tbody = document.getElementById('logsTableBody');
+            
+            if (pageLogs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #6c757d;">
+                            <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                            No se encontraron logs con los filtros aplicados
+                        </td>
+                    </tr>
+                `;
+            } else {
+                let html = '';
+                
+                pageLogs.forEach(log => {
+                    // Determinar badge según acción
+                    let badgeClass = '';
+                    let badgeIcon = '';
+                    
+                    switch(log.action) {
+                        case 'login':
+                            badgeClass = 'badge-login';
+                            badgeIcon = 'fas fa-sign-in-alt';
+                            break;
+                        case 'dashboard_view':
+                            badgeClass = 'badge-view';
+                            badgeIcon = 'fas fa-chart-bar';
+                            break;
+                        case 'logout':
+                            badgeClass = 'badge-logout';
+                            badgeIcon = 'fas fa-sign-out-alt';
+                            break;
+                        case 'login_failed':
+                            badgeClass = 'badge-failed';
+                            badgeIcon = 'fas fa-times-circle';
+                            break;
+                        default:
+                            badgeClass = '';
+                            badgeIcon = 'fas fa-circle';
+                    }
+                    
+                    // Nombre amigable del dashboard
+                    const dashboardName = log.dashboard ? 
+                        (dashboardNames[log.dashboard] || log.dashboard) : 
+                        'N/A';
+                    
+                    html += `
+                        <tr>
+                            <td class="time-cell">${formatDateTime(log.timestamp)}</td>
+                            <td class="user-cell">${log.user || 'N/A'}</td>
+                            <td>
+                                <span class="badge ${badgeClass}">
+                                    <i class="${badgeIcon}"></i> ${log.action || 'N/A'}
+                                </span>
+                            </td>
+                            <td class="dashboard-cell">${dashboardName}</td>
+                            <td>
+                                <i class="fas fa-${log.deviceType === 'mobile' ? 'mobile-alt' : 'desktop'}"></i>
+                                ${log.deviceType || 'N/A'}
+                            </td>
+                            <td>${log.ip || 'N/A'}</td>
+                            <td>
+                                <button class="btn" onclick="showLogDetails('${log.id || log.timestamp}')" 
+                                        style="padding: 6px 12px; font-size: 13px;">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+            }
+            
+            // Renderizar paginación
+            renderPagination(filteredLogs.length, page);
+            currentPage = page;
+        }
+        
+        // Crear gráficos
+        function createCharts() {
+            // Destruir gráficos anteriores si existen
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+            
+            if (allLogs.length === 0) return;
+            
+            // Gráfico de distribución por acción
+            const actionCounts = {};
+            allLogs.forEach(log => {
+                actionCounts[log.action] = (actionCounts[log.action] || 0) + 1;
+            });
+            
+            const actionCtx = document.getElementById('actionChart').getContext('2d');
+            charts.actionChart = new Chart(actionCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(actionCounts),
+                    datasets: [{
+                        data: Object.values(actionCounts),
+                        backgroundColor: [
+                            '#28a745', '#007bff', '#ffc107', '#dc3545',
+                            '#6c757d', '#17a2b8', '#e83e8c', '#fd7e14'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de actividad por hora
+            const hourCounts = new Array(24).fill(0);
+            allLogs.forEach(log => {
+                if (log.timestamp) {
+                    const hour = new Date(log.timestamp).getHours();
+                    hourCounts[hour]++;
+                }
+            });
+            
+            const timeCtx = document.getElementById('timeChart').getContext('2d');
+            charts.timeChart = new Chart(timeCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Actividad por hora',
+                        data: hourCounts,
+                        borderColor: '#152c6e',
+                        backgroundColor: 'rgba(21, 44, 110, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de top usuarios
+            const userCounts = {};
+            allLogs.forEach(log => {
+                userCounts[log.user] = (userCounts[log.user] || 0) + 1;
+            });
+            
+            const topUsers = Object.entries(userCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            const usersCtx = document.getElementById('usersChart').getContext('2d');
+            charts.usersChart = new Chart(usersCtx, {
+                type: 'bar',
+                data: {
+                    labels: topUsers.map(u => u[0].split('@')[0]),
+                    datasets: [{
+                        label: 'Actividad',
+                        data: topUsers.map(u => u[1]),
+                        backgroundColor: '#28a745'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de top dashboards
+            const dashboardCounts = {};
+            allLogs.forEach(log => {
+                if (log.dashboard && log.dashboard !== 'N/A' && log.dashboard !== 'null') {
+                    dashboardCounts[log.dashboard] = (dashboardCounts[log.dashboard] || 0) + 1;
+                }
+            });
+            
+            const topDashboards = Object.entries(dashboardCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            const dashboardsCtx = document.getElementById('dashboardsChart').getContext('2d');
+            charts.dashboardsChart = new Chart(dashboardsCtx, {
+                type: 'bar',
+                data: {
+                    labels: topDashboards.map(d => dashboardNames[d[0]] || d[0]),
+                    datasets: [{
+                        label: 'Vistas',
+                        data: topDashboards.map(d => d[1]),
+                        backgroundColor: '#ffc107'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Paginación
+        function renderPagination(totalLogs, currentPage) {
+            const totalPages = Math.ceil(totalLogs / logsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            // Botón anterior
+            html += `
+                <button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" 
+                        onclick="${currentPage > 1 ? `renderTable(${currentPage - 1})` : ''}">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            `;
+            
+            // Páginas
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                    <button class="page-btn ${i === currentPage ? 'active' : ''}" 
+                            onclick="renderTable(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            // Indicador de página
+            html += `
+                <span class="page-info">
+                    Página ${currentPage} de ${totalPages} (${totalLogs} logs)
+                </span>
+            `;
+            
+            // Botón siguiente
+            html += `
+                <button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" 
+                        onclick="${currentPage < totalPages ? `renderTable(${currentPage + 1})` : ''}">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+            
+            pagination.innerHTML = html;
+        }
+        
+        // Mostrar detalles de un log
+        function showLogDetails(logId) {
+            const log = allLogs.find(l => l.id === logId || l.timestamp === logId);
+            if (!log) return;
+            
+            const modalBody = document.getElementById('modalBody');
+            
+            let detailsHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">ID:</div>
+                    <div class="detail-value">${log.id || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Fecha/Hora:</div>
+                    <div class="detail-value">${formatDateTime(log.timestamp)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Usuario:</div>
+                    <div class="detail-value">${log.user || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Acción:</div>
+                    <div class="detail-value">
+                        <span class="badge ${getBadgeClass(log.action)}">
+                            ${log.action || 'N/A'}
+                        </span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Dashboard:</div>
+                    <div class="detail-value">${dashboardNames[log.dashboard] || log.dashboard || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Dispositivo:</div>
+                    <div class="detail-value">
+                        <i class="fas fa-${log.deviceType === 'mobile' ? 'mobile-alt' : 'desktop'}"></i>
+                        ${log.deviceType || 'N/A'} (${log.screen || 'N/A'})
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Sesión:</div>
+                    <div class="detail-value">${log.sessionId || 'N/A'}</div>
+                </div>
+            `;
+            
+            // Información adicional si existe
+            if (log.userAgent) {
+                detailsHTML += `
+                    <div class="detail-row">
+                        <div class="detail-label">Navegador:</div>
+                        <div class="detail-value">${log.userAgent.substring(0, 100)}...</div>
+                    </div>
+                `;
+            }
+            
+            if (log.referrer && log.referrer !== 'direct') {
+                detailsHTML += `
+                    <div class="detail-row">
+                        <div class="detail-label">Referencia:</div>
+                        <div class="detail-value">${log.referrer}</div>
+                    </div>
+                `;
+            }
+            
+            modalBody.innerHTML = detailsHTML;
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+        
+        // Cerrar modal de detalles
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+        
+        // Funciones de exportación
+        function exportLogs() {
+            const logsToExport = filteredLogs.length > 0 ? filteredLogs : allLogs;
+            const dataStr = JSON.stringify(logsToExport, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = `bi_logs_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showNotification(`${logsToExport.length} logs exportados como JSON`, 'success');
+        }
+        
+        function exportToCSV() {
+            const logsToExport = filteredLogs.length > 0 ? filteredLogs : allLogs;
+            if (logsToExport.length === 0) {
+                showNotification('No hay datos para exportar', 'warning');
+                return;
+            }
+            
+            const headers = ['Fecha', 'Usuario', 'Acción', 'Dashboard', 'Dispositivo', 'Sesión', 'Navegador'];
+            const csvContent = [
+                headers.join(','),
+                ...logsToExport.map(log => [
+                    `"${formatDateTime(log.timestamp)}"`,
+                    `"${log.user || ''}"`,
+                    `"${log.action || ''}"`,
+                    `"${dashboardNames[log.dashboard] || log.dashboard || ''}"`,
+                    `"${log.deviceType || ''}"`,
+                    `"${log.sessionId || ''}"`,
+                    `"${log.userAgent?.substring(0, 50) || ''}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `bi_logs_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showNotification(`${logsToExport.length} logs exportados como CSV`, 'success');
+        }
+        
+        function exportToExcel() {
+            // CSV funciona en Excel
+            exportToCSV();
+        }
+        
+        function generateReport() {
+            showNotification('Función de reporte PDF en desarrollo', 'info');
+        }
+        
+        function viewRealTime() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                showNotification('Actualización automática desactivada', 'info');
+            } else {
+                autoRefreshInterval = setInterval(loadLogs, 30000); // Cada 30 segundos
+                showNotification('Actualización automática activada (30 segundos)', 'success');
+            }
+        }
+        
+        function viewLocalLogs() {
+            try {
+                const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
+                const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
+                
+                allLogs = [...localLogs, ...pendingLogs].sort((a, b) => 
+                    new Date(b.timestamp) - new Date(a.timestamp)
+                );
+                
+                // ✅✅✅ SOLUCIÓN PERMANENTE - LÍNEA 3: Actualizar variable global
+                window.allLogs = allLogs;
+                
+                if (allLogs.length > 0) {
+                    updateStats();
+                    populateFilters();
+                    renderTable();
+                    createCharts();
+                    
+                    showNotification(`Cargados ${allLogs.length} logs locales`, 'success');
+                    
+                } else {
+                    showNotification('No hay logs locales almacenados', 'info');
+                    return;
+                }
+                
+            } catch (error) {
+                showNotification('Error cargando logs locales: ' + error.message, 'error');
+            }
+        }
+        
+        function clearLocalCache() {
+            if (confirm('¿Estás seguro de eliminar todos los logs locales?')) {
+                localStorage.removeItem('bi_logs_local');
+                localStorage.removeItem('bi_logs_pending');
+                localStorage.removeItem('github_pat_token');
+                
+                showNotification('Cache local limpiado correctamente', 'success');
+                loadLogs(); // Recargar logs del servidor
+            }
+        }
+        
+        function clearAllLogs() {
+            showNotification('Función de limpieza completa en desarrollo', 'info');
+        }
+        
+        function exportLocalLogs() {
+            try {
+                const localLogs = JSON.parse(localStorage.getItem('bi_logs_local') || '[]');
+                const pendingLogs = JSON.parse(localStorage.getItem('bi_logs_pending') || '[]');
+                
+                const allLocalLogs = [...localLogs, ...pendingLogs];
+                
+                if (allLocalLogs.length === 0) {
+                    showNotification('No hay logs locales para exportar', 'info');
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(allLocalLogs, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = `bi_logs_locales_${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                showNotification(`${allLocalLogs.length} logs locales exportados`, 'success');
+                
+            } catch (error) {
+                showNotification('Error exportando logs locales: ' + error.message, 'error');
+            }
+        }
+        
+        // ==================== FUNCIONES DE DIAGNÓSTICO ====================
+        
+        function testDateFunctions() {
+            console.clear();
+            console.log('=== TEST FUNCIONES DE FECHA ===');
+            
+            // Fecha actual
+            const now = new Date();
+            console.log('1. Fecha actual:');
+            console.log('   - Local:', now.toLocaleString());
+            console.log('   - ISO:', now.toISOString());
+            console.log('   - YYYY-MM-DD:', now.toISOString().split('T')[0]);
+            
+            // Logs de ejemplo
+            if (allLogs.length > 0) {
+                console.log('\n2. Análisis de logs:');
+                const sampleLogs = allLogs.slice(0, 3);
+                sampleLogs.forEach((log, i) => {
+                    console.log(`   Log ${i + 1}:`);
+                    console.log(`     - Timestamp original:`, log.timestamp);
+                    if (log.timestamp) {
+                        const logDate = new Date(log.timestamp);
+                        console.log(`     - Parseado a Date:`, logDate);
+                        console.log(`     - YYYY-MM-DD:`, logDate.toISOString().split('T')[0]);
+                        console.log(`     - Es hoy?`, logDate.toISOString().split('T')[0] === now.toISOString().split('T')[0]);
+                    }
+                });
+                
+                // Calcular logs de hoy
+                const todayStr = now.toISOString().split('T')[0];
+                const todayLogs = allLogs.filter(log => {
+                    if (!log.timestamp) return false;
+                    const logDateStr = log.timestamp.split('T')[0];
+                    return logDateStr === todayStr;
+                });
+                
+                console.log('\n3. Resultado cálculo "Actividad Hoy":');
+                console.log(`   - Fecha hoy:`, todayStr);
+                console.log(`   - Logs encontrados para hoy:`, todayLogs.length);
+                console.log(`   - IDs de logs de hoy:`, todayLogs.map(l => l.id));
+            } else {
+                console.log('No hay logs cargados para analizar');
+            }
+            
+            // Test de formato de fecha
+            console.log('\n4. Test formatos de fecha:');
+            const testDate = '2025-12-17T19:26:18.572Z';
+            console.log(`   - String original:`, testDate);
+            console.log(`   - split('T')[0]:`, testDate.split('T')[0]);
+            console.log(`   - new Date():`, new Date(testDate));
+            console.log(`   - toISOString():`, new Date(testDate).toISOString());
+            console.log(`   - toLocaleString():`, new Date(testDate).toLocaleString());
+            
+            showNotification('Test de fechas ejecutado. Revisa la consola (F12).', 'info');
+        }
+        
+        function diagnoseLogsIssue() {
+            console.clear();
+            console.log('=== DIAGNÓSTICO COMPLETO DE LOGS ===');
+            
+            // 1. Información del sistema
+            console.log('1. INFORMACIÓN DEL SISTEMA:');
+            console.log('  - Fecha/hora local:', new Date().toLocaleString());
+            console.log('  - Fecha/hora UTC:', new Date().toISOString());
+            console.log('  - Zona horaria:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+            console.log('  - URL actual:', window.location.href);
+            
+            // 2. Estado de logs
+            console.log('\n2. ESTADO DE LOGS:');
+            console.log('  - allLogs cargados:', allLogs.length);
+            console.log('  - filteredLogs:', filteredLogs.length);
+            console.log('  - window.allLogs disponible:', window.allLogs ? 'SÍ ✅' : 'NO ❌');
+            console.log('  - window.allLogs.length:', window.allLogs ? window.allLogs.length : 'No definido');
+            console.log('  - Primeros 3 logs:', allLogs.slice(0, 3).map(l => ({
+                timestamp: l.timestamp,
+                user: l.user,
+                action: l.action
+            })));
+            
+            // 3. Verificar fechas
+            console.log('\n3. ANÁLISIS DE FECHAS:');
+            const today = new Date().toISOString().split('T')[0];
+            console.log('  - Hoy (YYYY-MM-DD):', today);
+            
+            const logDates = [...new Set(allLogs.map(l => l.timestamp?.split('T')[0]).filter(Boolean))];
+            console.log('  - Fechas únicas en logs:', logDates);
+            
+            const logsToday = allLogs.filter(l => l.timestamp?.split('T')[0] === today);
+            console.log('  - Logs de hoy encontrados:', logsToday.length);
+            console.log('  - Logs de hoy detalles:', logsToday.map(l => ({
+                id: l.id,
+                user: l.user,
+                action: l.action,
+                timestamp: l.timestamp
+            })));
+            
+            // 4. Verificar localStorage
+            console.log('\n4. LOCALSTORAGE:');
+            console.log('  - bi_logs_local:', JSON.parse(localStorage.getItem('bi_logs_local') || '[]').length);
+            console.log('  - bi_logs_pending:', JSON.parse(localStorage.getItem('bi_logs_pending') || '[]').length);
+            console.log('  - github_pat_token:', localStorage.getItem('github_pat_token') ? 'PRESENTE' : 'NO');
+            
+            // 5. Probar conexión a logs.json
+            console.log('\n5. PRUEBA DE CONEXIÓN:');
+            const logsUrl = '../logs/logs.json';
+            
+            fetch(logsUrl + '?t=' + Date.now())
+                .then(response => {
+                    console.log('  - Status:', response.status, response.statusText);
+                    console.log('  - Content-Type:', response.headers.get('content-type'));
+                    
+                    if (response.ok) {
+                        return response.text().then(text => {
+                            console.log('  - Tamaño respuesta:', text.length, 'caracteres');
+                            console.log('  - Primeros 200 chars:', text.substring(0, 200));
+                            
+                            try {
+                                const parsed = JSON.parse(text);
+                                console.log('  - Parseado OK, items:', parsed.length);
+                                console.log('  - Último timestamp:', parsed[parsed.length - 1]?.timestamp);
+                                console.log('  - Primer timestamp:', parsed[0]?.timestamp);
+                            } catch (e) {
+                                console.log('  - Error parseando:', e.message);
+                            }
+                        });
+                    } else {
+                        console.log('  - ERROR: No se pudo cargar el archivo');
+                    }
+                })
+                .catch(error => {
+                    console.log('  - Error de red:', error.message);
+                })
+                .finally(() => {
+                    console.log('\n=== RECOMENDACIONES ===');
+                    console.log('1. Los logs en tu archivo son de 2025-12-17');
+                    console.log('2. Hoy es 2024-12-18 (diferente año)');
+                    console.log('3. Por eso "Actividad Hoy" muestra 0');
+                    console.log('4. Para ver logs de hoy, genera nuevos logs');
+                    console.log('5. Ve a index.html y haz login para crear logs de HOY');
+                    console.log('\n=== FIN DIAGNÓSTICO ===');
+                });
+            
+            showNotification('Diagnóstico ejecutado. Revisa la consola (F12).', 'info');
+        }
+        
+        // ==================== INICIALIZACIÓN ====================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Admin panel inicializado desde /logs/admin.html');
+            console.log('🔍 Estado inicial de window.allLogs:', window.allLogs ? '✅ DEFINIDO' : '❌ NO DEFINIDO');
+            console.log('📊 Estado inicial de variable local allLogs:', typeof allLogs !== 'undefined' ? '✅ DEFINIDA' : '❌ NO DEFINIDA');
+            
+            // Cargar logs al iniciar
+            loadLogs();
+            
+            // Configurar token si existe
+            const savedToken = localStorage.getItem('github_pat_token');
+            if (savedToken) {
+                document.getElementById('githubTokenInput').value = savedToken;
+                GITHUB_CONFIG.token = savedToken;
+                updateGitHubStatus('Token configurado', 'success');
+            } else {
+                updateGitHubStatus('Configura tu token GitHub para sincronizar logs', 'info');
+            }
+            
+            // Configurar fecha por defecto (últimos 7 días)
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            document.getElementById('filterDateFrom').value = weekAgo.toISOString().split('T')[0];
+            document.getElementById('filterDateTo').value = new Date().toISOString().split('T')[0];
+            
+            // Cerrar modal al hacer clic fuera
+            document.getElementById('detailModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeDetailModal();
+                }
+            });
+            
+            // Atajos de teclado
+            document.addEventListener('keydown', function(e) {
+                // F5 para refrescar
+                if (e.key === 'F5') {
+                    e.preventDefault();
+                    loadLogs();
+                }
+                // Escape para cerrar modal
+                if (e.key === 'Escape') {
+                    closeDetailModal();
+                }
+                // Ctrl+R para refrescar
+                if (e.ctrlKey && e.key === 'r') {
+                    e.preventDefault();
+                    loadLogs();
+                }
+                // Ctrl+D para diagnóstico
+                if (e.ctrlKey && e.key === 'd') {
+                    e.preventDefault();
+                    diagnoseLogsIssue();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
