@@ -1,0 +1,28 @@
+# .github/workflows/debug-deploy.yml
+name: Debug Deployment
+
+on: [push, workflow_dispatch]
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Debug Info
+        run: |
+          echo "=== NODE/NPM VERSION ==="
+          node --version
+          npm --version
+          
+          echo "=== PACKAGE.JSON SCRIPTS ==="
+          cat package.json | grep -A5 '"scripts"'
+          
+          echo "=== TRYING TO BUILD ==="
+          npm run build 2>&1 || echo "Build failed"
+          
+          echo "=== FINAL STRUCTURE ==="
+          find . -type f -name "*.html" -o -name "*.js" -o -name "*.css" | head -20
+          
+          echo "=== TOTAL FILES ==="
+          find . -type f | wc -l
