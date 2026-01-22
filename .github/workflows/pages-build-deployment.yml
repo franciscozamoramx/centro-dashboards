@@ -1,0 +1,59 @@
+# .github/workflows/deploy-gh-pages.yml
+name: 🚀 Deploy to GitHub Pages
+
+on:
+  # Se activa con cada push a main
+  push:
+    branches: [main, master]
+  
+  # También manualmente
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deployment'
+        required: false
+        default: 'Manual trigger'
+
+# Evita que se ejecuten múltiples deployments simultáneos
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🏗️ Build project
+        run: npm run build
+        env:
+          NODE_ENV: production
+          CI: false
+      
+      - name: 🎯 Configure GitHub Pages
+        uses: actions/configure-pages@v4
+      
+      - name: 📤 Upload build files
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # ⚠️ IMPORTANTE: Cambia esto según tu proyecto
+          path: ./dist  # O ./build, ./out, etc.
+      
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
