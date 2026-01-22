@@ -1,0 +1,152 @@
+name: Process BI Logs - Hourly Stats
+
+on:
+  schedule:
+    # Ejecutar cada hora
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Modo debug'
+        required: false
+        default: 'false'
+
+jobs:
+  process-stats:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Necesario para hacer push
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}  # IMPORTANTE: Especificar el token
+        fetch-depth: 0  # Traer todo el historial
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Generate hourly statistics
+      run: |
+        echo "📊 Generando estadísticas por hora..."
+        
+        # Crear directorios si no existen
+        mkdir -p logs/hourly
+        
+        if [ -f "logs/logs.json" ]; then
+          # Generar archivo por hora
+          HOUR=$(date -u +%Y-%m-%d-%H)
+          
+          node -e "
+          const fs = require('fs');
+          
+          try {
+            // Leer logs actuales
+            const logsContent = fs.readFileSync('logs/logs.json', 'utf8');
+            const logs = logsContent ? JSON.parse(logsContent) : [];
+            
+            console.log(\`Total de logs encontrados: \${logs.length}\`);
+            
+            // Calcular logs de la última hora
+            const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+            const hourlyLogs = logs.filter(log => 
+              log && log.timestamp && log.timestamp >= hourAgo
+            );
+            
+            console.log(\`Logs en la última hora: \${hourlyLogs.length}\`);
+            
+            // Generar estadísticas
+            const stats = {
+              hour: '$HOUR',
+              generated_at: new Date().toISOString(),
+              total_logs_in_hour: hourlyLogs.length,
+              unique_users: [...new Set(hourlyLogs.map(l => l.user).filter(Boolean))].length,
+              actions_summary: {},
+              device_summary: {}
+            };
+            
+            // Contar por acción y dispositivo
+            hourlyLogs.forEach(log => {
+              if (log.action) {
+                stats.actions_summary[log.action] = (stats.actions_summary[log.action] || 0) + 1;
+              }
+              if (log.deviceType) {
+                stats.device_summary[log.deviceType] = (stats.device_summary[log.deviceType] || 0) + 1;
+              }
+            });
+            
+            // Guardar estadísticas por hora
+            const hourlyFile = \`logs/hourly/\${'$HOUR'}.json\`;
+            fs.writeFileSync(hourlyFile, JSON.stringify(stats, null, 2));
+            console.log(\`✅ Archivo guardado: \${hourlyFile}\`);
+            
+            // Actualizar resumen diario
+            const today = new Date().toISOString().split('T')[0];
+            const todayFile = \`logs/\${today}-summary.json\`;
+            let todayStats = {};
+            
+            if (fs.existsSync(todayFile)) {
+              try {
+                todayStats = JSON.parse(fs.readFileSync(todayFile, 'utf8'));
+              } catch (e) {
+                console.log('⚠️ Error leyendo archivo diario, creando nuevo:', e.message);
+              }
+            }
+            
+            todayStats['$HOUR'] = stats;
+            fs.writeFileSync(todayFile, JSON.stringify(todayStats, null, 2));
+            console.log(\`✅ Resumen diario actualizado: \${todayFile}\`);
+            
+          } catch (error) {
+            console.error('❌ Error procesando logs:', error.message);
+            process.exit(1);
+          }
+          "
+        else
+          echo "⚠️ No hay logs.json para procesar"
+          # Crear archivo vacío de estadísticas para evitar error
+          HOUR=$(date -u +%Y-%m-%d-%H)
+          echo "{\"hour\":\"$HOUR\",\"generated_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"total_logs_in_hour\":0,\"unique_users\":0,\"actions_summary\":{},\"device_summary\":{}}" > logs/hourly/$HOUR.json
+        fi
+        
+    - name: Clean old hourly files (keep last 7 days)
+      run: |
+        echo "🧹 Limpiando archivos antiguos..."
+        # Buscar y eliminar archivos de más de 7 días
+        find logs/hourly -name "*.json" -mtime +7 -delete 2>/dev/null || true
+        echo "✅ Limpieza completada"
+        
+    - name: Commit and push if changed
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        
+        # Verificar cambios
+        git status
+        
+        # Agregar todos los cambios en logs/
+        git add logs/
+        
+        # Verificar si hay cambios para commitear
+        if ! git diff --cached --quiet; then
+          echo "📝 Hay cambios para commitear"
+          git commit -m "📈 Actualizar estadísticas por hora [$(date -u +%Y-%m-%d-%H)]"
+          
+          # Intentar push con reintentos
+          for i in {1..3}; do
+            echo "🔄 Intento $i de push..."
+            if git push; then
+              echo "✅ Push exitoso"
+              break
+            else
+              echo "⚠️ Falló push, reintentando..."
+              sleep 5
+              git pull --rebase
+            fi
+          done
+        else
+          echo "✅ No hay cambios para commitear"
+        fi
