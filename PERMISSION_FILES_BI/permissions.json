@@ -10,7 +10,7 @@
             "dashboards": ["principal", "adt", "bigplayers", "diccionario"]
         },
         "renato.delapena@bigbola.com": {
-            "dashboards": ["principal", "adt", "desempeno", "rtp", "diccionario"]
+            "dashboards": ["principal", "adt", "desempeno", "rtp", "bigplayers", "bolipoits", "diccionario"]
         },
         "edgar.delatorre@bigbola.com": {
             "dashboards": ["principal", "auditoria", "seguimiento_auditores"]
