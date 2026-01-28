@@ -23,6 +23,9 @@
         },
         "emilio.quiros@bigbola.com": {
             "dashboards": ["principal", "adt", "auditoria", "desempeno", "rtp", "diccionario"]
+        },
+        "jarb@bigbola.com": {
+            "dashboards": ["principal", "bolipoits", "diccionario"]
         }
     }
 }
