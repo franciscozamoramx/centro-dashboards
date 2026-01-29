@@ -110,5 +110,13 @@
     "unique_users": 0,
     "actions_summary": {},
     "device_summary": {}
+  },
+  "2026-01-29-18": {
+    "hour": "2026-01-29-18",
+    "generated_at": "2026-01-29T18:46:06.151Z",
+    "total_logs_in_hour": 0,
+    "unique_users": 0,
+    "actions_summary": {},
+    "device_summary": {}
   }
 }
