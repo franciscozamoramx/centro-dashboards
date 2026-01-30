@@ -54,6 +54,7 @@
             "dashboards": [
                 "principal",
                 "auditoria",
+                "promociones",
                 "seguimiento_auditores"
             ]
         },
