@@ -105,3 +105,17 @@
             ]
         },
         "max.campos@bigbola.com": {
+            "dashboards": [
+                "principal",
+                "auditoria"
+            ]
+        },
+        "jarb@bigbola.com": {
+            "dashboards": [
+                "principal",
+                "bolipoits",
+                "diccionario"
+            ]
+        }
+    }
+}
